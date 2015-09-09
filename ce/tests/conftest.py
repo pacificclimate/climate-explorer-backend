@@ -1,6 +1,7 @@
 import py.path
 import tempfile
 from datetime import datetime
+from pkg_resources import resource_filename
 
 import pytest
 import modelmeta
@@ -11,14 +12,14 @@ from ce import get_app
 
 
 # From http://stackoverflow.com/questions/25525202/py-test-temporary-folder-for-the-session-scope
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def sessiondir(request):
     dir = py.path.local(tempfile.mkdtemp())
     request.addfinalizer(lambda: dir.remove(rec=1))
     return dir
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def dsn(sessiondir):
     return 'sqlite:///{}'.format(sessiondir.join('test.sqlite').realpath())
 
@@ -59,9 +60,10 @@ def populateddb(cleandb):
                  type='GCM', runs=[run0], organization='CCCMA')
     csiro = Model(short_name='csiro', type='GCM', runs=[run1], organization='CSIRO')
 
-    file0 = DataFile(filename='/path/to/some/netcdf_file.nc', unique_id='file0',
-                     first_1mib_md5sum='xxxx', x_dim_name='lon',
-                     y_dim_name='lat', index_time=now, run=run0)
+    file0 = DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
+                     unique_id='file0', first_1mib_md5sum='xxxx',
+                     x_dim_name='lon', y_dim_name='lat', index_time=now,
+                     run=run0)
     file1 = DataFile(filename='/path/to/some/other/netcdf_file.nc',
                      unique_id='file1', first_1mib_md5sum='xxxx',
                      x_dim_name='lon', y_dim_name='lat', index_time=now,

@@ -1,3 +1,6 @@
 Flask
 Flask-SQLAlchemy
 modelmeta
+shapely
+numpy
+netcdf4
