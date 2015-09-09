@@ -23,7 +23,10 @@ setup(
     install_requires = [
         'flask',
         'Flask-SQLAlchemy',
-        'modelmeta'
+        'modelmeta',
+        'shapely',
+        'numpy',
+        'netcdf4'
     ],
     scripts = ['scripts/devserver.py'],
     package_dir = {'ce': 'ce'},
