@@ -21,9 +21,16 @@ model_id1:
 model_id2:
     ...}
 '''
+from sqlalchemy.orm.exc import NoResultFound
+
 def stats(sesh, id_, time, area, variable):
     '''
     '''
+    try:
+        fname, = sesh.query(DataFile.filename).filter(DataFile.unique_id == id_).one()
+    except NoResultFound:
+        return {}
+
     return {
         'model_id1':
         {
