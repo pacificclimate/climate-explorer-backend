@@ -41,16 +41,20 @@ def stats(sesh, id_, time, area, variable):
     except NoResultFound:
         return {}
 
-    assert os.path.exists(fname)
+    if not os.path.exists(fname):
+        raise Exception(
+            "The meatadata database is out of sync with the filesystem. "
+            "I was told to open the file {}, but it does not exist."
+            .format(fname)
+        )
 
     nc = Dataset(fname)
 
-    polygon = loads(area)
-
-    # Mask out data that isn't inside the input polygon
-    mask = polygonToMask(nc, polygon)
-
-    assert variable in nc.variables
+    if variable not in nc.variables:
+        raise Exception(
+            "File {} (id {}) does not have variable {}."
+            .format(fname, id_, variable)
+        )
 
     data = nc.variables[variable]
 
@@ -58,10 +62,22 @@ def stats(sesh, id_, time, area, variable):
         assert 'time' in nc.variables[variable].dimensions
         data = data[time,:,:] # FIXME: Assumes 3d data... doesn't support levels
 
-    # Extend the mask into the time dimension (if it exists)
-    mask = np.repeat(mask, data.size / mask.size).reshape(data.shape)
+    if area:
+        polygon = loads(area)
 
-    data = ma.masked_array(data, mask=mask)
+        # Mask out data that isn't inside the input polygon
+        mask = polygonToMask(nc, polygon)
+
+        # Extend the mask into the time dimension (if it exists)
+        mask = np.repeat(mask, data.size / mask.size).reshape(data.shape)
+        data = ma.masked_array(data, mask=mask)
+
+    if type(data) == ma.MaskedArray:
+        med = ma.median(data)[0]
+        ncells = data.compressed().size
+    else:
+        med = np.median(data)
+        ncells = data[0,:,:].size
 
     return {
         id_:
@@ -69,10 +85,10 @@ def stats(sesh, id_, time, area, variable):
             'min': np.min(data),
             'max': np.max(data),
             'mean': np.mean(data),
-            'median': ma.median(data)[0],
+            'median': med,
             'stdev': np.std(data),
             'units': nc.variables[variable].units,
-            'ncells': data.compressed().size
+            'ncells': ncells
         },
     }
 
