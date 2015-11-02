@@ -22,16 +22,13 @@ model_id2:
     ...}
 '''
 
-import os.path
+import numpy as np
+import numpy.ma as ma
+from sqlalchemy.orm.exc import NoResultFound
 
 from modelmeta import DataFile
 
-import numpy as np
-import numpy.ma as ma
-from shapely.geometry import Polygon, Point, CAP_STYLE
-from shapely.wkt import loads
-from netCDF4 import Dataset
-from sqlalchemy.orm.exc import NoResultFound
+from ce.api.util import get_array, get_units_from_netcdf_file
 
 def stats(sesh, id_, time, area, variable):
     '''
@@ -41,101 +38,20 @@ def stats(sesh, id_, time, area, variable):
     except NoResultFound:
         return {}
 
-    if not os.path.exists(fname):
-        raise Exception(
-            "The meatadata database is out of sync with the filesystem. "
-            "I was told to open the file {}, but it does not exist."
-            .format(fname)
-        )
+    array = get_array(fname, time, area, variable)
+    stats = array_stats(array)
+    stats['units'] = get_units_from_netcdf_file(fname, variable)
+    return {id_: stats}
 
-    nc = Dataset(fname)
-
-    if variable not in nc.variables:
-        raise Exception(
-            "File {} (id {}) does not have variable {}."
-            .format(fname, id_, variable)
-        )
-
-    data = nc.variables[variable]
-
-    if time:
-        assert 'time' in nc.variables[variable].dimensions
-        data = data[time,:,:] # FIXME: Assumes 3d data... doesn't support levels
-
-    if area:
-        polygon = loads(area)
-
-        # Mask out data that isn't inside the input polygon
-        mask = polygonToMask(nc, polygon)
-
-        # Extend the mask into the time dimension (if it exists)
-        mask = np.repeat(mask, data.size / mask.size).reshape(data.shape)
-        data = ma.masked_array(data, mask=mask)
-
-    if type(data) == ma.MaskedArray:
-        med = ma.median(data)[0]
-        ncells = data.compressed().size
-    else:
-        med = np.median(data)
-        ncells = data[0,:,:].size
-
+def array_stats(array):
+    '''Return the min, max, mean, median, standard deviation and number
+       of cells of a 3d data grid (numpy.ma.MaskedArray)
+    '''
     return {
-        id_:
-        {
-            'min': np.min(data),
-            'max': np.max(data),
-            'mean': np.mean(data),
-            'median': med,
-            'stdev': np.std(data),
-            'units': nc.variables[variable].units,
-            'ncells': ncells
-        },
+        'min': np.asscalar(np.min(array)),
+        'max': np.asscalar(np.max(array)),
+        'mean': np.asscalar(np.mean(array)),
+        'median': np.asscalar(ma.median(array)),
+        'stdev': np.asscalar(np.std(array)),
+        'ncells': array.compressed().size
     }
-
-
-def pointInPoly(x, y, poly):
-    if x is ma.masked or y is ma.masked:
-        return ma.masked
-
-    cell = Point(x, y).buffer(2, cap_style=CAP_STYLE.square)
-    if poly.intersects(cell):
-        return not ma.masked
-    else:
-        return ma.masked
-
-pointsInPoly = np.vectorize(pointInPoly)
-
-def polygonToMask(nc, poly):
-
-    nclats = nc.variables['lat'][:]
-    nclons = nc.variables['lon'][:]
-    if np.any(nclons > 180):
-        nclons -= 180
-
-    lons, lats = np.meshgrid(nclons, nclats)
-    lons = ma.masked_array(lons)
-    lats = ma.masked_array(lats, mask=lons.mask)
-    # The mask is now shared between both arrays, so you can mask one and the
-    # other will be masked as well
-    assert lons.sharedmask == True
-
-    # Calculate the polygon extent
-    minx, miny, maxx, maxy = poly.bounds
-
-    min_width = np.min(np.diff(nclons))
-    min_height = np.min(np.diff(nclons))
-    min_cell_area = min_width * min_height
-    if poly.area < min_cell_area:
-        # We can't just naively mask based on grid centroids.
-        # The polygon could actually fall completely between grid centroid
-        minx -= min_width
-        maxx += min_width
-        miny -= min_height
-        maxy += min_height
-
-    lons = ma.masked_where((lons < minx) | (lons > maxx), lons, copy=False)
-    lats = ma.masked_where((lats < miny) | (lats > maxy), lats, copy=False)
-
-    polygon_mask = pointsInPoly(lons, lats, poly)
-
-    return polygon_mask.mask

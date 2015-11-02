@@ -4,3 +4,5 @@ modelmeta
 shapely
 numpy
 netcdf4
+# For testing
+python-dateutil

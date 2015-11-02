@@ -45,6 +45,6 @@ def metadata(sesh, model_id=None):
             'model_name': f.run.model.long_name,
             'experiment': f.run.emission.short_name,
             'variables': vars,
-            'ensemble_member': 'What is this?'
+            'ensemble_member': 'What is this?' #FIXME This is the run id
         }
     return rv

@@ -100,6 +100,13 @@ def populateddb(cleandb):
 
     sesh.add_all(sesh.dirty)
 
+    ts = TimeSet(calendar='gregorian', start_date=datetime(1971, 1, 1),
+                 end_date=datetime(2000, 12, 31), multi_year_mean=True,
+                 num_times=12, time_resolution='other',
+                 times = [ Time(time_idx=i, timestep=datetime(1985, 1+i, 15)) for i in range(12) ])
+    ts.files = [file0]
+    sesh.add_all(sesh.dirty)
+
     sesh.commit()
     return populateable_db
 
