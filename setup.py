@@ -23,6 +23,7 @@ setup(
     install_requires = [
         'flask',
         'Flask-SQLAlchemy',
+        'Flask-Cors',
         'modelmeta',
         'shapely',
         'numpy',
