@@ -51,10 +51,11 @@ def call(session, request_type):
         return Response("Missing query params", status=400)
 
     # FIXME: Sanitize input
-    args = [ request.args.get(key) for key in required_params ]
+    args = { key: request.args.get(key) for key in required_params }
     kwargs = { key: request.args.get(key) for key in optional_params }
+    args.update(kwargs)
     return Response(
-        dumps(func(session, *args, **kwargs)),
+        dumps(func(session, **args)),
         content_type='application/json'
     )
 
