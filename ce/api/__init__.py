@@ -52,7 +52,7 @@ def call(session, request_type):
 
     # FIXME: Sanitize input
     args = { key: request.args.get(key) for key in required_params }
-    kwargs = { key: request.args.get(key) for key in optional_params }
+    kwargs = { key: request.args.get(key) for key in optional_params if request.args.get(key) is not None }
     args.update(kwargs)
     return Response(
         dumps(func(session, **args)),
