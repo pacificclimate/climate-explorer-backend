@@ -14,7 +14,7 @@ model_id2,
 
 from modelmeta import *
 
-def models(sesh, ensemble_name='bcsd_downscale_canada'):
+def models(sesh, ensemble_name='ce'):
     '''
     '''
     try:
