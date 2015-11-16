@@ -326,7 +326,7 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
 
 def test_models(populateddb):
     sesh = populateddb.session
-    rv = models(sesh, 'bc_prism')
+    rv = models(sesh, 'ce')
     assert rv
 
 @pytest.mark.parametrize(('unique_id'), ('file0', 'file1'))

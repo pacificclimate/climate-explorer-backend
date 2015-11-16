@@ -49,6 +49,7 @@ def populateddb(cleandb):
     sesh = populateable_db.session
     ens0 = Ensemble(name='bccaqv2', version=1.0, changes='', description='')
     ens1 = Ensemble(name='bc_prism', version=2.0, changes='', description='')
+    ens2 = Ensemble(name='ce', version=2.0, changes='', description='')
 
     rcp45 = Emission(short_name='rcp45')
     rcp85 = Emission(short_name='rcp85')
@@ -97,6 +98,8 @@ def populateddb(cleandb):
 
     ens0.data_file_variables.append(tmin)
     ens1.data_file_variables.append(tmax)
+    ens2.data_file_variables.append(tmin)
+    ens2.data_file_variables.append(tmax)
 
     sesh.add_all(sesh.dirty)
 
