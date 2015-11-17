@@ -16,13 +16,15 @@ from ce.api.data import data
 from ce.api.timeseries import timeseries
 from ce.api.models import models
 from ce.api.metadata import metadata
+from ce.api.lister import lister
 
 methods = {
     'stats': stats,
     'data': data,
     'models': models,
     'metadata': metadata,
-    'timeseries': timeseries
+    'timeseries': timeseries,
+    'lister': lister
 }
 
 __all__ = list(methods.keys()) + ['call']

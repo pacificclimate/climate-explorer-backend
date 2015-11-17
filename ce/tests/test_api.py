@@ -330,6 +330,15 @@ def test_models(populateddb):
     rv = models(sesh, 'ce')
     assert rv
 
+@pytest.mark.parametrize(('args', 'expected'), [
+    ({'ensemble_name': 'bccaqv2'}, ['file0']),
+    ({'model': 'csiro'}, ['file1', 'file2'])
+])
+def test_lister(populateddb, args, expected):
+    sesh = populateddb.session
+    rv = lister(sesh, **args)
+    assert rv == expected
+
 @pytest.mark.parametrize(('unique_id'), ('file0', 'file1'))
 def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
