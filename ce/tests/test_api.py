@@ -318,7 +318,8 @@ test_polygons = {# Metro Van 10 vertex
     ('timeseries', {'id_': '', 'area': '', 'variable': ''}),
     ('models', {}),
     ('metadata', {'model_id': 'file0'}),
-    ('lister', {'model': 'cgcm3'})
+    ('multimeta', {'model': ''}),
+    ('lister', {'model': ''})
 ])
 def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params):
     url = '/api/' + endpoint
@@ -347,6 +348,13 @@ def test_metadata(populateddb, unique_id):
     for key in ['institute_id', 'institution', 'model_id', 'model_name',
                 'experiment', 'variables', 'ensemble_member']:
         assert key in rv[unique_id]
+
+@pytest.mark.parametrize(('model'), ('cgcm3', ''))
+def test_multimeta(populateddb, model):
+    sesh = populateddb.session
+    rv = multimeta(sesh, model=model)
+    assert 'file0' in rv
+    assert rv['file0']['model_id'] == 'cgcm3'
 
 @pytest.mark.parametrize(('polygon'), test_polygons.values(), ids=list(test_polygons.keys()))
 def test_stats(populateddb, polygon):

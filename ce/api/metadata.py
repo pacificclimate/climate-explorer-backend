@@ -21,7 +21,7 @@ model_id2:
 }
 '''
 
-from modelmeta import *
+from modelmeta import DataFile
 
 def metadata(sesh, model_id=None):
     '''

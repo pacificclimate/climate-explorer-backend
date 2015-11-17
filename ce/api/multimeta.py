@@ -3,7 +3,9 @@
 
 from modelmeta import Ensemble
 
-def multimeta(sesh, ensemble_name='ce', model=None):
+from ce.api.metadata import metadata
+
+def multimeta(sesh, ensemble_name='ce', model=''):
     '''
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object
@@ -34,8 +36,9 @@ def multimeta(sesh, ensemble_name='ce', model=None):
 
     ensemble = sesh.query(Ensemble).filter(Ensemble.name == ensemble_name).first()
 
+    rv = {}
     if not ensemble: # Result does not contain any row therefore ensemble does not exist
-        return []
+        return rv
 
     if model:
         model = model.replace(' ', '+')
@@ -43,4 +46,6 @@ def multimeta(sesh, ensemble_name='ce', model=None):
     else:
         unique_ids =  [ dfv.file.unique_id for dfv in ensemble.data_file_variables ]
 
-    ## TODO: wrap metadata call for all unique_ids
+    for id_ in unique_ids:
+        rv.update(metadata(sesh, id_))
+    return rv
