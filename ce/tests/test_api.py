@@ -317,7 +317,8 @@ test_polygons = {# Metro Van 10 vertex
     ('data', {'model': '', 'emission': '', 'time': '0', 'area': '', 'variable': ''}),
     ('timeseries', {'id_': '', 'area': '', 'variable': ''}),
     ('models', {}),
-    ('metadata', {'model_id': 'file0'})
+    ('metadata', {'model_id': 'file0'}),
+    ('lister', {'model': 'cgcm3'})
 ])
 def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params):
     url = '/api/' + endpoint
