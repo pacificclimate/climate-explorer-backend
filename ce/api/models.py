@@ -1,8 +1,6 @@
 '''module for requesting list of available models
 '''
 
-from sqlalchemy import distinct
-
 from modelmeta import Ensemble
 
 def models(sesh, ensemble_name='ce'):
