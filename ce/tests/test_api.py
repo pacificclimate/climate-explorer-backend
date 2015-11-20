@@ -345,7 +345,7 @@ def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id)
     assert unique_id in rv
-    for key in ['institute_id', 'institution', 'model_id', 'model_name',
+    for key in ['institution', 'model_id', 'model_name',
                 'experiment', 'variables', 'ensemble_member']:
         assert key in rv[unique_id]
 
