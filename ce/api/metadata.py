@@ -39,12 +39,11 @@ def metadata(sesh, model_id=None):
         vars = [ a.long_name for a in [ v.variable_alias for v in f.data_file_variables ] ]
 
         rv[f.unique_id] = {
-            'institute_id': 'What is this?',
             'institution': f.run.model.organization,
             'model_id': f.run.model.short_name,
             'model_name': f.run.model.long_name,
             'experiment': f.run.emission.short_name,
             'variables': vars,
-            'ensemble_member': 'What is this?' #FIXME This is the run id
+            'ensemble_member': f.run.name
         }
     return rv
