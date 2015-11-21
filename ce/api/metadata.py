@@ -36,7 +36,7 @@ def metadata(sesh, model_id=None):
 
     rv = {}
     for f in files:
-        vars = [ { dfv.netcdf_variable_name: a.long_name } for a, dfv in [ (dfv.variable_alias, dfv) for dfv in f.data_file_variables ] ]
+        vars = {dfv.netcdf_variable_name: a.long_name for a, dfv in [ (dfv.variable_alias, dfv) for dfv in f.data_file_variables ]}
 
         rv[f.unique_id] = {
             'institution': f.run.model.organization,
