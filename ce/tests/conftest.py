@@ -56,10 +56,14 @@ def populateddb(cleandb):
 
     run0 = Run(name='run0', emission=rcp45)
     run1 = Run(name='run1', emission=rcp45)
+    run2 = Run(name='r1i1p1', emission=rcp85)
 
     cgcm = Model(short_name='cgcm3', long_name='Canadian Global Climate Model (version 3)',
                  type='GCM', runs=[run0], organization='CCCMA')
     csiro = Model(short_name='csiro', type='GCM', runs=[run1], organization='CSIRO')
+    canems2 = Model(short_name='CanESM2',
+                 long_name='CCCma (Canadian Centre for Climate Modelling and Analysis, Victoria, BC, Canada)',
+                 type='GCM', runs=[run2], organization='CCCMA')
 
     file0 = DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
                      unique_id='file0', first_1mib_md5sum='xxxx',
@@ -73,6 +77,10 @@ def populateddb(cleandb):
                      unique_id='file2', first_1mib_md5sum='xxxx',
                      x_dim_name='lon', y_dim_name='lat', index_time=now,
                      run=run1)
+    file3 = DataFile(filename=resource_filename('ce', 'CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc'),
+                     unique_id='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', first_1mib_md5sum='xxxx',
+                     x_dim_name='lon', y_dim_name='lat', index_time=now,
+                     run=run2)
 
     tasmin = VariableAlias(long_name='Daily Minimum Temperature',
                          standard_name='air_temperature', units='degC')
@@ -85,7 +93,7 @@ def populateddb(cleandb):
                           xc_units='degrees_east', yc_units='degrees_north',
                           evenly_spaced_y=True)
 
-    sesh.add_all([ens0, ens1, cgcm, csiro, file0, file1, file2, tasmin, tasmax,
+    sesh.add_all([ens0, ens1, ens2, cgcm, csiro, canems2, file0, file1, file2, file3, tasmin, tasmax,
                   anuspline_grid])
     sesh.flush()
 
@@ -102,9 +110,11 @@ def populateddb(cleandb):
     tmax1 = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
                             range_max=50, file=file2,
                             variable_alias=tasmax, grid=anuspline_grid)
+    tmax2 = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
+                            range_max=50, file=file3,
+                            variable_alias=tasmax, grid=anuspline_grid)
 
-    sesh.add_all([tmin, tmax, tmin1, tmax1])
-
+    sesh.add_all([tmin, tmax, tmin1, tmax1, tmax2])
     sesh.flush()
 
     ens0.data_file_variables.append(tmin)
@@ -113,6 +123,7 @@ def populateddb(cleandb):
     ens2.data_file_variables.append(tmax)
     ens2.data_file_variables.append(tmin1)
     ens2.data_file_variables.append(tmax1)
+    ens2.data_file_variables.append(tmax2)
 
     sesh.add_all(sesh.dirty)
 
