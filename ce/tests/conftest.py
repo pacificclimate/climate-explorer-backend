@@ -69,6 +69,10 @@ def populateddb(cleandb):
                      unique_id='file0', first_1mib_md5sum='xxxx',
                      x_dim_name='lon', y_dim_name='lat', index_time=now,
                      run=run0)
+    file4 = DataFile(filename=resource_filename('ce', 'tests/data/cgcm-tmin.nc'),
+                     unique_id='file4', first_1mib_md5sum='xxxx',
+                     x_dim_name='lon', y_dim_name='lat', index_time=now,
+                     run=run0)
     file1 = DataFile(filename='/path/to/some/other/netcdf_file.nc',
                      unique_id='file1', first_1mib_md5sum='xxxx',
                      x_dim_name='lon', y_dim_name='lat', index_time=now,
@@ -93,12 +97,12 @@ def populateddb(cleandb):
                           xc_units='degrees_east', yc_units='degrees_north',
                           evenly_spaced_y=True)
 
-    sesh.add_all([ens0, ens1, ens2, cgcm, csiro, canems2, file0, file1, file2, file3, tasmin, tasmax,
-                  anuspline_grid])
+    sesh.add_all([ens0, ens1, ens2, cgcm, csiro, canems2, file0, file1, file2, file3, file4,
+                  tasmin, tasmax, anuspline_grid])
     sesh.flush()
 
     tmin = DataFileVariable(netcdf_variable_name='tasmin', range_min=0,
-                            range_max=50, file=file0,
+                            range_max=50, file=file4,
                             variable_alias=tasmin, grid=anuspline_grid)
     tmax = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
                             range_max=50, file=file0,
@@ -118,6 +122,7 @@ def populateddb(cleandb):
     sesh.flush()
 
     ens0.data_file_variables.append(tmin)
+    ens0.data_file_variables.append(tmax)
     ens1.data_file_variables.append(tmax)
     ens2.data_file_variables.append(tmin)
     ens2.data_file_variables.append(tmax)
@@ -131,7 +136,7 @@ def populateddb(cleandb):
                  end_date=datetime(2000, 12, 31), multi_year_mean=True,
                  num_times=12, time_resolution='other',
                  times = [ Time(time_idx=i, timestep=datetime(1985, 1+i, 15)) for i in range(12) ])
-    ts.files = [file0]
+    ts.files = [file0, file4]
     sesh.add_all(sesh.dirty)
 
     sesh.commit()

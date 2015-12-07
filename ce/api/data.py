@@ -3,8 +3,8 @@
 
 import numpy as np
 
-from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile
-from ce.api.util import get_array, get_units_from_run_object
+from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile, DataFileVariable
+from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable
 
 def data(sesh, model, emission, time, area, variable):
     '''Delegate for performing data lookups across climatological files
@@ -73,7 +73,8 @@ def data(sesh, model, emission, time, area, variable):
         raise Exception('time parameter "{}" not convertable to an integer.'.format(time))
 
     results = sesh.query(Run, Time.timestep)\
-            .join(Model, Emission, DataFile, TimeSet, Time)\
+            .join(Model, Emission, DataFile, DataFileVariable, TimeSet, Time)\
+            .filter(DataFileVariable.netcdf_variable_name == variable)\
             .filter(Emission.short_name == emission)\
             .filter(Model.short_name == model)\
             .filter(Time.time_idx == time)\
@@ -89,7 +90,7 @@ def data(sesh, model, emission, time, area, variable):
     return {
         run.name: {
             'data': {
-                timeval.strftime('%Y-%m-%dT%H:%M:%SZ'): getdata(file_) for file_ in run.files },
+                timeval.strftime('%Y-%m-%dT%H:%M:%SZ'): getdata(file_) for file_ in get_files_from_run_variable(run, variable) },
             'units': get_units_from_run_object(run, variable)
         } for run, timeval in results
     }

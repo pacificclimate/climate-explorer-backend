@@ -7,6 +7,11 @@ from shapely.wkt import loads
 
 from ce.api.geo import polygonToMask
 
+def get_files_from_run_variable(run, variable):
+    return [file_ for file_ in run.files if variable in
+                [dfv.netcdf_variable_name for dfv in file_.data_file_variables]
+           ]
+
 def get_units_from_netcdf_file(fname, variable):
     nc = Dataset(fname)
     return nc.variables[variable].units
@@ -18,7 +23,8 @@ def get_units_from_file_object(file_, varname):
     raise Exception("Variable {} is not indexed for file {}".format(varname, file_.filename))
 
 def get_units_from_run_object(run, varname):
-    units = { get_units_from_file_object(file_, varname) for file_ in run.files }
+    files = get_files_from_run_variable(run, varname)
+    units = { get_units_from_file_object(file_, varname) for file_ in files }
 
     if len(units) != 1:
         raise Exception("File list {} does not have consistent units {}".format(run.files, units))

@@ -332,13 +332,13 @@ def test_models(populateddb):
     assert rv
 
 @pytest.mark.parametrize(('args', 'expected'), [
-    ({'ensemble_name': 'bccaqv2'}, ['file0']),
+    ({'ensemble_name': 'bccaqv2'}, ['file0', 'file4']),
     ({'model': 'csiro'}, ['file1', 'file2'])
 ])
 def test_lister(populateddb, args, expected):
     sesh = populateddb.session
     rv = lister(sesh, **args)
-    assert rv == expected
+    assert set(rv) == set(expected)
 
 @pytest.mark.parametrize(('unique_id'), ('file0', 'file1'))
 def test_metadata(populateddb, unique_id):
@@ -419,6 +419,10 @@ def test_data_bad_time(populateddb):
     assert 'time parameter "time-not-an-int" not convertable to an integer.' == \
         str(exc.value)
 
+@pytest.mark.parametrize(('variable'), ('tasmax', 'tasmin'))
+def test_data_single_variable_file(populateddb, variable):
+    rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable)
+    assert len(rv) == 1
 
 @pytest.mark.parametrize(('polygon'), test_polygons.values(), ids=list(test_polygons.keys()))
 def test_timeseries(populateddb, polygon):
