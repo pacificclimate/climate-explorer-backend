@@ -32,6 +32,6 @@ setup(
     ],
     scripts = ['scripts/devserver.py'],
     package_dir = {'ce': 'ce'},
-    package_data = {'ce': ['tests/data/cgcm.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static')},
+    package_data = {'ce': ['tests/data/cgcm.nc', 'tests/data/cgcm-tmin.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static')},
     zip_safe=False
 )
