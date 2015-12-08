@@ -84,8 +84,8 @@ def data(sesh, model, emission, time, area, variable):
         return {}
 
     def getdata(file_):
-        array = get_array(file_.filename, time, area, variable)
-        return np.asscalar(np.mean(array))
+        a = get_array(file_.filename, time, area, variable)
+        return np.asscalar(np.mean(a))
 
     return {
         run.name: {
