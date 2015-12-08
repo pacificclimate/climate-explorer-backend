@@ -33,7 +33,6 @@ def get_units_from_run_object(run, varname):
 
 
 def get_array(fname, time, area, variable):
-
     if not os.path.exists(fname):
         raise Exception(
             "The meatadata database is out of sync with the filesystem. "
@@ -53,7 +52,6 @@ def get_array(fname, time, area, variable):
 
     # FIXME: Assumes 3d data... doesn't support levels
     if time:
-        print("Time:", time)
         assert 'time' in nc.variables[variable].dimensions
         a = a[time,:,:]
     else:
