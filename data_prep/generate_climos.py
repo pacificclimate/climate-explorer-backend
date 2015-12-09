@@ -90,12 +90,15 @@ def determine_climo_periods(nc):
 def generate_output_fp(in_fp, t_range, outdir):
     '''
     Assumes a PCIC CMIP5 style input path.
+
+    MIP table/variable info here:
+    http://cmip-pcmdi.llnl.gov/cmip5/docs/standard_output.pdf
     '''
 
     cf = Cmip5File(fp=in_fp)
     cf.t_start = d2ss(t_range[0])
     cf.t_end = d2ss(t_range[1])
-    cf.freq = 'mon'
+    cf.freq = 'monClim'
     cf.mip_table = 'Amon'
     cf.root = outdir
     return os.path.realpath(cf.fullpath)
@@ -114,8 +117,8 @@ def main(args):
             print 'Generating climo period {}-{}'.format(d2s(t_range[0]), d2s(t_range[1]))
             out_fp = generate_output_fp(fp, t_range, args.outdir)
             create_climo_file(fp, out_fp, t_range[0], t_range[1])
-        exit()
 
+            #update output file metadata to match climatological CMIP5 standards
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')

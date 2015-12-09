@@ -4,6 +4,8 @@ class Cmip5File(object):
 
     def __init__(self, fp=None, **kwargs):
         '''
+        Documentation in section 3.4: http://cmip-pcmdi.llnl.gov/cmip5/docs/cmip5_data_reference_syntax.pdf
+
         Parses or builds a PCIC CMIP5 file path with specific metadata.
         Pattern is "<base_dir>/<institue>/<model>/<experiment>/<frequency>/<modeling realm>/<MIP table>/<ensemble member>/<version>/<variable name>/<CMOR filename>.nc"
                         -11       -10       -9        -8           -7            -6             -5           -4              -3           -2              -1
