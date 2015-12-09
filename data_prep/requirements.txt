@@ -1,1 +1,3 @@
 cdo
+numpy
+netCDF
