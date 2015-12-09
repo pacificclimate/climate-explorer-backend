@@ -349,6 +349,10 @@ def test_metadata(populateddb, unique_id):
                 'experiment', 'variables', 'ensemble_member']:
         assert key in rv[unique_id]
 
+def test_metadata_empty(populateddb):
+    sesh = populateddb.session
+    assert metadata(sesh, None) == {}
+
 @pytest.mark.parametrize(('model'), ('cgcm3', ''))
 def test_multimeta(populateddb, model):
     sesh = populateddb.session
