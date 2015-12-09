@@ -2,6 +2,7 @@
 '''
 
 from modelmeta import DataFile
+from sqlalchemy.orm.exc import NoResultFound
 
 def metadata(sesh, model_id):
     '''Delegate for performing a metadata lookup for one single file
@@ -46,18 +47,27 @@ def metadata(sesh, model_id):
         None?
 
     '''
-    files = sesh.query(DataFile).filter(DataFile.unique_id == model_id).all()
+    try:
+        file_ = sesh.query(DataFile).filter(DataFile.unique_id == model_id).one()
+    except NoResultFound:
+        return {}
 
-    rv = {}
-    for f in files:
-        vars = {dfv.netcdf_variable_name: a.long_name for a, dfv in [ (dfv.variable_alias, dfv) for dfv in f.data_file_variables ]}
+    vars = {
+            dfv.netcdf_variable_name: a.long_name
+                for a, dfv in [
+                        (dfv.variable_alias, dfv) for dfv in file_.data_file_variables
+                ]
+    }
 
-        rv[f.unique_id] = {
-            'institution': f.run.model.organization,
-            'model_id': f.run.model.short_name,
-            'model_name': f.run.model.long_name,
-            'experiment': f.run.emission.short_name,
+    run = file_.run
+    model = run.model
+    return {
+        model_id: {
+            'institution': model.organization,
+            'model_id': model.short_name,
+            'model_name': model.long_name,
+            'experiment': run.emission.short_name,
             'variables': vars,
-            'ensemble_member': f.run.name
+            'ensemble_member': run.name
         }
-    return rv
+    }
