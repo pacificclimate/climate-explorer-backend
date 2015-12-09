@@ -340,14 +340,26 @@ def test_lister(populateddb, args, expected):
     rv = lister(sesh, **args)
     assert set(rv) == set(expected)
 
-@pytest.mark.parametrize(('unique_id'), ('file0', 'file1'))
+@pytest.mark.parametrize(('unique_id'), ('file0', 'file4'))
 def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id)
     assert unique_id in rv
-    for key in ['institution', 'model_id', 'model_name',
-                'experiment', 'variables', 'ensemble_member']:
+    for key in ['institution', 'model_id', 'model_name', 'experiment',
+                'variables', 'ensemble_member', 'times']:
         assert key in rv[unique_id]
+
+    times = rv[unique_id]['times']
+    assert len(times) > 0
+
+    # Are the values converible into times?
+    for val in times.values():
+        assert parse(val)
+
+def test_metadata_no_times(populateddb):
+    sesh = populateddb.session
+    rv = metadata(sesh, 'file1')
+    assert rv['file1']['times'] == {}
 
 def test_metadata_empty(populateddb):
     sesh = populateddb.session

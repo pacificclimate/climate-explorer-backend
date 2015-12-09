@@ -39,9 +39,16 @@ def metadata(sesh, model_id):
                     {
                         'tasmax': 'Maximum daily temperature',
                         'tasmin': 'Minimum daily temperature',
+                    },
+                    'times':
+                    {
+                        0: '1985-01-15T00:00:00Z',
+                        1: '1985-02-15T00:00:00Z',
+                        2: '1985-03-15T00:00:00Z',
+                        3: '1985-04-15T00:00:00Z'
                     }
-              }
-         }
+                }
+            }
 
     Raises:
         None?
@@ -59,6 +66,11 @@ def metadata(sesh, model_id):
                 ]
     }
 
+    times = {
+        time.time_idx: time.timestep.strftime('%Y-%m-%dT%H:%M:%SZ')
+                for time in file_.timeset.times
+    } if file_.timeset else {}
+
     run = file_.run
     model = run.model
     return {
@@ -68,6 +80,7 @@ def metadata(sesh, model_id):
             'model_name': model.long_name,
             'experiment': run.emission.short_name,
             'variables': vars,
-            'ensemble_member': run.name
+            'ensemble_member': run.name,
+            'times': times
         }
     }
