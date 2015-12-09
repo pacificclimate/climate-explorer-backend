@@ -380,8 +380,12 @@ def test_stats(populateddb, polygon):
         assert rv['file0'][attr] > 0
         assert type(rv['file0'][attr]) == float
 
-    assert rv['file0']['units']
+    for attr in ('units', 'time'):
+        assert rv['file0'][attr]
+        print(rv['file0'][attr])
+
     assert type(rv['file0']['ncells']) == int
+    assert parse(rv['file0']['time'])
 
 def test_stats_bad_variable(populateddb):
     sesh = populateddb.session

@@ -26,21 +26,32 @@ import numpy as np
 import numpy.ma as ma
 from sqlalchemy.orm.exc import NoResultFound
 
-from modelmeta import DataFile
+from modelmeta import DataFile, Time
 
-from ce.api.util import get_array, get_units_from_netcdf_file
+from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime
 
 def stats(sesh, id_, time, area, variable):
     '''
     '''
     try:
-        fname, = sesh.query(DataFile.filename).filter(DataFile.unique_id == id_).one()
+        df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
+        fname = df.filename
     except NoResultFound:
         return {}
 
     array = get_array(fname, time, area, variable)
     stats = array_stats(array)
-    stats['units'] = get_units_from_netcdf_file(fname, variable)
+
+    query = sesh.query(Time.timestep).filter(Time.time_set_id == df.timeset.id)
+    if time:
+        query.filter(Time.time_idx == time)
+    timevals = [ t for t, in query.all() ]
+    timeval = mean_datetime(timevals)
+
+    stats.update({
+        'units': get_units_from_netcdf_file(fname, variable),
+        'time': timeval.strftime('%Y-%m-%dT%H:%M:%SZ')
+    })
     return {id_: stats}
 
 def array_stats(array):
