@@ -7,7 +7,12 @@ from sqlalchemy.orm.exc import NoResultFound
 def metadata(sesh, model_id):
     '''Delegate for performing a metadata lookup for one single file
 
-    Multi-paragraph
+    The `metadata` call is intended for the client to retrieve
+    attributes, model information and organizational information. In
+    also includes variable/measured quantity names as well as the time
+    values for which data exists. The `metadata` call uses information
+    from the `modelmeta` database exclusively and does not hit any data
+    files on disk.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
