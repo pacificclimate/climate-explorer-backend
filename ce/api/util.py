@@ -48,11 +48,14 @@ def get_array(fname, time, area, variable):
             .format(fname, variable)
         )
 
-    data = nc.variables[variable]
+    a = nc.variables[variable]
 
+    # FIXME: Assumes 3d data... doesn't support levels
     if time:
         assert 'time' in nc.variables[variable].dimensions
-        data = data[time,:,:] # FIXME: Assumes 3d data... doesn't support levels
+        a = a[time,:,:]
+    else:
+        a = a[:,:,:]
 
     if area:
         polygon = loads(area)
@@ -61,7 +64,13 @@ def get_array(fname, time, area, variable):
         mask = polygonToMask(nc, polygon)
 
         # Extend the mask into the time dimension (if it exists)
-        mask = np.repeat(mask, data.size / mask.size).reshape(data.shape)
-        return ma.masked_array(data, mask=mask)
+        mask = np.repeat(mask, a.size / mask.size).reshape(a.shape)
     else:
-        return ma.masked_array(data, False)
+        mask = False
+
+    # We may or may not have received a masked array from the NetCDF file
+    if hasattr(a, 'mask'):
+        mask = a.mask | mask
+        return ma.masked_array(a.data, mask)
+    else:
+        return ma.masked_array(a, mask)
