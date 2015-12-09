@@ -59,7 +59,7 @@ def metadata(sesh, model_id):
     except NoResultFound:
         return {}
 
-    vars = {
+    vars_ = {
             dfv.netcdf_variable_name: a.long_name
                 for a, dfv in [
                         (dfv.variable_alias, dfv) for dfv in file_.data_file_variables
@@ -79,7 +79,7 @@ def metadata(sesh, model_id):
             'model_id': model.short_name,
             'model_name': model.long_name,
             'experiment': run.emission.short_name,
-            'variables': vars,
+            'variables': vars_,
             'ensemble_member': run.name,
             'times': times
         }
