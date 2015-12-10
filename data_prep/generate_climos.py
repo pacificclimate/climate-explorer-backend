@@ -116,6 +116,7 @@ def generate_climo_time_var(t_start, t_end, units):
     year = (t_start + (t_end - t_start)/2).year + 1
 
     times = []
+    climo_bounds = []
 
     # Calc month time values
     for i in range(1,13):
@@ -125,20 +126,29 @@ def generate_climo_time_var(t_start, t_end, units):
         mid = mid.replace(hour = 0)
         times.append(mid)
 
+        climo_bounds.append([datetime(t_start.year, i, 1), (datetime(t_end.year, i, 1) + relativedelta(months=1))])
+
     # Seasonal time values
     for i in range(3, 13, 3): # Index is start month of season
         start = datetime(year, i, 1)
         end = start + relativedelta(months=3)
-
         mid = start + (end - start)/2
         times.append(mid.replace(hour=0))
+
+        climo_start = datetime(t_start.year, i, 1)
+        climo_end = datetime(t_end.year, i, 1) + relativedelta(months=3)
+        # Account for DJF being a shorter season (crosses year boundary)
+        if climo_end > t_end: climo_end -= relativedelta(years=1)
+        climo_bounds.append([climo_start, climo_end])
 
     # Annual time value
     days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
     mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
     times.append(mid)
 
-    return times
+    climo_bounds.append([t_start, t_end + relativedelta(days=1)])
+
+    return times, climo_bounds
 
 def update_climo_time_meta(fp):
     '''
@@ -162,7 +172,9 @@ def update_climo_time_meta(fp):
     nc = Dataset(fp, 'r+')
     timevar = nc.variables['time']
 
-    print generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units)
+    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units)
+    print times
+    print climo_bounds
 
 def main(args):
     test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*rcp.*tasmax.*r1i1p1.*nc'))
