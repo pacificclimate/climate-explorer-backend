@@ -184,6 +184,8 @@ def update_climo_time_meta(fp):
     timevar.climatology = 'climatology_bounds'
     bnds_dim = nc.createDimension(u'bnds', 2)
     climo_bnds_var = nc.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
+    climo_bnds_var.calendar = timevar.calendar
+    climo_bnds_var.units = timevar.units
     climo_bnds_var[:] = date2num(climo_bounds, timevar.units, timevar.calendar)
 
     nc.close()
