@@ -154,9 +154,13 @@ def update_climo_time_meta(fp):
     '''
     Updates the time varaible in an existing netCDF file to reflect climatological values.
 
+    IMPORTANT: THIS MAKES CHANGES TO FILES IN PLACE
+
     Section 7.4: http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
 
-    Assumes 17 timesteps: 12 months, 4 seasons, 1 annual
+    Assumes:
+      - 17 timesteps: 12 months, 4 seasons, 1 annual
+      - PCIC CMIP5 style file path
     '''
 
     
@@ -172,9 +176,19 @@ def update_climo_time_meta(fp):
     nc = Dataset(fp, 'r+')
     timevar = nc.variables['time']
 
+    # Generate new time/climo_bounds data
     times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units)
-    print times
-    print climo_bounds
+
+    timevar[:] = date2num(times, timevar.units, timevar.calendar)
+
+    # Create new climatology_bounds variable and required bnds dimension
+    timevar.climatology = 'climatology_bounds'
+    bnds_dim = nc.createDimension(u'bnds', 2)
+    climo_bnds_var = nc.createVariable('climatology_bounds', 'f8', ('time', 'bnds', ))
+    climo_bnds_var[:] = date2num(climo_bounds, timevar.units, timevar.calendar)
+
+    nc.close()
+
 
 def main(args):
     test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*rcp.*tasmax.*r1i1p1.*nc'))
