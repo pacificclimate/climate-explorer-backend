@@ -1,5 +1,7 @@
 import os, os.path
 import re
+import logging
+import sys
 
 from argparse import ArgumentParser
 from datetime import datetime
@@ -24,6 +26,9 @@ def d2s(d):
 
 def d2ss(d):
     return datetime.strftime(d, '%Y%m%d')
+
+log = logging.getLogger(__name__)
+logging.basicConfig(stream=sys.stdout, level=4)
 
 climo_periods = {
     '6190': [s2d('1961-01-01'),s2d('1990-12-31')],
@@ -57,7 +62,7 @@ def find_var_name(keys):
     else:
         raise
 
-def create_climo_file(fp_in, fp_out, t_start, t_end):
+def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     '''
     Generates climatological files from an input file and a selected time range
 
@@ -79,7 +84,10 @@ def create_climo_file(fp_in, fp_out, t_start, t_end):
 
     with NamedTemporaryFile(suffix='nc') as tempf:
         cdo.seldate(date_range, input=fp_in, output=tempf.name)
-        cdo.copy(input='-ymonmean {} -yseasmean {} -timmean {}'.format(tempf.name, tempf.name, tempf.name), output=fp_out)
+        if variable == 'pr':
+            log.warn("Sorry, can't yet process precip")
+        else:
+            cdo.copy(input='-ymonmean {} -yseasmean {} -timmean {}'.format(tempf.name, tempf.name, tempf.name), output=fp_out)
 
 def determine_climo_periods(nc):
     '''
@@ -162,17 +170,8 @@ def update_climo_time_meta(fp):
       - 17 timesteps: 12 months, 4 seasons, 1 annual
       - PCIC CMIP5 style file path
     '''
-
     
-    import shutil
     cf = Cmip5File(fp)
-    cf.root = r'/home/data/scratch/bveerman'
-    if not os.path.exists(os.path.dirname(cf.fullpath)):
-        os.makedirs(os.path.dirname(cf.fullpath))
-    # print 'Copying\n{}\nto\n{}'.format(fp, cf.fullpath)
-    shutil.copy(fp, cf.fullpath)
-    fp = cf.fullpath
-
     nc = Dataset(fp, 'r+')
     timevar = nc.variables['time']
 
@@ -184,39 +183,36 @@ def update_climo_time_meta(fp):
     # Create new climatology_bounds variable and required bnds dimension
     timevar.climatology = 'climatology_bounds'
     bnds_dim = nc.createDimension(u'bnds', 2)
-    climo_bnds_var = nc.createVariable('climatology_bounds', 'f8', ('time', 'bnds', ))
+    climo_bnds_var = nc.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
     climo_bnds_var[:] = date2num(climo_bounds, timevar.units, timevar.calendar)
 
     nc.close()
 
 
 def main(args):
-    test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*rcp.*tasmax.*r1i1p1.*nc'))
+    test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*(tasmax|tasmin).*(_rcp|_historical_).*r1i1p1.*nc'))
 
     for fp in test_files:
-        print fp
+        log.info(fp)
 
         nc = Dataset(fp)
         available_climo_periods = determine_climo_periods(nc)
         nc.close()
+        variable = Cmip5File(fp).variable
 
         for period, t_range in available_climo_periods.items():
-            print 'Generating climo period {}-{}'.format(d2s(t_range[0]), d2s(t_range[1]))
-            out_fp = generate_output_fp(fp, t_range, args.outdir)
-            create_climo_file(fp, out_fp, t_range[0], t_range[1])
 
-            print out_fp
-            exit()
-            #update output file metadata to match climatological CMIP5 standards
+            # Create climatological period and update metadata
+            log.info('Generating climo period {} to {}'.format(d2s(t_range[0]), d2s(t_range[1])))
+            out_fp = generate_output_fp(fp, t_range, args.outdir)
+            log.info('Output file: {}'.format(out_fp))
+            create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
             update_climo_time_meta(out_fp)
 
-            
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
     parser.add_argument('outdir', help='Output folder')
-    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
+    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     args = parser.parse_args()
-#    main(args)
-
-    update_climo_time_meta('/datasets/home/bveerman/code/climate-explorer-backend/data_prep/out/CCCMA/CanESM2/rcp45/monClim/atmos/Amon/r1i1p1/v20120410/tasmax/tasmax_Amon_CanESM2_rcp45_r1i1p1_20400101-20691231.nc')
+    main(args)
