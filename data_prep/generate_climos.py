@@ -89,6 +89,8 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
         else:
             cdo.copy(input='-ymonmean {} -yseasmean {} -timmean {}'.format(tempf.name, tempf.name, tempf.name), output=fp_out)
 
+    # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
+
 def determine_climo_periods(nc):
     '''
     Determine what climatological periods are available in a given netCDF file
