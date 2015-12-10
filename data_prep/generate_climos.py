@@ -7,11 +7,15 @@ from tempfile import NamedTemporaryFile
 
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
+from dateutil.relativedelta import relativedelta
 
 from Cmip5File import Cmip5File
 
 def s2d(s):
     return datetime.strptime(s, '%Y-%m-%d')
+
+def ss2d(s):
+    return datetime.strptime(s, '%Y%m%d')
 
 def d2s(d):
     return datetime.strftime(d, '%Y-%m-%d')
@@ -103,6 +107,62 @@ def generate_output_fp(in_fp, t_range, outdir):
     cf.root = outdir
     return os.path.realpath(cf.fullpath)
 
+def update_climo_time_meta(fp):
+    '''
+    Updates the time varaible in an existing netCDF file to reflect climatological values.
+
+    Section 7.4: http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
+
+    Assumes 17 timesteps: 12 months, 4 seasons, 1 annual
+    '''
+
+    
+    import shutil
+    cf = Cmip5File(fp)
+    cf.root = r'/home/data/scratch/bveerman'
+    if not os.path.exists(os.path.dirname(cf.fullpath)):
+        os.makedirs(os.path.dirname(cf.fullpath))
+    # print 'Copying\n{}\nto\n{}'.format(fp, cf.fullpath)
+    shutil.copy(fp, cf.fullpath)
+    fp = cf.fullpath
+
+    nc = Dataset(fp, 'r+')
+    timevar = nc.variables['time']
+
+    year_mid = ss2d(cf.t_start) + (ss2d(cf.t_end) - ss2d(cf.t_start))/2
+    year_mid = year_mid.year + 1
+    year_start = ss2d(cf.t_start).year
+    year_end = ss2d(cf.t_end).year
+
+    timevar.units = 'days since {}'.format(d2s(datetime(year_start, 1, 1)))
+    print timevar.units
+
+    print year_start, year_mid, year_end
+    time_index = 0
+
+    # Calc month time values
+    for i in range(1,13):
+        day_mid = (datetime(year_mid, i, 1) + relativedelta(months=1) - datetime(year_mid, i, 1)).days/2
+        timevar[time_index] = date2num(datetime(year_mid, i, day_mid), timevar.units)
+        time_index += 1
+
+    # Seasonal time values
+    for i in range(3, 13, 3): # Index is start month of season
+        days_to_seas_mid = (datetime(year_mid, i, 1) + relativedelta(months=3) - datetime(year_mid, i, 1)).days/2
+        seas_mid = (datetime(year_mid, i, 1) + relativedelta(days=days_to_seas_mid))
+        timevar[time_index] = date2num(seas_mid, timevar.units)
+        time_index += 1
+
+    # Annual time values
+    days_to_year_mid = ((datetime(year_mid, 1, 1) + relativedelta(years=1)) - datetime(year_mid, 1, 1)).days/2
+    print days_to_year_mid
+    year_middle_day = datetime(year_mid, 1, 1) + relativedelta(days=days_to_year_mid)
+    print year_middle_day
+    timevar[time_index] = date2num(year_middle_day, timevar.units)
+
+    print timevar[:]
+
+    
 def main(args):
     test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*rcp.*tasmax.*r1i1p1.*nc'))
 
@@ -110,19 +170,26 @@ def main(args):
         print fp
 
         nc = Dataset(fp)
-
         available_climo_periods = determine_climo_periods(nc)
+        nc.close()
 
         for period, t_range in available_climo_periods.items():
             print 'Generating climo period {}-{}'.format(d2s(t_range[0]), d2s(t_range[1]))
             out_fp = generate_output_fp(fp, t_range, args.outdir)
             create_climo_file(fp, out_fp, t_range[0], t_range[1])
 
+            print out_fp
+            exit()
             #update output file metadata to match climatological CMIP5 standards
+            update_climo_time_meta(out_fp)
+
+            
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
     parser.add_argument('outdir', help='Output folder')
     parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     args = parser.parse_args()
-    main(args)
+#    main(args)
+
+    update_climo_time_meta('/datasets/home/bveerman/code/climate-explorer-backend/data_prep/out/CCCMA/CanESM2/rcp45/monClim/atmos/Amon/r1i1p1/v20120410/tasmax/tasmax_Amon_CanESM2_rcp45_r1i1p1_20400101-20691231.nc')

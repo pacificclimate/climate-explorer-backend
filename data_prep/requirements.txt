@@ -1,3 +1,4 @@
+python-dateutil
 cdo
 numpy
 netCDF
