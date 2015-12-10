@@ -140,8 +140,9 @@ def generate_climo_time_var(t_start, t_end, units):
     for i in range(3, 13, 3): # Index is start month of season
         start = datetime(year, i, 1)
         end = start + relativedelta(months=3)
-        mid = start + (end - start)/2
-        times.append(mid.replace(hour=0))
+        mid = (start + (end - start)/2).replace(hour=0)
+        while mid in times: mid += relativedelta(days=1)
+        times.append(mid)
 
         climo_start = datetime(t_start.year, i, 1)
         climo_end = datetime(t_end.year, i, 1) + relativedelta(months=3)
@@ -152,6 +153,7 @@ def generate_climo_time_var(t_start, t_end, units):
     # Annual time value
     days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
     mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
+    while mid in times: mid += relativedelta(days=1)
     times.append(mid)
 
     climo_bounds.append([t_start, t_end + relativedelta(days=1)])
