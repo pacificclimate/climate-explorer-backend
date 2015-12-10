@@ -5,6 +5,8 @@ from argparse import ArgumentParser
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
+import numpy as np
+
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
@@ -107,6 +109,37 @@ def generate_output_fp(in_fp, t_range, outdir):
     cf.root = outdir
     return os.path.realpath(cf.fullpath)
 
+def generate_climo_time_var(t_start, t_end, units):
+    '''
+    '''
+
+    year = (t_start + (t_end - t_start)/2).year + 1
+
+    times = []
+
+    # Calc month time values
+    for i in range(1,13):
+        start = datetime(year, i, 1)
+        end = start + relativedelta(months=1)
+        mid =  start + (end - start)/2
+        mid = mid.replace(hour = 0)
+        times.append(mid)
+
+    # Seasonal time values
+    for i in range(3, 13, 3): # Index is start month of season
+        start = datetime(year, i, 1)
+        end = start + relativedelta(months=3)
+
+        mid = start + (end - start)/2
+        times.append(mid.replace(hour=0))
+
+    # Annual time value
+    days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
+    mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
+    times.append(mid)
+
+    return times
+
 def update_climo_time_meta(fp):
     '''
     Updates the time varaible in an existing netCDF file to reflect climatological values.
@@ -129,40 +162,8 @@ def update_climo_time_meta(fp):
     nc = Dataset(fp, 'r+')
     timevar = nc.variables['time']
 
-    year_mid = ss2d(cf.t_start) + (ss2d(cf.t_end) - ss2d(cf.t_start))/2
-    year_mid = year_mid.year + 1
-    year_start = ss2d(cf.t_start).year
-    year_end = ss2d(cf.t_end).year
+    print generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units)
 
-    timevar.units = 'days since {}'.format(d2s(datetime(year_start, 1, 1)))
-    print timevar.units
-
-    print year_start, year_mid, year_end
-    time_index = 0
-
-    # Calc month time values
-    for i in range(1,13):
-        day_mid = (datetime(year_mid, i, 1) + relativedelta(months=1) - datetime(year_mid, i, 1)).days/2
-        timevar[time_index] = date2num(datetime(year_mid, i, day_mid), timevar.units)
-        time_index += 1
-
-    # Seasonal time values
-    for i in range(3, 13, 3): # Index is start month of season
-        days_to_seas_mid = (datetime(year_mid, i, 1) + relativedelta(months=3) - datetime(year_mid, i, 1)).days/2
-        seas_mid = (datetime(year_mid, i, 1) + relativedelta(days=days_to_seas_mid))
-        timevar[time_index] = date2num(seas_mid, timevar.units)
-        time_index += 1
-
-    # Annual time values
-    days_to_year_mid = ((datetime(year_mid, 1, 1) + relativedelta(years=1)) - datetime(year_mid, 1, 1)).days/2
-    print days_to_year_mid
-    year_middle_day = datetime(year_mid, 1, 1) + relativedelta(days=days_to_year_mid)
-    print year_middle_day
-    timevar[time_index] = date2num(year_middle_day, timevar.units)
-
-    print timevar[:]
-
-    
 def main(args):
     test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*rcp.*tasmax.*r1i1p1.*nc'))
 
