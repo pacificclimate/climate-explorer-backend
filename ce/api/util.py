@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 import numpy as np
 import numpy.ma as ma
@@ -74,3 +75,8 @@ def get_array(fname, time, area, variable):
         return ma.masked_array(a.data, mask)
     else:
         return ma.masked_array(a, mask)
+
+def mean_datetime(datetimes):
+    timestamps = [ dt.replace(tzinfo=timezone.utc).timestamp() for dt in datetimes ]
+    mean = np.mean(timestamps)
+    return datetime.fromtimestamp(mean, tz=timezone.utc)
