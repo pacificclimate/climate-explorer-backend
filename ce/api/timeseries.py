@@ -22,15 +22,20 @@ def timeseries(sesh, id_, area, variable):
     Returns:
         dict: Empty dictionary if id_ is not found in the database.
 
-        Otherwise returns a single dict with keys id_ and `units`. the
-        value for id_ is another dictionary where keys correspond to
-        the time values (formatted as '%Y-%m-%dT%H:%M:%SZ') and values
-        correspond to the data values themselves.
+        Otherwise returns a single dict with keys `id`, `units` and
+        `data`. The value for `data` is another dictionary where keys
+        correspond to the time values (formatted as
+        '%Y-%m-%dT%H:%M:%SZ') and values correspond to the data values
+        themselves. The value for `id` is the unique_id for the file
+        and the value for `units` is the unit string of the data
+        values.
 
         For example::
 
             {
-                'tmax_monClim_PRISM_historical_run1_198101-201012':
+                'id': 'tmax_monClim_PRISM_historical_run1_198101-201012',
+                'units': 'degC',
+                'data':
                 {
                     '1985-1-15T00:00:00Z': 1.5,
                     '1985-2-15T00:00:00Z': 2.5,
@@ -39,11 +44,11 @@ def timeseries(sesh, id_, area, variable):
                     ...
                     '1985-12-15T00:00:00Z': 2.5,
                 }
-                'units': 'degC'
             }
 
     Raises:
         None?
+
     '''
     try:
         file_ = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
@@ -60,6 +65,7 @@ def timeseries(sesh, id_, area, variable):
         for timeval, idx in ti
     }
     return {
-        id_: data,
+        'id': id_,
+        'data': data,
         'units': get_units_from_netcdf_file(file_.filename, variable)
     }

@@ -448,17 +448,18 @@ def test_data_single_variable_file(populateddb, variable):
 def test_timeseries(populateddb, polygon):
     sesh = populateddb.session
     rv = timeseries(sesh, 'file0', polygon, 'tasmax')
-    assert 'file0' in rv
-    assert set(rv['file0'].keys()) == {'1985-01-15T00:00:00Z',
+    for key in ('id', 'data', 'units'):
+        assert key in rv
+    assert rv['id'] == 'file0'
+    assert set(rv['data'].keys()) == {'1985-01-15T00:00:00Z',
             '1985-08-15T00:00:00Z', '1985-04-15T00:00:00Z',
             '1985-09-15T00:00:00Z', '1985-06-15T00:00:00Z',
             '1985-12-15T00:00:00Z', '1985-05-15T00:00:00Z',
             '1985-02-15T00:00:00Z', '1985-03-15T00:00:00Z',
             '1985-07-15T00:00:00Z', '1985-10-15T00:00:00Z',
             '1985-11-15T00:00:00Z'}
-    for val in rv['file0'].values():
+    for val in rv['data'].values():
         assert type(val) == float
-    assert 'units' in rv
     assert rv['units'] == 'K'
 
 @pytest.mark.parametrize(('id_'), (None, '', 'does-not-exist'))
