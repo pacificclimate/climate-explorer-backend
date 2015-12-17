@@ -3,6 +3,7 @@
 
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound
+from collections import OrderedDict
 
 from modelmeta import DataFile
 from ce.api.util import get_array, get_units_from_netcdf_file
@@ -57,13 +58,15 @@ def timeseries(sesh, id_, area, variable):
 
     # Get all time indexes for this file
     ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
+    ti.sort(key=lambda x: x[1])
 
-    data = {
-        timeval.strftime('%Y-%m-%dT%H:%M:%SZ'):
-                np.asscalar(np.mean(get_array(file_.filename, idx, area,
-                                              variable)))
+    data = OrderedDict([(
+        timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        np.asscalar(np.mean(get_array(file_.filename, idx, area, variable)))
+    )
         for timeval, idx in ti
-    }
+    ])
+
     return {
         'id': id_,
         'data': data,
