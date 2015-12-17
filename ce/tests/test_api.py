@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from flask import url_for
@@ -387,24 +389,30 @@ def test_stats(populateddb, polygon):
     assert type(rv['file0']['ncells']) == int
     assert parse(rv['file0']['time'])
 
-def test_stats_bad_variable(populateddb):
+@pytest.mark.parametrize(('filters', 'keys'), (
+    ({'variable': 'tasmax'}, ('CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', 'file0', 'file2')),
+    ({'variable': 'tasmax', 'model': 'cgcm3'}, ['file0']),
+    ({'variable': 'tasmin', 'model': 'csiro'}, ['file1'])
+))
+def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session
-    with pytest.raises(Exception) as exc:
-        stats(sesh, 'file0', None, None, 'no_variable')
+    rv = multistats(sesh, 'ce', **filters)
+    for key in keys:
+        assert key in rv
 
-    assert 'does not have variable' in str(exc.value)
-
-def test_stats_bad_file(populateddb):
-
+# stats() should return NaNs for the values
+@pytest.mark.parametrize(('id_', 'var'), (
+    ('file0', 'no_variable'), # Variable does not exist in file
+    ('file1', 'tasmax') # File does not exist on the filesystem
+))
+def test_stats_bad_params(populateddb, id_, var):
     sesh = populateddb.session
-    # OMG!!1 The database has a file that doesn't exist in it
-    # What will the app do? (Hint: Error)
 
-    with pytest.raises(Exception) as exc:
-        stats(sesh, 'file1', None, None, 'tasmax')
+    rv = stats(sesh, id_, None, None, var)
+    assert math.isnan(rv[id_]['max'])
+    assert 'time' not in rv[id_]
+    assert 'units' not in rv[id_]
 
-    assert 'I was told to open the file /path/to/some/other/netcdf_file.nc, but it does not exist.' \
-        in str(exc.value)
 
 def test_stats_bad_id(populateddb):
     rv = stats(populateddb.session, 'id-does-not-exist', None, None, None)
