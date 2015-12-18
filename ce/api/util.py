@@ -5,6 +5,7 @@ import numpy as np
 import numpy.ma as ma
 from netCDF4 import Dataset
 from shapely.wkt import loads
+from modelmeta import *
 
 from ce.api.geo import polygonToMask
 
@@ -80,3 +81,19 @@ def mean_datetime(datetimes):
     timestamps = [ dt.replace(tzinfo=timezone.utc).timestamp() for dt in datetimes ]
     mean = np.mean(timestamps)
     return datetime.fromtimestamp(mean, tz=timezone.utc)
+
+def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='', variable='', time=0):
+    query = sesh.query(DataFile.unique_id)\
+                  .join(DataFileVariable, EnsembleDataFileVariables, Ensemble, Run, Model, Emission)\
+                  .filter(Ensemble.name == ensemble_name)\
+                  .filter(DataFileVariable.netcdf_variable_name == variable)\
+                  .filter(Time.time_idx == time)\
+                  .filter(TimeSet.multi_year_mean == True)
+
+    if model:
+        query = query.filter(Model.short_name == model)
+
+    if emission:
+        query = query.filter(Emission.short_name == emission)
+
+    return ( r[0] for r in query.all() )

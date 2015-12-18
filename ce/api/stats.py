@@ -9,6 +9,11 @@ from modelmeta import DataFile, Time
 
 from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime
 
+na_array_stats = {
+    key: np.nan
+    for key in ('min', 'max', 'mean', 'median', 'stdev', 'ncells')
+}
+
 def stats(sesh, id_, time, area, variable):
     '''Request and calculate summary statistics averaged across a region
 
@@ -50,11 +55,18 @@ def stats(sesh, id_, time, area, variable):
                 }
             }
 
-    Raises:
-        Exception in several cases:
+        There are two cases semi-error cases which should be mentioned,
+        when the filesystem is out of sync with the database.
 
         1. The file pointed to by `id_` does not exist in the filesystem
         2. The requested variable does not exist in the given file
+
+        In these cases, the numerical values will all be NaN, and the
+        results dict will be missing the 'units' and 'time' keys.
+
+    Raises:
+        None?
+
     '''
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
@@ -62,7 +74,10 @@ def stats(sesh, id_, time, area, variable):
     except NoResultFound:
         return {}
 
-    array = get_array(fname, time, area, variable)
+    try:
+        array = get_array(fname, time, area, variable)
+    except:
+        return {id_: na_array_stats}
     stats = array_stats(array)
 
     query = sesh.query(Time.timestep).filter(Time.time_set_id == df.timeset.id)
