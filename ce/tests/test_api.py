@@ -452,6 +452,14 @@ def test_data_single_variable_file(populateddb, variable):
     rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable)
     assert len(rv) == 1
 
+def test_data_multiple_times(multitime_db):
+    rv = data(multitime_db.session, 'cgcm3', 'rcp45', 0, None, 'tasmax')
+    print(rv)
+    assert len(rv) > 1
+    for run in rv.values():
+        assert len(run['data']) > 1
+
+
 @pytest.mark.parametrize(('polygon'), test_polygons.values(), ids=list(test_polygons.keys()))
 def test_timeseries(populateddb, polygon):
     sesh = populateddb.session
