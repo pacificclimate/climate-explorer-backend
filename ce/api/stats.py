@@ -55,8 +55,8 @@ def stats(sesh, id_, time, area, variable):
                 }
             }
 
-        There are two cases semi-error cases which should be mentioned,
-        when the filesystem is out of sync with the database.
+        There are two semi-error cases which should be mentioned, when
+        the filesystem is out of sync with the database.
 
         1. The file pointed to by `id_` does not exist in the filesystem
         2. The requested variable does not exist in the given file
