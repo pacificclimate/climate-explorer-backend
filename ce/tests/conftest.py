@@ -155,6 +155,14 @@ def db(app):
 def multitime_db(cleandb):
     '''A fixture which represents multiple runs where there exist
        multiple climatological time periods in each run
+       This is realistic for a set of model output that we would be
+       using, but unfortunately it's overly-complicated to set up as a
+       test case :(
+
+       Simulated 3 runs, each consisting of 3 files, so 9 files total.
+       We'll have 3 timesets, each of which are only a single date for
+       some particular multidecadal period (say, 1980s, 2010s, 2040s).
+       Each of a run's 3 files, will point to a different timeset.
     '''
     dbcopy = cleandb
     sesh = dbcopy.session
@@ -163,14 +171,19 @@ def multitime_db(cleandb):
     now = datetime.now()
 
     rcp45 = Emission(short_name='rcp45')
+    # Create three runs
     runs = [ Run(name='run{}'.format(i), emission=rcp45) for i in range(3) ]
     cgcm = Model(short_name='cgcm3', long_name='',
                  type='GCM', runs=runs, organization='CCCMA')
 
-    files = [ DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
-                       unique_id='file{}'.format(i), first_1mib_md5sum='xxxx',
+    files = [
+        # Create three files for each run
+        [ DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
+                       unique_id='file{}'.format(j*3+i), first_1mib_md5sum='xxxx',
                        x_dim_name='lon', y_dim_name='lat', index_time=now,
-                       run=run) for i, run in enumerate(runs) ]
+                       run=run) for i, run in enumerate(runs) ] for j in range(3)
+    ]
+    files = files[0] + files[1] + files[2]
 
     tasmax = VariableAlias(long_name='Daily Maximum Temperature',
                          standard_name='air_temperature', units='degC')
@@ -186,18 +199,29 @@ def multitime_db(cleandb):
                             variable_alias=tasmax, grid=anuspline_grid)
              for file_ in files]
 
+    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, cgcm, rcp45, ens])
+    sesh.commit()
+
+    # Create the three timesets, with just one time step per timeset
     times = [
         Time(time_idx=0, timestep=datetime(1985+y, 1, 15))
         for y in range(0, 90, 30)
     ]
-    for file_, t in zip(files, times):
-        ts = TimeSet(calendar='gregorian', start_date=datetime(1971, 1, 1),
-                     end_date=datetime(2099, 12, 31), multi_year_mean=True,
-                     num_times=10, time_resolution='other',
-                     times = [t])
-        ts.files = [file_]
 
-    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, cgcm, rcp45, ens])
+    timesets = [
+        TimeSet(calendar='gregorian', start_date=datetime(1971, 1, 1),
+                end_date=datetime(2099, 12, 31), multi_year_mean=True,
+                num_times=10, time_resolution='other',
+                times = [t]
+        ) for t in times
+    ]
+
+    # Wire up the timesets with the runs
+    for run in runs:
+        for i, ts in enumerate(timesets):
+            ts.files.append(run.files[i])
+            sesh.add_all(sesh.dirty)
+
     sesh.commit()
 
     return dbcopy
