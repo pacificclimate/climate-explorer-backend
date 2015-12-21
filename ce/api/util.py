@@ -83,8 +83,8 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='', variable='', time=0):
-    query = sesh.query(DataFile.unique_id)\
-                  .join(DataFileVariable, EnsembleDataFileVariables, Ensemble, Run, Model, Emission)\
+    query = sesh.query(DataFile.unique_id).distinct(DataFile.unique_id)\
+                  .join(DataFileVariable, EnsembleDataFileVariables, Ensemble, Run, Model, Emission, TimeSet, Time)\
                   .filter(Ensemble.name == ensemble_name)\
                   .filter(DataFileVariable.netcdf_variable_name == variable)\
                   .filter(Time.time_idx == time)\
