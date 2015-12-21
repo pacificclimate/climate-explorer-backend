@@ -72,7 +72,7 @@ def data(sesh, model, emission, time, area, variable):
     except ValueError:
         raise Exception('time parameter "{}" not convertable to an integer.'.format(time))
 
-    results = sesh.query(Run, DataFile)\
+    results = sesh.query(Run)\
             .join(Model, Emission, DataFile, DataFileVariable, TimeSet)\
             .filter(DataFileVariable.netcdf_variable_name == variable)\
             .filter(Emission.short_name == emission)\
@@ -99,5 +99,5 @@ def data(sesh, model, emission, time, area, variable):
                         getdata(file_, time) for file_ in get_files_from_run_variable(run, variable)
             },
             'units': get_units_from_run_object(run, variable)
-        } for run, data_file in results
+        } for run in results
     }
