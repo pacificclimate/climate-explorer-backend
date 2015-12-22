@@ -391,8 +391,7 @@ def test_stats(populateddb, polygon):
 
 @pytest.mark.parametrize(('filters', 'keys'), (
     ({'variable': 'tasmax'}, ('CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', 'file0', 'file2')),
-    ({'variable': 'tasmax', 'model': 'cgcm3'}, ['file0']),
-    ({'variable': 'tasmin', 'model': 'csiro'}, ['file1'])
+    ({'variable': 'tasmax', 'model': 'cgcm3'}, ['file0'])
 ))
 def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session

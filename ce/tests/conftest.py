@@ -136,7 +136,7 @@ def populateddb(cleandb):
                  end_date=datetime(2000, 12, 31), multi_year_mean=True,
                  num_times=12, time_resolution='other',
                  times = [ Time(time_idx=i, timestep=datetime(1985, 1+i, 15)) for i in range(12) ])
-    ts.files = [file0, file4]
+    ts.files = [file0, file2, file3, file4]
     sesh.add_all(sesh.dirty)
 
     sesh.commit()
