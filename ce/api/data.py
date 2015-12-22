@@ -72,25 +72,32 @@ def data(sesh, model, emission, time, area, variable):
     except ValueError:
         raise Exception('time parameter "{}" not convertable to an integer.'.format(time))
 
-    results = sesh.query(Run, Time.timestep)\
-            .join(Model, Emission, DataFile, DataFileVariable, TimeSet, Time)\
+    results = sesh.query(Run)\
+            .join(Model, Emission, DataFile, DataFileVariable, TimeSet)\
             .filter(DataFileVariable.netcdf_variable_name == variable)\
             .filter(Emission.short_name == emission)\
             .filter(Model.short_name == model)\
-            .filter(Time.time_idx == time)\
             .filter(TimeSet.multi_year_mean == True).all()
 
     if not results:
         return {}
 
-    def getdata(file_):
-        a = get_array(file_.filename, time, area, variable)
+    def getdata(file_, time_idx):
+        a = get_array(file_.filename, time_idx, area, variable)
         return np.asscalar(np.mean(a))
+
+    def get_timeval(timeset, idx):
+        for time in timeset.times:
+            if time.time_idx == idx:
+                return time.timestep
+        raise Exception('Timeset has not time with index value {}'.format(idx))
 
     return {
         run.name: {
             'data': {
-                timeval.strftime('%Y-%m-%dT%H:%M:%SZ'): getdata(file_) for file_ in get_files_from_run_variable(run, variable) },
+                get_timeval(file_.timeset, time).strftime('%Y-%m-%dT%H:%M:%SZ'):
+                        getdata(file_, time) for file_ in get_files_from_run_variable(run, variable)
+            },
             'units': get_units_from_run_object(run, variable)
-        } for run, timeval in results
+        } for run in results
     }
