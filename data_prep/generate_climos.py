@@ -94,7 +94,7 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
             log.warn("Sorry, can't yet process {}".format(variable))
         else:
             cdo.copy(input='-ymon{op} {fname} -yseas{op} {fname}'
-                     '-tim{op} {fname}'.format(fname=tempf.name, op=op),
+                     '-tim{op} {fname}'.format(fname=tempf.name, op=op[variable]),
                      output=fp_out)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
