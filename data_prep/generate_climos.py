@@ -204,7 +204,8 @@ def update_climo_time_meta(fp):
 
 
 def main(args):
-    test_files = iter_matching('/home/data/climate/CMIP5/CCCMA/CanESM2/', re.compile('.*(tasmax|tasmin).*(_rcp|_historical_).*r1i1p1.*nc'))
+    vars = '|'.join(args.variables)
+    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp|_historical_).*r1i1p1.*nc'.format(vars)))
 
     for fp in test_files:
         log.info(fp)
@@ -228,5 +229,11 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
     parser.add_argument('outdir', help='Output folder')
     parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
+    parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
+    parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
+    parser.set_defaults(
+        variables=['tasmin', 'tasmax'],
+        basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/'
+    )
     args = parser.parse_args()
     main(args)
