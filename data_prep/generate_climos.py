@@ -84,10 +84,18 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
 
     with NamedTemporaryFile(suffix='nc') as tempf:
         cdo.seldate(date_range, input=fp_in, output=tempf.name)
-        if variable == 'pr':
-            log.warn("Sorry, can't yet process precip")
+        op = {
+            'pr': 'sum',
+            'tasmax': 'mean',
+            'tasmin': 'mean'
+        }
+
+        if variable not in op:
+            log.warn("Sorry, can't yet process {}".format(variable))
         else:
-            cdo.copy(input='-ymonmean {} -yseasmean {} -timmean {}'.format(tempf.name, tempf.name, tempf.name), output=fp_out)
+            cdo.copy(input='-ymon{op} {fname} -yseas{op} {fname}'
+                     '-tim{op} {fname}'.format(fname=tempf.name, op=op),
+                     output=fp_out)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
