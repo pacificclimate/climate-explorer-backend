@@ -227,8 +227,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
-    parser.add_argument('outdir', help='Output folder')
-    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
+    parser.add_argument('-o', '--outdir', required=True, help='Output folder')
+#    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
     parser.set_defaults(
