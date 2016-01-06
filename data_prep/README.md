@@ -1,49 +1,85 @@
 ## Datafile Preparation
 
-Input data files can be created from CMIP5 compliant input with the following method:
+Input data files can be created from CMIP5 compliant input using the `generate_climos.py` script.
 
-```
-.... detail functions here
-```
+This script:
 
+1. Opens an existing NetCDF file
+2. Determines what climatological periods to generate
+3. Aggregates the daily data to each respective climatological period
+4. Revises the time variable to meet CF1.6/CMIP5 specification
+5. Adds a climatology_bounds variable to match climatological period
+6. Revises output file name with climatological period
 
-```
-for i in $(find -type f -name "*tasmin*");
-do
-  echo $i;
-  ncks -O -v tasmin,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i
-  ncap2 -O -s 'where(lon>180) lon=lon-360' $i $i
-done
-
-
-for i in $(find -type f -name "*tasmax*");
-do
-  echo $i;
-  ncks -O -v tasmax,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i
-  ncap2 -O -s 'where(lon>180) lon=lon-360' $i $i
-done
-```
-
-### Terrible Bash Method
-
-Creating basic climatological files can be accomplished with the following bash method, but it suffers from some shortcomings. In addition to the bash methods, we need to:
+The general process is to:
 
 1. Revise time variable to meet CF1.6 spec for climatological series
 2. Add a climatology_bounds variable as per CF1.6 spec
 3. Process file names to correct the time range available
 
-```bash
-IFILE=/home/data/climate/CMIP5/CCCMA/CanESM2/rcp45/day/atmos/day/r1i1p1/v20120410/tasmax/tasmax_day_CanESM2_rcp45_r1i1p1_20060101-23001231.nc
-TEMP=~/deleteme_temp.nc
-OUTPUT_CLIM=~/deleteme_chained.nc
+### Installation
 
-cdo seldate,2010-01-01,2039-12-31 $IFILE $TEMP
-cdo copy -ymonmean $TEMP -yseasmean $TEMP -timmean $TEMP $OUTPUT_CLIM
+```bash
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-If the longitude in the original file is 0 -> 360 rather than -180 -> 180 this will also need to be transformed
+### Usage
 
 ```bash
-ncks -O -v <variabl> --msa -d lon,180.,360. -d lon,0.,179.999999 $OUTPUT_CLIM $OUTPUT_CLIM
-ncap2 -O -s 'where(lon>180) lon=lon-360' $i $i
+# Use defaults:
+python generate_climos.py -o <outdir>
+
+# Specify variables and input data:
+python generate_climos.py -v tasmax tasmin pr -b <indir> -o <outdir>
+```
+
+Usage is further detailed in the provided help information `python generate_climos.py -h`
+
+### Post Processing
+
+As created, the files may need some post processing. This includes:
+
+* Converting longitudes from 0 -> 360 to -180 -> 180
+* Scaling variables to more user interpretable values
+
+#### tasmin/tasmax
+
+```
+for VAR in tasmin tasmax;
+do
+  for i in $(find -type f -name "*$VAR*");
+  do
+    echo $i;
+    ncks -O -v $VAR,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i;
+    ncap2 -O -s 'where(lon>180) lon=lon-360' $i $i;
+  done
+done
+```
+
+#### precip
+
+Precip also requires you to convert to kg m-2 s-1 to mm since we have summed over each time of year
+
+```bash
+for i in $(find -type f -name "*pr*");
+do
+  echo $i;
+  ncks -O -v pr,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i
+  ncap2 -O -s 'where(lon>180) lon=lon-360' $i $i
+  cdo -O mulc,86400 $i $i.1
+  mv $i.1 $i
+  ncatted -a units,pr,m,c,"mm" $i
+done
+```
+
+### Indexing
+
+Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
+
+```R
+source("db/index_netcdf.r")
+f.list <- list.files("<input_directory>", full.name=TRUE, pattern = "\\.nc$", recursive=TRUE)
+index.netcdf.files(f.list, host="dbhost", db="dbname", user="dbuser", password="optional")
 ```
