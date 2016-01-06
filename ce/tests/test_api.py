@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from flask import url_for
@@ -340,14 +342,30 @@ def test_lister(populateddb, args, expected):
     rv = lister(sesh, **args)
     assert set(rv) == set(expected)
 
-@pytest.mark.parametrize(('unique_id'), ('file0', 'file1'))
+@pytest.mark.parametrize(('unique_id'), ('file0', 'file4'))
 def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id)
     assert unique_id in rv
-    for key in ['institution', 'model_id', 'model_name',
-                'experiment', 'variables', 'ensemble_member']:
+    for key in ['institution', 'model_id', 'model_name', 'experiment',
+                'variables', 'ensemble_member', 'times']:
         assert key in rv[unique_id]
+
+    times = rv[unique_id]['times']
+    assert len(times) > 0
+
+    # Are the values converible into times?
+    for val in times.values():
+        assert parse(val)
+
+def test_metadata_no_times(populateddb):
+    sesh = populateddb.session
+    rv = metadata(sesh, 'file1')
+    assert rv['file1']['times'] == {}
+
+def test_metadata_empty(populateddb):
+    sesh = populateddb.session
+    assert metadata(sesh, None) == {}
 
 @pytest.mark.parametrize(('model'), ('cgcm3', ''))
 def test_multimeta(populateddb, model):
@@ -364,27 +382,36 @@ def test_stats(populateddb, polygon):
         assert rv['file0'][attr] > 0
         assert type(rv['file0'][attr]) == float
 
-    assert rv['file0']['units']
+    for attr in ('units', 'time'):
+        assert rv['file0'][attr]
+        print(rv['file0'][attr])
+
     assert type(rv['file0']['ncells']) == int
+    assert parse(rv['file0']['time'])
 
-def test_stats_bad_variable(populateddb):
+@pytest.mark.parametrize(('filters', 'keys'), (
+    ({'variable': 'tasmax'}, ('CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', 'file0', 'file2')),
+    ({'variable': 'tasmax', 'model': 'cgcm3'}, ['file0'])
+))
+def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session
-    with pytest.raises(Exception) as exc:
-        stats(sesh, 'file0', None, None, 'no_variable')
+    rv = multistats(sesh, 'ce', **filters)
+    for key in keys:
+        assert key in rv
 
-    assert 'does not have variable' in str(exc.value)
-
-def test_stats_bad_file(populateddb):
-
+# stats() should return NaNs for the values
+@pytest.mark.parametrize(('id_', 'var'), (
+    ('file0', 'no_variable'), # Variable does not exist in file
+    ('file1', 'tasmax') # File does not exist on the filesystem
+))
+def test_stats_bad_params(populateddb, id_, var):
     sesh = populateddb.session
-    # OMG!!1 The database has a file that doesn't exist in it
-    # What will the app do? (Hint: Error)
 
-    with pytest.raises(Exception) as exc:
-        stats(sesh, 'file1', None, None, 'tasmax')
+    rv = stats(sesh, id_, None, None, var)
+    assert math.isnan(rv[id_]['max'])
+    assert 'time' not in rv[id_]
+    assert 'units' not in rv[id_]
 
-    assert 'I was told to open the file /path/to/some/other/netcdf_file.nc, but it does not exist.' \
-        in str(exc.value)
 
 def test_stats_bad_id(populateddb):
     rv = stats(populateddb.session, 'id-does-not-exist', None, None, None)
@@ -424,21 +451,30 @@ def test_data_single_variable_file(populateddb, variable):
     rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable)
     assert len(rv) == 1
 
+
+def test_data_multiple_times(multitime_db):
+    rv = data(multitime_db.session, 'cgcm3', 'rcp45', 0, None, 'tasmax')
+    assert len(rv) > 1
+    for run in rv.values():
+        assert len(run['data']) > 1
+
+
 @pytest.mark.parametrize(('polygon'), test_polygons.values(), ids=list(test_polygons.keys()))
 def test_timeseries(populateddb, polygon):
     sesh = populateddb.session
     rv = timeseries(sesh, 'file0', polygon, 'tasmax')
-    assert 'file0' in rv
-    assert set(rv['file0'].keys()) == {'1985-01-15T00:00:00Z',
+    for key in ('id', 'data', 'units'):
+        assert key in rv
+    assert rv['id'] == 'file0'
+    assert set(rv['data'].keys()) == {'1985-01-15T00:00:00Z',
             '1985-08-15T00:00:00Z', '1985-04-15T00:00:00Z',
             '1985-09-15T00:00:00Z', '1985-06-15T00:00:00Z',
             '1985-12-15T00:00:00Z', '1985-05-15T00:00:00Z',
             '1985-02-15T00:00:00Z', '1985-03-15T00:00:00Z',
             '1985-07-15T00:00:00Z', '1985-10-15T00:00:00Z',
             '1985-11-15T00:00:00Z'}
-    for val in rv['file0'].values():
+    for val in rv['data'].values():
         assert type(val) == float
-    assert 'units' in rv
     assert rv['units'] == 'K'
 
 @pytest.mark.parametrize(('id_'), (None, '', 'does-not-exist'))
