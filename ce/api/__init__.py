@@ -12,6 +12,7 @@ from werkzeug.wrappers import BaseResponse as Response
 from flask import request
 
 from ce.api.stats import stats
+from ce.api.multistats import multistats
 from ce.api.data import data
 from ce.api.timeseries import timeseries
 from ce.api.models import models
@@ -21,6 +22,7 @@ from ce.api.lister import lister
 
 methods = {
     'stats': stats,
+    'multistats': multistats,
     'data': data,
     'models': models,
     'metadata': metadata,

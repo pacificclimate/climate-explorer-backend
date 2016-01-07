@@ -3,9 +3,9 @@ FROM pcic/geospatial-python
 ADD . /app
 WORKDIR /app
 
-RUN pip install -U pip
-RUN pip install --trusted-host tools.pacificclimate.org -i http://tools.pacificclimate.org/pypiserver/ .
+RUN pip3 install -U pip
+RUN pip3 install --trusted-host tools.pacificclimate.org -i http://tools.pacificclimate.org/pypiserver/ .
 
 EXPOSE 8000
 
-CMD python scripts/devserver.py -p 8000 -t
+CMD python3 scripts/devserver.py -p 8000 -t
