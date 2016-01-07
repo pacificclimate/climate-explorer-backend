@@ -76,6 +76,20 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     Requested date range MUST exist in the input file
 
     '''
+    supported_vars = {
+        'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
+        'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
+        'r20mmETCCDI', 'r95pETCCDI', 'r99pETCCDI', 'rx1dayETCCDI',
+        'rx5dayETCCDI', 'sdiiETCCDI', 'suETCCDI', 'thresholds', 'tn10pETCCDI',
+        'tn90pETCCDI', 'tnnETCCDI', 'tnxETCCDI', 'trETCCDI', 'tx10pETCCDI',
+        'tx90pETCCDI', 'txnETCCDI', 'txxETCCDI', 'wsdiETCCDI', 'tasmin',
+        'tasmax', 'pr'
+    }
+
+    if variable not in supported_vars:
+        raise Exception("Unsupported variable: cant't yet process {}".format(variable))
+
+    op = 'sum' if variable == 'pr' else 'mean'
 
     cdo = Cdo()
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
@@ -85,24 +99,12 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
 
     with NamedTemporaryFile(suffix='.nc') as tempf:
         cdo.seldate(date_range, input=fp_in, output=tempf.name)
-        op = {
-            'pr': 'sum',
-            'tasmax': 'mean',
-            'tasmin': 'mean',
-            'r99pETCCDI': 'mean'
-        }
-
-        if variable not in op:
-            log.warn("Sorry, can't yet process {}".format(variable))
-            return
-
         if 'yr' in fp_in:
-            cdo_cmd = '-tim{op} {fname}'.format(fname=tempf.name, op=op[variable])
+            cdo_cmd = '-tim{op} {fname}'.format(fname=tempf.name, op=op)
         else:
             cdo_cmd = '-ymon{op} {fname} -yseas{op} {fname} -tim{op} {fname}'\
-                .format(fname=tempf.name, op=op[variable])
+                .format(fname=tempf.name, op=op)
 
-        log.info(cdo_cmd)
         cdo.copy(input=cdo_cmd, output=fp_out)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
@@ -224,9 +226,12 @@ def main(args):
             log.info('Generating climo period {} to {}'.format(d2s(t_range[0]), d2s(t_range[1])))
             out_fp = file_.generate_output_fp(t_range, args.outdir)
             log.info('Output file: {}'.format(out_fp))
-            create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
-            update_climo_time_meta(out_fp, FileType)
-
+            try:
+                create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
+            except:
+                log.warn('Failed to create climatology file')
+            else:
+                update_climo_time_meta(out_fp, FileType)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
