@@ -1,5 +1,7 @@
 import os
+import time
 from datetime import datetime
+import netCDF4
 
 def d2ss(d):
     return datetime.strftime(d, '%Y%m%d')
@@ -97,11 +99,24 @@ class Cmip5File(object):
         basename = '{}_{}_{}_{}_{}_{}-{}.nc'.format(self.variable, new_mip_table, self.model, self.experiment, self.run, d2ss(t_range[0]), d2ss(t_range[1]))
         return os.path.realpath(os.path.join(dirname, basename))
 
+def file_version(filename):
+    '''Returns a "version string" for a given file
+
+    The version string is just 'v' + the file creation date in YYMMDD format
+    '''
+    t = os.stat(filename).st_ctime
+    return 'v{}'.format(time.strftime('%Y%m%d', time.gmtime(t)))
+
 class ClimdexFile(Cmip5File):
     ''' See DB's ClimDEX directory in /home/data/climate/CLIMDEX/CMIP5
     '''
     def __init__(self, fp=None, **kwargs):
+
         if fp:
+            nc = netCDF4.Dataset(fp)
+            institute = nc.institute_id
+            nc.close()
+
             dirname, basename = os.path.split(os.path.abspath(fp))
             splitdirs = dirname.split('/')
             variable, freq, model, experiment, run, trange = basename.strip('.nc').split('_')
@@ -112,8 +127,8 @@ class ClimdexFile(Cmip5File):
                     'freq': freq,
                     'realm': 'atmos',
                     'mip_table': freq,
-                    'version': 'vUnknown', # FIXME: get this from file modtime
-                    'institute': 'unknown', # FIXME: get this from NetCDF metadata
+                    'version': file_version(fp),
+                    'institute': institute,
                     'variable': variable,
                     'trange': trange
                     })
