@@ -78,8 +78,18 @@ done
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
 
+To create a fresh modelmeta database, you can use the `mkblankdb.py` script in the modelmeta package.
+
+```bash
+python modelmeta/scripts/mkblankdb.py -d sqlite:////tmp/mddb.sqlite3
+```
+
 ```R
 source("db/index_netcdf.r")
 f.list <- list.files("<input_directory>", full.name=TRUE, pattern = "\\.nc$", recursive=TRUE)
 index.netcdf.files(f.list, host="dbhost", db="dbname", user="dbuser", password="optional")
+# Or using sqlite
+index.netcdf.files.sqlite(f.list, "/tmp/mddb.sqlite3")
 ```
+
+Finally, you'll have to add all of the indexed files to an "ensemble", i.e. a group of files to be served in a given application. There currently exists another script in the modelmeta package that searches a database for all of the existing data_file_variables and adds them to a newly created ensemble. This works for the simple case, but you may want to do something more customized.
