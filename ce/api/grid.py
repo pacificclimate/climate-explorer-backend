@@ -1,11 +1,9 @@
 '''module for requesting the lat/lon grid for a given model run file
 '''
 
-import numpy as np
-import numpy.ma as ma
 from sqlalchemy.orm.exc import NoResultFound
 
-from modelmeta import DataFile, Time
+from modelmeta import DataFile
 
 from ce.api.util import get_grid_from_netcdf_file
 

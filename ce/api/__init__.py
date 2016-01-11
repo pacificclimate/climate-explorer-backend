@@ -19,6 +19,7 @@ from ce.api.models import models
 from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
+from ce.api.grid import grid
 
 methods = {
     'stats': stats,
@@ -28,14 +29,15 @@ methods = {
     'metadata': metadata,
     'multimeta': multimeta,
     'timeseries': timeseries,
-    'lister': lister
+    'lister': lister,
+    'grid': grid
 }
 
 __all__ = list(methods.keys()) + ['call']
 
 def call(session, request_type):
     '''Extracts request query parameters, checks for required arguments
-       and delegates to helper functions to fetch the resuls from
+       and delegates to helper functions to fetch the results from
        storage
 
        Args:
