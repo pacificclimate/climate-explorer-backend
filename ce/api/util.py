@@ -33,6 +33,12 @@ def get_units_from_run_object(run, varname):
 
     return units.pop()
 
+def get_grid_from_netcdf_file(fname):
+    nc = Dataset(fname)
+    return {
+        'latitudes': nc.variables['lat'][:],
+        'longitudes': nc.variables['lon'][:]
+    }
 
 def get_array(fname, time, area, variable):
     if not os.path.exists(fname):
