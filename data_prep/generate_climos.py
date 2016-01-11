@@ -13,7 +13,7 @@ from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
 
-from Cmip5File import Cmip5File
+from Cmip5File import Cmip5File, ClimdexFile
 
 def s2d(s):
     return datetime.strptime(s, '%Y-%m-%d')
@@ -62,6 +62,12 @@ def find_var_name(keys):
     else:
         raise
 
+def var_trans(variable):
+    # Returns additional variable specific commands
+    if variable == 'pr':
+        return '-mulc,86400'
+    return ''
+
 def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     '''
     Generates climatological files from an input file and a selected time range
@@ -71,10 +77,25 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
         f_out: output file path
         t_start (datetime.datetime): start date of climo period
         t_end (datetime.datetime): end date of climo period
+        variable (str): name of the variable which is being processed
 
     Requested date range MUST exist in the input file
 
     '''
+    supported_vars = {
+        'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
+        'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
+        'r20mmETCCDI', 'r95pETCCDI', 'r99pETCCDI', 'rx1dayETCCDI',
+        'rx5dayETCCDI', 'sdiiETCCDI', 'suETCCDI', 'thresholds', 'tn10pETCCDI',
+        'tn90pETCCDI', 'tnnETCCDI', 'tnxETCCDI', 'trETCCDI', 'tx10pETCCDI',
+        'tx90pETCCDI', 'txnETCCDI', 'txxETCCDI', 'wsdiETCCDI', 'tasmin',
+        'tasmax', 'pr'
+    }
+
+    if variable not in supported_vars:
+        raise Exception("Unsupported variable: cant't yet process {}".format(variable))
+
+    op = 'sum' if variable == 'pr' else 'mean'
 
     cdo = Cdo()
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
@@ -82,20 +103,19 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     if not os.path.exists(os.path.dirname(fp_out)):
         os.makedirs(os.path.dirname(fp_out))
 
-    with NamedTemporaryFile(suffix='nc') as tempf:
+    with NamedTemporaryFile(suffix='.nc') as tempf:
         cdo.seldate(date_range, input=fp_in, output=tempf.name)
-        op = {
-            'pr': 'sum',
-            'tasmax': 'mean',
-            'tasmin': 'mean'
-        }
 
-        if variable not in op:
-            log.warn("Sorry, can't yet process {}".format(variable))
+        # Add extra postprocessing for specific variables.
+        vt = var_trans(variable)
+
+        if 'yr' in fp_in:
+            cdo_cmd = '{vt} -tim{op} {fname}'.format(fname=tempf.name, op=op, vt=vt)
         else:
-            cdo.copy(input='-ymon{op} {fname} -yseas{op} {fname} '
-                     '-tim{op} {fname}'.format(fname=tempf.name, op=op[variable]),
-                     output=fp_out)
+            cdo_cmd = '{vt} -ymon{op} {fname} {vt} -yseas{op} {fname} {vt} -tim{op} {fname}'\
+                .format(fname=tempf.name, op=op, vt=vt)
+
+        cdo.copy(input=cdo_cmd, output=fp_out)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
@@ -111,23 +131,7 @@ def determine_climo_periods(nc):
 
     return dict([(k, v) for k, v in climo_periods.items() if v[0] > s_date and v[1] < e_date])
 
-def generate_output_fp(in_fp, t_range, outdir):
-    '''
-    Assumes a PCIC CMIP5 style input path.
-
-    MIP table/variable info here:
-    http://cmip-pcmdi.llnl.gov/cmip5/docs/standard_output.pdf
-    '''
-
-    cf = Cmip5File(fp=in_fp)
-    cf.t_start = d2ss(t_range[0])
-    cf.t_end = d2ss(t_range[1])
-    cf.freq = 'monClim'
-    cf.mip_table = 'Amon'
-    cf.root = outdir
-    return os.path.realpath(cf.fullpath)
-
-def generate_climo_time_var(t_start, t_end, units):
+def generate_climo_time_var(t_start, t_end, units, types=('monthly', 'seasonal', 'annual')):
     '''
     '''
 
@@ -137,40 +141,43 @@ def generate_climo_time_var(t_start, t_end, units):
     climo_bounds = []
 
     # Calc month time values
-    for i in range(1,13):
-        start = datetime(year, i, 1)
-        end = start + relativedelta(months=1)
-        mid =  start + (end - start)/2
-        mid = mid.replace(hour = 0)
-        times.append(mid)
+    if 'monthly' in types:
+        for i in range(1,13):
+            start = datetime(year, i, 1)
+            end = start + relativedelta(months=1)
+            mid =  start + (end - start)/2
+            mid = mid.replace(hour = 0)
+            times.append(mid)
 
-        climo_bounds.append([datetime(t_start.year, i, 1), (datetime(t_end.year, i, 1) + relativedelta(months=1))])
+            climo_bounds.append([datetime(t_start.year, i, 1), (datetime(t_end.year, i, 1) + relativedelta(months=1))])
 
     # Seasonal time values
-    for i in range(3, 13, 3): # Index is start month of season
-        start = datetime(year, i, 1)
-        end = start + relativedelta(months=3)
-        mid = (start + (end - start)/2).replace(hour=0)
+    if 'seasonal' in types:
+        for i in range(3, 13, 3): # Index is start month of season
+            start = datetime(year, i, 1)
+            end = start + relativedelta(months=3)
+            mid = (start + (end - start)/2).replace(hour=0)
+            while mid in times: mid += relativedelta(days=1)
+            times.append(mid)
+
+            climo_start = datetime(t_start.year, i, 1)
+            climo_end = datetime(t_end.year, i, 1) + relativedelta(months=3)
+            # Account for DJF being a shorter season (crosses year boundary)
+            if climo_end > t_end: climo_end -= relativedelta(years=1)
+            climo_bounds.append([climo_start, climo_end])
+
+    # Annual time value
+    if 'annual' in types:
+        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
+        mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
         while mid in times: mid += relativedelta(days=1)
         times.append(mid)
 
-        climo_start = datetime(t_start.year, i, 1)
-        climo_end = datetime(t_end.year, i, 1) + relativedelta(months=3)
-        # Account for DJF being a shorter season (crosses year boundary)
-        if climo_end > t_end: climo_end -= relativedelta(years=1)
-        climo_bounds.append([climo_start, climo_end])
-
-    # Annual time value
-    days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
-    mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
-    while mid in times: mid += relativedelta(days=1)
-    times.append(mid)
-
-    climo_bounds.append([t_start, t_end + relativedelta(days=1)])
+        climo_bounds.append([t_start, t_end + relativedelta(days=1)])
 
     return times, climo_bounds
 
-def update_climo_time_meta(fp):
+def update_climo_time_meta(fp, file_type=Cmip5File):
     '''
     Updates the time varaible in an existing netCDF file to reflect climatological values.
 
@@ -183,12 +190,17 @@ def update_climo_time_meta(fp):
       - PCIC CMIP5 style file path
     '''
     
-    cf = Cmip5File(fp)
+    cf = file_type(fp)
     nc = Dataset(fp, 'r+')
     timevar = nc.variables['time']
 
     # Generate new time/climo_bounds data
-    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units)
+    if cf.freq == 'yrClim':
+        time_types = ('annual')
+    else:
+        time_types = ('monthly', 'seasonal', 'annual')
+
+    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units, time_types)
 
     timevar[:] = date2num(times, timevar.units, timevar.calendar)
 
@@ -207,23 +219,29 @@ def main(args):
     vars = '|'.join(args.variables)
     test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp|_historical_).*r1i1p1.*nc'.format(vars)))
 
+    FileType = ClimdexFile if args.climdex else Cmip5File
+
     for fp in test_files:
         log.info(fp)
 
         nc = Dataset(fp)
         available_climo_periods = determine_climo_periods(nc)
         nc.close()
-        variable = Cmip5File(fp).variable
+        file_ = FileType(fp)
+        variable = file_.variable
 
         for period, t_range in available_climo_periods.items():
 
             # Create climatological period and update metadata
             log.info('Generating climo period {} to {}'.format(d2s(t_range[0]), d2s(t_range[1])))
-            out_fp = generate_output_fp(fp, t_range, args.outdir)
+            out_fp = file_.generate_climo_fp(t_range, args.outdir)
             log.info('Output file: {}'.format(out_fp))
-            create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
-            update_climo_time_meta(out_fp)
-
+            try:
+                create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
+            except:
+                log.warn('Failed to create climatology file')
+            else:
+                update_climo_time_meta(out_fp, FileType)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
@@ -231,9 +249,11 @@ if __name__ == '__main__':
 #    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
+    parser.add_argument('-C', '--climdex', action='store_true')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
-        basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/'
+        basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/',
+        climdex=False
     )
     args = parser.parse_args()
     main(args)
