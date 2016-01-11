@@ -89,13 +89,14 @@ class Cmip5File(object):
     def t_end(self, value):
         self.trange = '-'.join([self.trange.split('-')[0], value])
 
-    def generate_output_fp(self, t_range, outdir):
+    def generate_climo_fp(self, t_range, outdir):
         '''The input file path and the output file path are not the same
            since the CDO commands change some properties (MIP table,
            date range) of which the file path consists.
         '''
-        new_mip_table = {'day': 'monClim', 'mon': 'monClim', 'yr': 'yrClim'}[self.freq]
-        dirname = os.path.join(outdir, self.institute, self.model, self.experiment, self.freq, self.realm, new_mip_table, self.run, self.version, self.variable)
+        new_mip_table = {'day': 'Amon', 'mon': 'aMon', 'yr': 'Ayr'}[self.freq]
+        new_freq = {'day': 'monClim', 'monClim': 'mon', 'yr': 'yrClim'}[self.freq]
+        dirname = os.path.join(outdir, self.institute, self.model, self.experiment, new_freq, self.realm, new_mip_table, self.run, self.version, self.variable)
         basename = '{}_{}_{}_{}_{}_{}-{}.nc'.format(self.variable, new_mip_table, self.model, self.experiment, self.run, d2ss(t_range[0]), d2ss(t_range[1]))
         return os.path.realpath(os.path.join(dirname, basename))
 

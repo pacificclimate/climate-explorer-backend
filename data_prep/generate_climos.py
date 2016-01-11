@@ -234,7 +234,7 @@ def main(args):
 
             # Create climatological period and update metadata
             log.info('Generating climo period {} to {}'.format(d2s(t_range[0]), d2s(t_range[1])))
-            out_fp = file_.generate_output_fp(t_range, args.outdir)
+            out_fp = file_.generate_climo_fp(t_range, args.outdir)
             log.info('Output file: {}'.format(out_fp))
             try:
                 create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)

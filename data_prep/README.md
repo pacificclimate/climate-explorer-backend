@@ -11,12 +11,6 @@ This script:
 5. Adds a climatology_bounds variable to match climatological period
 6. Revises output file name with climatological period
 
-The general process is to:
-
-1. Revise time variable to meet CF1.6 spec for climatological series
-2. Add a climatology_bounds variable as per CF1.6 spec
-3. Process file names to correct the time range available
-
 ### Installation
 
 ```bash
@@ -46,7 +40,7 @@ As created, the files may need some post processing. This includes:
 
 #### tasmin/tasmax
 
-```
+```bash
 for VAR in tasmin tasmax;
 do
   for i in $(find -type f -name "*$VAR*");
