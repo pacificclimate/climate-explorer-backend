@@ -8,7 +8,7 @@ from modelmeta import DataFile
 from ce.api.util import get_grid_from_netcdf_file
 
 na_grid = {
-    key: []]
+    key: []
     for key in ('latitudes', 'longitudes')
 }
 
