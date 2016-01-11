@@ -62,6 +62,12 @@ def find_var_name(keys):
     else:
         raise
 
+def var_trans(variable):
+    # Returns additional variable specific commands
+    if variable == 'pr':
+        return '-mulc,86400'
+    return ''
+
 def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     '''
     Generates climatological files from an input file and a selected time range
@@ -99,11 +105,15 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
 
     with NamedTemporaryFile(suffix='.nc') as tempf:
         cdo.seldate(date_range, input=fp_in, output=tempf.name)
+
+        # Add extra postprocessing for specific variables.
+        vt = var_trans(variable)
+
         if 'yr' in fp_in:
-            cdo_cmd = '-tim{op} {fname}'.format(fname=tempf.name, op=op)
+            cdo_cmd = '{vt} -tim{op} {fname}'.format(fname=tempf.name, op=op, vt=vt)
         else:
-            cdo_cmd = '-ymon{op} {fname} -yseas{op} {fname} -tim{op} {fname}'\
-                .format(fname=tempf.name, op=op)
+            cdo_cmd = '{vt} -ymon{op} {fname} {vt} -yseas{op} {fname} {vt} -tim{op} {fname}'\
+                .format(fname=tempf.name, op=op, vt=vt)
 
         cdo.copy(input=cdo_cmd, output=fp_out)
 

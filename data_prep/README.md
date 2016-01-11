@@ -68,8 +68,6 @@ do
   echo $i;
   ncks -O -v pr,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i
   ncap2 -O -s 'where(lon>=180) lon=lon-360' $i $i
-  cdo -O mulc,86400 $i $i.1
-  mv $i.1 $i
   ncatted -a units,pr,m,c,"mm" $i
 done
 ```
