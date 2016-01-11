@@ -153,15 +153,15 @@ def generate_climo_time_var(t_start, t_end, units, types=('monthly', 'seasonal',
 
     # Seasonal time values
     if 'seasonal' in types:
-        for i in range(3, 13, 3): # Index is start month of season
-            start = datetime(year, i, 1)
+        for i in range(-1, 9, 3): # Index is start month of season
+            start = datetime(year, 1, 1) + relativedelta(months=i)
             end = start + relativedelta(months=3)
             mid = (start + (end - start)/2).replace(hour=0)
             while mid in times: mid += relativedelta(days=1)
             times.append(mid)
 
-            climo_start = datetime(t_start.year, i, 1)
-            climo_end = datetime(t_end.year, i, 1) + relativedelta(months=3)
+            climo_start = datetime(t_start.year, 1, 1) + relativedelta(months=i)
+            climo_end = datetime(t_end.year, 1, 1) + relativedelta(months=i) + relativedelta(months=3)
             # Account for DJF being a shorter season (crosses year boundary)
             if climo_end > t_end: climo_end -= relativedelta(years=1)
             climo_bounds.append([climo_start, climo_end])
