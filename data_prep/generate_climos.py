@@ -218,7 +218,12 @@ def update_climo_time_meta(fp, file_type=Cmip5File):
 
 def main(args):
     vars = '|'.join(args.variables)
-    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp|_historical_).*r1i1p1.*nc'.format(vars)))
+    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'.format(vars)))
+
+    if args.dry_run:
+        for f in test_files:
+            print f
+        sys.exit(0)
 
     FileType = ClimdexFile if args.climdex else Cmip5File
 
@@ -251,10 +256,12 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
     parser.add_argument('-C', '--climdex', action='store_true')
+    parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
         basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/',
-        climdex=False
+        climdex=False,
+        dry_run=False
     )
     args = parser.parse_args()
     main(args)
