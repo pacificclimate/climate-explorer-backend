@@ -134,10 +134,12 @@ def polygonToMask(nc, poly):
     min_height = np.min(np.diff(nclons))
     min_cell_area = min_width * min_height
 
-    # Buffer the polygon by 1/2 the diagonal distance
-    # FIXME: may increase larger selections which don't need this to contain more grid cells than intended
-    dist = math.sqrt(math.pow(min_width,2)+math.pow(min_height,2))/2
-    poly = poly.buffer(dist)
+    if poly.area < min_cell_area * 2:
+        # Buffer the polygon by 1/2 the diagonal distance
+        # FIXME: use something better than min_cell_area * 2.
+        # Maybe buffer based on function of selected size vs grid cell size to avoid hard cutoff
+        dist = math.sqrt(math.pow(min_width,2)+math.pow(min_height,2))/2
+        poly = poly.buffer(dist)
 
     # Calculate the polygon extent
     minx, miny, maxx, maxy = poly.bounds
