@@ -91,6 +91,12 @@ class memoize_mask(object):
 
         return result
 
+    def cache_clear(self):
+        with cache_lock:
+            self.cache.clear()
+            self.hits = 0
+            self.misses = 0
+
 def pointInPoly(x, y, poly):
     if x is ma.masked or y is ma.masked:
         return ma.masked

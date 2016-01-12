@@ -10,6 +10,7 @@ test_polygons = [
 
 def test_cache(netcdf_file):
     f = wktToMask
+    f.cache_clear()
     f(netcdf_file, test_polygons[0])
     assert f.hits == 0, f.misses == 1
     f(netcdf_file, test_polygons[0])
