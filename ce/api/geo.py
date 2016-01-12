@@ -1,6 +1,7 @@
 import logging
 import collections
 import sys
+import math
 from collections import OrderedDict
 from threading import RLock
 
@@ -101,8 +102,8 @@ def pointInPoly(x, y, poly):
     if x is ma.masked or y is ma.masked:
         return ma.masked
 
-    cell = Point(x, y).buffer(2, cap_style=CAP_STYLE.square)
-    if poly.intersects(cell):
+    cell_center = Point(x, y)
+    if poly.contains(cell_center):
         return not ma.masked
     else:
         return ma.masked
@@ -128,19 +129,18 @@ def polygonToMask(nc, poly):
     # other will be masked as well
     assert lons.sharedmask == True
 
-    # Calculate the polygon extent
-    minx, miny, maxx, maxy = poly.bounds
-
+    # Gather grid properties
     min_width = np.min(np.diff(nclons))
     min_height = np.min(np.diff(nclons))
     min_cell_area = min_width * min_height
-    if poly.area < min_cell_area:
-        # We can't just naively mask based on grid centroids.
-        # The polygon could actually fall completely between grid centroid
-        minx -= min_width
-        maxx += min_width
-        miny -= min_height
-        maxy += min_height
+
+    # Buffer the polygon by 1/2 the diagonal distance
+    # FIXME: may increase larger selections which don't need this to contain more grid cells than intended
+    dist = math.sqrt(math.pow(min_width,2)+math.pow(min_height,2))/2
+    poly = poly.buffer(dist)
+
+    # Calculate the polygon extent
+    minx, miny, maxx, maxy = poly.bounds
 
     lons = ma.masked_where((lons < minx) | (lons > maxx), lons, copy=False)
     lats = ma.masked_where((lats < miny) | (lats > maxy), lats, copy=False)
