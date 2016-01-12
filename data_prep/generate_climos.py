@@ -95,7 +95,8 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     if variable not in supported_vars:
         raise Exception("Unsupported variable: cant't yet process {}".format(variable))
 
-    op = 'sum' if variable == 'pr' else 'mean'
+    # Allow different ops by variable? # op = 'sum' if variable == 'pr' else 'mean'
+    op = 'mean'
 
     cdo = Cdo()
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
