@@ -7,6 +7,7 @@ import pytest
 import modelmeta
 from modelmeta import *
 from flask.ext.sqlalchemy import SQLAlchemy
+from netCDF4 import Dataset
 
 from ce import get_app
 
@@ -39,6 +40,14 @@ def cleandb(app):
     db.create_all()
     return db
 
+@pytest.fixture(scope='function')
+def netcdf_file(request):
+    nc = Dataset(resource_filename('ce', 'tests/data/cgcm.nc'))
+    def fin():
+        print ("teardown netcdf_file")
+        nc.close()
+    request.addfinalizer(fin)
+    return nc
 
 @pytest.fixture
 def populateddb(cleandb):
