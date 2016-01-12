@@ -86,7 +86,7 @@ class memoize_mask(object):
         with cache_lock:
             self.cache[key] = result
             self.misses += 1
-            if getsize(self.cache) > self.maxsize * 1024 * 1024: # convert to MB
+            while getsize(self.cache) > self.maxsize * 1024 * 1024: # convert to MB
                 self.cache.popitem(0) # Purge least recently used cache entry
 
         return result
