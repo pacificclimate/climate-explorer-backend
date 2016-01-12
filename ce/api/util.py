@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 import numpy as np
 import numpy.ma as ma
 from netCDF4 import Dataset
-from shapely.wkt import loads
 from modelmeta import *
 
-from ce.api.geo import polygonToMask
+from ce.api.geo import wktToMask
 
 def get_files_from_run_variable(run, variable):
     return [file_ for file_ in run.files if variable in
@@ -60,10 +59,8 @@ def get_array(fname, time, area, variable):
         a = a[:,:,:]
 
     if area:
-        polygon = loads(area)
-
         # Mask out data that isn't inside the input polygon
-        mask = polygonToMask(nc, polygon)
+        mask = wktToMask(nc, area)
 
         # Extend the mask into the time dimension (if it exists)
         mask = np.repeat(mask, a.size / mask.size).reshape(a.shape)
