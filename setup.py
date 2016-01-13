@@ -24,6 +24,7 @@ setup(
         'flask',
         'Flask-SQLAlchemy',
         'Flask-Cors',
+        'Flask-Cache',
         'modelmeta',
         'shapely',
         'numpy',
