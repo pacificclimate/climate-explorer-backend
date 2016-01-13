@@ -6,7 +6,7 @@ from modelmeta import Ensemble
 from ce.api.metadata import metadata
 from ce import cache
 
-@cache.memoize()
+@cache.memoize(timeout=86400)
 def multimeta(sesh, ensemble_name='ce', model=''):
     '''
     Args
