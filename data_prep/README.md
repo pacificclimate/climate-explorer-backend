@@ -66,6 +66,20 @@ do
 done
 ```
 
+#### ETCCDI Extremes
+
+```bash
+for VAR in rx1dayETCCDI altcsdiETCCDI cwdETCCDI txxETCCDI r1mmETCCDI prcptotETCCDI r95pETCCDI tx10pETCCDI sdiiETCCDI r20mmETCCDI txnETCCDI tn10pETCCDI tnnETCCDI suETCCDI idETCCDI tnxETCCDI tx90pETCCDI fdETCCDI r10mmETCCDI wsdiETCCDI rx5dayETCCDI tn90pETCCDI r99pETCCDI altwsdiETCCDI csdiETCCDI cddETCCDI trETCCDI altcwdETCCDI dtrETCCDI gslETCCDI altcddETCCDI;
+do
+  for i in $(find -type f -name "*$VAR*");
+  do
+    echo $i;
+    ncks -O -v $VAR,lon_bnds,lat_bnds,climatology_bounds --msa -d lon,180.,360. -d lon,0.,179.999999 $i $i;
+    ncap2 -O -s 'where(lon>=180) lon=lon-360' $i $i;
+  done
+done
+```
+
 ### Indexing
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
