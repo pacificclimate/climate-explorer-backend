@@ -58,7 +58,7 @@ def get_array(fname, time, area, variable):
     a = nc.variables[variable]
 
     # FIXME: Assumes 3d data... doesn't support levels
-    if time:
+    if time or time == 0:
         assert 'time' in nc.variables[variable].dimensions
         a = a[time,:,:]
     else:
