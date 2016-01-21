@@ -38,10 +38,12 @@ def multimeta(sesh, ensemble_name='ce', model=''):
 
     q = sesh.query(DataFile.unique_id, Model.organization, Model.short_name,
             Model.long_name, Emission.short_name, Run.name,
-            DataFileVariable.netcdf_variable_name, VariableAlias.long_name)\
+            DataFileVariable.netcdf_variable_name, VariableAlias.long_name,
+            Time.time_idx, Time.timestep)\
             .join(Run).join(Model).join(Emission).join(DataFileVariable)\
             .join(EnsembleDataFileVariables).join(Ensemble)\
-            .join(VariableAlias).filter(Ensemble.name == ensemble_name)
+            .join(VariableAlias).join(TimeSet).join(Time)\
+            .filter(Ensemble.name == ensemble_name)
 
     rv = {}
     results = q.all()
@@ -49,7 +51,8 @@ def multimeta(sesh, ensemble_name='ce', model=''):
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
     # circa release 1.1
-    for id_, org, model_short, model_long, emission, run, var, long_var in results:
+    for id_, org, model_short, model_long, emission, run, var, long_var,\
+            time_idx, timestep in results:
         if id_ not in rv:
             rv[id_] = {
                 'institution': org,
@@ -58,8 +61,10 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                 'experiment': run,
                 'variables': {var: long_var},
                 'ensemble_member': emission,
+                'times': {time_idx: timestep.strftime('%Y-%m-%dT%H:%M:%SZ')},
             }
         else:
             rv[id_]['variables'][var] = long_var
+            rv[id_]['times'][time_idx] = timestep.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     return rv
