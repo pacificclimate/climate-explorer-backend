@@ -58,9 +58,9 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                 'institution': org,
                 'model_id': model_short,
                 'model_name': model_long,
-                'experiment': run,
+                'experiment': emission,
                 'variables': {var: long_var},
-                'ensemble_member': emission,
+                'ensemble_member': run,
                 'times': {time_idx: timestep.strftime('%Y-%m-%dT%H:%M:%SZ')},
             }
         else:
