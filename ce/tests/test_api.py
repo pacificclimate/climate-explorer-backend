@@ -374,6 +374,8 @@ def test_multimeta(populateddb, model):
     rv = multimeta.__wrapped__(sesh, model=model) # Multimeta is wrapped for caching. Call the wrapped function
     assert 'file0' in rv
     assert rv['file0']['model_id'] == 'cgcm3'
+    # times are not included in the multimeta API call
+    assert 'times' not in rv['file0']
 
 @pytest.mark.parametrize(('polygon'), test_polygons.values(), ids=list(test_polygons.keys()))
 def test_stats(populateddb, polygon):
