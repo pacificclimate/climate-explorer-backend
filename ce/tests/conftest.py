@@ -211,6 +211,9 @@ def multitime_db(cleandb):
     sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, cgcm, rcp45, ens])
     sesh.commit()
 
+    ens.data_file_variables += dfvs
+    sesh.add_all(sesh.dirty)
+
     # Create the three timesets, with just one time step per timeset
     times = [
         Time(time_idx=0, timestep=datetime(1985+y, 1, 15))

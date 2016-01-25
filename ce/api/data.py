@@ -3,10 +3,11 @@
 
 import numpy as np
 
-from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile, DataFileVariable
+from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile
+from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable
 
-def data(sesh, model, emission, time, area, variable):
+def data(sesh, model, emission, time, area, variable, ensemble_name='ce'):
     '''Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and
@@ -74,10 +75,12 @@ def data(sesh, model, emission, time, area, variable):
 
     results = sesh.query(Run)\
             .join(Model, Emission, DataFile, DataFileVariable, TimeSet)\
+            .join(EnsembleDataFileVariables, Ensemble)\
             .filter(DataFileVariable.netcdf_variable_name == variable)\
             .filter(Emission.short_name == emission)\
             .filter(Model.short_name == model)\
-            .filter(TimeSet.multi_year_mean == True).all()
+            .filter(TimeSet.multi_year_mean == True)\
+            .filter(Ensemble.name == ensemble_name).all()
 
     if not results:
         return {}
