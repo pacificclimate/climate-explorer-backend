@@ -7,7 +7,8 @@ from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable
 
-def data(sesh, model, emission, time, area, variable, ensemble_name='ce'):
+def data(sesh, model, emission, time, area, variable, timescale='other',
+         ensemble_name='ce'):
     '''Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and
@@ -23,6 +24,9 @@ def data(sesh, model, emission, time, area, variable, ensemble_name='ce'):
         time (int): Timestep integer (1-17) representing the time of year
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
+        timescale (str): Description of the resolution of time to be
+            returned (e.g. "monthly" or "annual")
+        ensemble_name (str): Some named ensemble
 
     Returns:
         dict:
@@ -79,7 +83,7 @@ def data(sesh, model, emission, time, area, variable, ensemble_name='ce'):
             .filter(DataFileVariable.netcdf_variable_name == variable)\
             .filter(Emission.short_name == emission)\
             .filter(Model.short_name == model)\
-            .filter(TimeSet.multi_year_mean == True)\
+            .filter(TimeSet.time_resolution == timescale)\
             .filter(Ensemble.name == ensemble_name).all()
 
     if not results:
