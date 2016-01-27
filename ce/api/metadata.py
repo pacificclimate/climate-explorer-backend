@@ -45,6 +45,7 @@ def metadata(sesh, model_id):
                         'tasmax': 'Maximum daily temperature',
                         'tasmin': 'Minimum daily temperature',
                     },
+                    'time_resolution': 'monthly',
                     'times':
                     {
                         0: '1985-01-15T00:00:00Z',
@@ -75,6 +76,7 @@ def metadata(sesh, model_id):
         time.time_idx: time.timestep.strftime('%Y-%m-%dT%H:%M:%SZ')
                 for time in file_.timeset.times
     } if file_.timeset else {}
+    timescale = file_.timeset.time_resolution if file_.timeset else 'other'
 
     run = file_.run
     model = run.model
@@ -86,6 +88,7 @@ def metadata(sesh, model_id):
             'experiment': run.emission.short_name,
             'variables': vars_,
             'ensemble_member': run.name,
-            'times': times
+            'times': times,
+            'timescale': timescale
         }
     }

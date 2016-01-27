@@ -349,7 +349,7 @@ def test_metadata(populateddb, unique_id):
     rv = metadata(sesh, unique_id)
     assert unique_id in rv
     for key in ['institution', 'model_id', 'model_name', 'experiment',
-                'variables', 'ensemble_member', 'times']:
+                'variables', 'ensemble_member', 'times', 'timescale']:
         assert key in rv[unique_id]
 
     times = rv[unique_id]['times']
@@ -423,7 +423,8 @@ def test_stats_bad_id(populateddb):
 
 @pytest.mark.parametrize(('time_idx'), (0, 1, 11))
 def test_data(populateddb, time_idx):
-    rv = data(populateddb.session, 'cgcm3', 'rcp45', time_idx, None, 'tasmax')
+    rv = data(populateddb.session, 'cgcm3', 'rcp45', time_idx, None, 'tasmax',
+              timescale="other", ensemble_name="ce")
     assert 'run0' in rv
     assert 'data' in rv['run0']
     for val in rv['run0']['data'].values():
