@@ -53,4 +53,5 @@ Creating a versioned release involves:
 git add setup.py NEWS.md
 git commit -m"Bump to version x.x.x"
 git tag -a -m"x.x.x" x.x.x
+git push --follow-tags
 ```
