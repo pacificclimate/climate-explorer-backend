@@ -40,3 +40,17 @@ While this will run a functional container, you must also link in all appropriat
 docker build -t climate-explorer-backend .
 docker run --rm -it -p 8000:8000 -e "MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname" -v $(pwd):/app --name backend climate-explorer-backend
 ```
+
+## Releasing
+
+Creating a versioned release involves:
+
+1. Incrementing `__version__` in `setup.py`
+2. Summarize the changes from the last release in `NEWS.md`
+3. Commit these changes, then tag the release:
+
+```bash
+git add setup.py NEWS.md
+git commit -m"Bump to version x.x.x"
+git tag -a -m"x.x.x" x.x.x
+```
