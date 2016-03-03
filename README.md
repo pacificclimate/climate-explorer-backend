@@ -49,9 +49,9 @@ Creating a versioned release involves:
 2. Summarize the changes from the last release in `NEWS.md`
 3. Commit these changes, then tag the release:
 
-```bash
+  ```bash
 git add setup.py NEWS.md
 git commit -m"Bump to version x.x.x"
 git tag -a -m"x.x.x" x.x.x
 git push --follow-tags
-```
+  ```
