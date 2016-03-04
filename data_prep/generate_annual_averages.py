@@ -28,7 +28,7 @@ def iter_matching(dirpath, regexp):
             if regexp.match(abspath):
                 yield abspath
 
-def create_annual_average_file(fp_in, fp_out, variable):
+def create_annual_avg_file(fp_in, fp_out, variable):
     '''
     Generates file with annual averages for the given variable across all time within an input file
 
@@ -57,11 +57,11 @@ def create_annual_average_file(fp_in, fp_out, variable):
     cdo = Cdo()
     cdo.yearmean(input=fp_in, output=fp_out)
 
-def update_file_metadata(out_fp, variable):
+def update_annual_avg_file_metadata(out_fp, variable):
     '''
     Opens generated yearmean NetCDF file and modifies global and variable metadata
     '''
-    
+
     nc = Dataset(out_fp, 'r+')
     # modify global metadata
     title = nc.getncattr('title')
@@ -88,18 +88,17 @@ def main(args):
     for fp in test_files:
         # log.info(fp)
         
-        file_ = FileType(fp)
+        file_ = FileType(fp, freq = 'yr', mip_table = 'yr')
         file_.root = args.outdir
         variable = file_.variable
-        file_.freq = 'yr'
         # calculate annual averages for all years in the file and store in a new NetCDF 
         out_fp = file_.fullpath
         # log.info('Output file: {}'.format(out_fp))
         print('Output file: {}'.format(out_fp))
 
-        create_annual_average_file(fp, out_fp, variable)
+        create_annual_avg_file(fp, out_fp, variable)
 
-        update_file_metadata(out_fp, variable)
+        update_annual_avg_file_metadata(out_fp, variable)
 
 
 if __name__ == '__main__':

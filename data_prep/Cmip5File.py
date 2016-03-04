@@ -29,6 +29,9 @@ class Cmip5File(object):
             self.institute, self.model, self.experiment, self.freq, self.realm, self.mip_table, self.run, self.version, self.variable = splitdirs[-9:]
             self.root = os.path.sep + os.path.join(*splitdirs[:-9])
             self.trange = os.path.splitext(basename)[0].split('_')[-1]
+            if len(kwargs) != 0:
+                for k, v in kwargs.items():
+                    setattr(self, k, v)
 
         else:
             required_meta = ['institute', 'model', 'experiment', 'freq', 'realm', 'mip_table', 'run', 'version', 'variable', 'trange']
