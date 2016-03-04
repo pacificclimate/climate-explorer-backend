@@ -7,39 +7,11 @@ from argparse import ArgumentParser
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
-import numpy as np
-
 from cdo import Cdo
-from netCDF4 import Dataset, num2date, date2num
-from dateutil.relativedelta import relativedelta
+from netCDF4 import Dataset
 
 from Cmip5File import Cmip5File, ClimdexFile
 
-def s2d(s):
-    return datetime.strptime(s, '%Y-%m-%d')
-
-def ss2d(s):
-    return datetime.strptime(s, '%Y%m%d')
-
-def d2s(d):
-    return datetime.strftime(d, '%Y-%m-%d')
-
-def d2ss(d):
-    return datetime.strftime(d, '%Y%m%d')
-
-# def ncd2s(d):
-#     '''
-#     Same as d2s function, but converts netcdftime._datetime.datetime to string
-#     due to python datetime's inability to handle dates before year 1900
-#     '''
-    
-
-# def ncs2d(s):
-#        '''
-#     Same as ss2d function, except avoids use of datetime due to its
-#     inability to handle dates before year 1900
-#     '''
-#     return datetime.strptime(str(d.year)+'-'+str(d.month)+'-'+str(d.day), '%Y-%m-%d')
 
 def iter_matching(dirpath, regexp):
     # http://stackoverflow.com/questions/4639506/os-walk-with-regex
@@ -77,7 +49,7 @@ def create_annual_average_file(fp_in, fp_out, variable):
     }
 
     if variable not in supported_vars:
-        raise Exception("Unsupported variable: cant't yet process {}".format(variable))
+        raise Exception("Unsupported variable: can't yet process {}".format(variable))
 
     if not os.path.exists(os.path.dirname(fp_out)):
         os.makedirs(os.path.dirname(fp_out))
@@ -85,6 +57,22 @@ def create_annual_average_file(fp_in, fp_out, variable):
     cdo = Cdo()
     cdo.yearmean(input=fp_in, output=fp_out)
 
+def update_file_metadata(out_fp, variable):
+    '''
+    Opens generated yearmean NetCDF file and modifies global and variable metadata
+    '''
+    
+    nc = Dataset(out_fp, 'r+')
+    # modify global metadata
+    title = nc.getncattr('title')
+    new_title = 'Annual Average of Daily ' + title
+    new_frequency = 'yr'
+    nc.setncatts({'title': new_title, 'frequency': new_frequency})
+    # modify variable metadata
+    long_name = nc.variables[variable].getncattr('long_name')
+    new_long_name = 'Annual Average ' + long_name
+    nc.variables[variable].setncattr('long_name', new_long_name)
+    nc.close()
 
 def main(args):
     vars = '|'.join(args.variables)
@@ -101,10 +89,9 @@ def main(args):
         # log.info(fp)
         
         file_ = FileType(fp)
-        file_.freq ='yr'
         file_.root = args.outdir
         variable = file_.variable
-
+        file_.freq = 'yr'
         # calculate annual averages for all years in the file and store in a new NetCDF 
         out_fp = file_.fullpath
         # log.info('Output file: {}'.format(out_fp))
@@ -112,10 +99,8 @@ def main(args):
 
         create_annual_average_file(fp, out_fp, variable)
 
-        # TODO: open up generated yearmean NC file and modify metadata (long_name, frequency...any others?)
-        # nc = Dataset(out_fp)
-        # modify metadata here
-        # nc.close()
+        update_file_metadata(out_fp, variable)
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create annual averages from CMIP5 data')
