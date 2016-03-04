@@ -30,13 +30,13 @@ def iter_matching(dirpath, regexp):
             if regexp.match(abspath):
                 yield abspath
 
-def create_annual_avg_file(fp_in, fp_out, variable):
+def create_annual_avg_file(in_fp, out_fp, variable):
     '''
     Generates file with annual averages for the given variable across all time within an input file
 
-    Paramenters:
-        f_in: input file path
-        f_out: output file path
+    Parameters:
+        in_fp: input file path
+        out_fp: output file path
         variable (str): name of the variable which is being processed
 
     '''
@@ -53,15 +53,19 @@ def create_annual_avg_file(fp_in, fp_out, variable):
     if variable not in supported_vars:
         raise Exception("Unsupported variable: can't yet process {}".format(variable))
 
-    if not os.path.exists(os.path.dirname(fp_out)):
-        os.makedirs(os.path.dirname(fp_out))
+    if not os.path.exists(os.path.dirname(out_fp)):
+        os.makedirs(os.path.dirname(out_fp))
 
     cdo = Cdo()
-    cdo.yearmean(input=fp_in, output=fp_out)
+    cdo.yearmean(input=in_fp, output=out_fp)
 
 def update_annual_avg_file_metadata(out_fp, variable):
     '''
     Opens generated yearmean NetCDF file and modifies global and variable metadata
+
+    Parameters:
+        out_fp: output file path
+        variable (str): name of the CMIP5 variable present in the output file
     '''
 
     nc = Dataset(out_fp, 'r+')
@@ -89,7 +93,7 @@ def main(args):
 
     for fp in test_files:
         log.info('Processing input file: {}'.format(fp))
-        file_ = FileType(fp, freq = 'yr', mip_table = 'yr')
+        file_ = FileType(fp, freq='yr', mip_table='yr')
         file_.root = args.outdir
         variable = file_.variable
         # calculate annual averages for all years in the file and store in a new NetCDF 
