@@ -76,6 +76,8 @@ def update_annual_avg_time_metadata(nc):
 
     new_times = []
     bounds_var = nc.variables['time_bnds']
+    bounds_var.units = units
+    bounds_var.calendar = calendar
     new_bounds = []
 
     for year in range(start_year, end_year):
