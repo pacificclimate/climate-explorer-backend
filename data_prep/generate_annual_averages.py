@@ -8,9 +8,10 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 
 from cdo import Cdo
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date, date2num
+from dateutil.relativedelta import relativedelta
 
-from Cmip5File import Cmip5File, ClimdexFile
+from Cmip5File import Cmip5File
 
 log = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, level=4)
@@ -59,6 +60,37 @@ def create_annual_avg_file(in_fp, out_fp, variable):
     cdo = Cdo()
     cdo.yearmean(input=in_fp, output=out_fp)
 
+def update_annual_avg_time_metadata(nc):
+    '''
+    Converts time values of a newly produced annual average NetCDF file (nc) to annual midpoints
+    and adds a time bounds variable
+
+    time values are the calculated midpoint between <year x>-01-01 and <year x+1>-01-01
+    time bounds are <year x>-01-01 00:00:00 and <year x+1>-01-01 00:00:00
+    '''
+    time_var = nc.variables['time']
+    units = nc.variables['time'].units
+    calendar = nc.variables['time'].calendar
+    start_year = num2date(time_var[0], units, calendar).year
+    end_year = start_year + time_var.shape[0] - 1
+    print('start_year: {} end_year: {}'.format(start_year, end_year))
+
+    new_times = []
+    bounds_var = nc.variables['time_bnds']
+    new_bounds = []
+
+    for time in time_var[:]:
+        date = num2date(time, units, calendar)
+        days_to_mid = ((datetime(date.year, 1, 1) + relativedelta(years=1)) - datetime(date.year, 1, 1)).days/2
+        mid = datetime(date.year, 1, 1) + relativedelta(days=days_to_mid)
+        new_times.append(mid)
+        lower_bound = datetime(date.year, 1, 1)
+        upper_bound = datetime(date.year, 1, 1) + relativedelta(years=1)
+        new_bounds.append([lower_bound, upper_bound])
+
+    time_var[:] = date2num(new_times, units, calendar)
+    bounds_var[:] = date2num(new_bounds, units, calendar)
+
 def update_annual_avg_file_metadata(out_fp, variable):
     '''
     Opens generated yearmean NetCDF file and modifies global and variable metadata
@@ -78,7 +110,9 @@ def update_annual_avg_file_metadata(out_fp, variable):
     long_name = nc.variables[variable].getncattr('long_name')
     new_long_name = 'Annual Average ' + long_name
     nc.variables[variable].setncattr('long_name', new_long_name)
+    update_annual_avg_time_metadata(nc)
     nc.close()
+
 
 def main(args):
     vars = '|'.join(args.variables)
@@ -89,11 +123,9 @@ def main(args):
             print(f)
         sys.exit(0)
 
-    FileType = ClimdexFile if args.climdex else Cmip5File
-
     for fp in test_files:
         log.info('Processing input file: {}'.format(fp))
-        file_ = FileType(fp, freq='yr', mip_table='yr')
+        file_ = Cmip5File(fp, freq='yr', mip_table='yr')
         file_.root = args.outdir
         variable = file_.variable
         # calculate annual averages for all years in the file and store in a new NetCDF 
@@ -109,7 +141,6 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
-    parser.add_argument('-C', '--climdex', action='store_true')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
