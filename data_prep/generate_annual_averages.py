@@ -62,34 +62,27 @@ def create_annual_avg_file(in_fp, out_fp, variable):
 
 def update_annual_avg_time_metadata(nc):
     '''
-    Converts time values of a newly produced annual average NetCDF file (nc) to annual midpoints
-    and adds a time bounds variable
+    Converts time values of a newly produced annual average NetCDF file (nc)
+    to annual midpoints and ensures the time bounds variable (intially set by
+    CDO) has correct units and calendar attributes
 
     time values are the calculated midpoint between <year x>-01-01 and <year x+1>-01-01
-    time bounds are <year x>-01-01 00:00:00 and <year x+1>-01-01 00:00:00
     '''
     time_var = nc.variables['time']
     units = nc.variables['time'].units
     calendar = nc.variables['time'].calendar
     start_year = num2date(time_var[0], units, calendar).year
     end_year = start_year + time_var.shape[0]
-
-    new_times = []
     bounds_var = nc.variables['time_bnds']
     bounds_var.units = units
     bounds_var.calendar = calendar
-    new_bounds = []
-
+    new_times = []
     for year in range(start_year, end_year):
         days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
         mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
         new_times.append(mid)
-        lower_bound = datetime(year, 1, 1)
-        upper_bound = datetime(year, 1, 1) + relativedelta(years=1)
-        new_bounds.append([lower_bound, upper_bound])
 
     time_var[:] = date2num(new_times, units, calendar)
-    bounds_var[:] = date2num(new_bounds, units, calendar)
 
 def update_annual_avg_file_metadata(out_fp, variable):
     '''
