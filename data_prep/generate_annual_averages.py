@@ -72,20 +72,18 @@ def update_annual_avg_time_metadata(nc):
     units = nc.variables['time'].units
     calendar = nc.variables['time'].calendar
     start_year = num2date(time_var[0], units, calendar).year
-    end_year = start_year + time_var.shape[0] - 1
-    print('start_year: {} end_year: {}'.format(start_year, end_year))
+    end_year = start_year + time_var.shape[0]
 
     new_times = []
     bounds_var = nc.variables['time_bnds']
     new_bounds = []
 
-    for time in time_var[:]:
-        date = num2date(time, units, calendar)
-        days_to_mid = ((datetime(date.year, 1, 1) + relativedelta(years=1)) - datetime(date.year, 1, 1)).days/2
-        mid = datetime(date.year, 1, 1) + relativedelta(days=days_to_mid)
+    for year in range(start_year, end_year):
+        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
+        mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
         new_times.append(mid)
-        lower_bound = datetime(date.year, 1, 1)
-        upper_bound = datetime(date.year, 1, 1) + relativedelta(years=1)
+        lower_bound = datetime(year, 1, 1)
+        upper_bound = datetime(year, 1, 1) + relativedelta(years=1)
         new_bounds.append([lower_bound, upper_bound])
 
     time_var[:] = date2num(new_times, units, calendar)
