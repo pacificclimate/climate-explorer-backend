@@ -120,6 +120,9 @@ def main(args):
         log.info('Processing input file: {}'.format(fp))
         file_ = Cmip5File(fp, freq='yr', mip_table='yr')
         file_.root = args.outdir
+        # trim time range that will appear in filename to just the years, as that is the limit of resolution
+        file_.t_start = file_.t_start[0:4]
+        file_.t_end = file_.t_end[0:4]
         variable = file_.variable
         # calculate annual averages for all years in the file and store in a new NetCDF 
         out_fp = file_.fullpath
