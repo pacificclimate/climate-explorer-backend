@@ -9,6 +9,7 @@ from tempfile import NamedTemporaryFile
 
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
+import numpy as np
 from dateutil.relativedelta import relativedelta
 
 from Cmip5File import Cmip5File
@@ -60,52 +61,82 @@ def create_annual_avg_file(in_fp, out_fp, variable):
     cdo = Cdo()
     cdo.yearmean(input=in_fp, output=out_fp)
 
-def update_annual_avg_time_metadata(nc):
+def update_annual_avg_file_global_metadata(nc):
     '''
-    Converts time values of a newly produced annual average NetCDF file (nc)
-    to annual midpoints and ensures the time bounds variable (intially set by
-    CDO) has correct units and calendar attributes
-
-    time values are the calculated midpoint between <year x>-01-01 and <year x+1>-01-01
+    Modifies global metadata of generated yearmean NetCDF file
     '''
-    time_var = nc.variables['time']
-    units = nc.variables['time'].units
-    calendar = nc.variables['time'].calendar
-    start_year = num2date(time_var[0], units, calendar).year
-    end_year = start_year + time_var.shape[0]
-    bounds_var = nc.variables['time_bnds']
-    bounds_var.units = units
-    bounds_var.calendar = calendar
-    new_times = []
-    for year in range(start_year, end_year):
-        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
-        mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
-        new_times.append(mid)
-
-    time_var[:] = date2num(new_times, units, calendar)
-
-def update_annual_avg_file_metadata(out_fp, variable):
-    '''
-    Opens generated yearmean NetCDF file and modifies global and variable metadata
-
-    Parameters:
-        out_fp: output file path
-        variable (str): name of the CMIP5 variable present in the output file
-    '''
-
-    nc = Dataset(out_fp, 'r+')
-    # modify global metadata
     title = nc.getncattr('title')
     new_title = 'Annual Average of Daily ' + title
     new_frequency = 'yr'
     nc.setncatts({'title': new_title, 'frequency': new_frequency})
-    # modify variable metadata
+
+def update_annual_avg_file_variable_metadata(nc, variable):
+    '''
+    Modifies metadata of one variable of generated yearmean NetCDF file
+    '''
     long_name = nc.variables[variable].getncattr('long_name')
     new_long_name = 'Annual Average ' + long_name
     nc.variables[variable].setncattr('long_name', new_long_name)
-    update_annual_avg_time_metadata(nc)
-    nc.close()
 
+def has_valid_time_bounds(bounds_var):
+    '''
+    Verifies if the input NetCDF has a valid, and populated, time_bnds variable
+    '''
+    # bounds_var might be a np.masked_array, and if any elements are masked, it's bad
+    if (hasattr(bounds_var, 'mask') and (np.ma.is_masked(bounds_var[:]))):
+        return False
+    # or, bounds_var might be full of zeros, also bad
+    elif (not np.any(bounds_var)):
+        return False
+    else:
+        return True
+
+def update_annual_avg_file_time_metadata(nc, start_year=None):
+    '''
+    Converts time values of a newly produced annual average NetCDF file
+    to annual midpoints. Checks validity of the time bounds variable (initially set by
+    CDO), overwriting it if necessary, and assigns correct units and calendar attributes.
+
+    time values are the calculated midpoint between <year n>-01-01 and <year n+1>-01-01
+    time bounds are <year n>-01-01 00:00:00 and <year n+1>-01-01 00:00:00
+
+    Optional parameter: 
+        start_year - set to override the time variable's start year
+    '''
+    time_var = nc.variables['time']
+    units = time_var.units
+    calendar = time_var.calendar
+    new_times = []
+    bounds_var = nc.variables['time_bnds']
+    new_bounds = []
+    write_new_bounds = False
+
+    if start_year is None:
+        start_year = num2date(time_var[0], units, calendar).year
+    else: # we are (possibly) setting a new start_year, so units will change, and thus bounds too
+        units = "days since {}-01-01 00:00:00".format(start_year)
+        time_var.units = units
+        write_new_bounds = True
+    end_year = start_year + time_var.shape[0]
+
+    bounds_var.units = units
+    bounds_var.calendar = calendar
+
+    if not has_valid_time_bounds(bounds_var):
+        write_new_bounds = True
+
+    for year in range(start_year, end_year):
+        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
+        mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
+        new_times.append(mid)
+        if write_new_bounds:
+            lower_bound = datetime(year, 1, 1)
+            upper_bound = datetime(year, 1, 1) + relativedelta(years=1)
+            new_bounds.append([lower_bound, upper_bound])
+
+    time_var[:] = date2num(new_times, units, calendar)
+    if write_new_bounds:
+        bounds_var[:] = date2num(new_bounds, units, calendar)
 
 def main(args):
     vars = '|'.join(args.variables)
@@ -129,8 +160,11 @@ def main(args):
         log.info('Generating annual average output file: {}'.format(out_fp))
         create_annual_avg_file(fp, out_fp, variable)
         # update the metadata in the file generated by cdo.yearmean
-        update_annual_avg_file_metadata(out_fp, variable)
-
+        nc = Dataset(out_fp, 'r+')
+        update_annual_avg_file_global_metadata(nc)
+        update_annual_avg_file_variable_metadata(nc, variable)
+        update_annual_avg_file_time_metadata(nc)
+        nc.close()
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create annual averages from CMIP5 data')
@@ -141,7 +175,6 @@ if __name__ == '__main__':
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
         basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/',
-        climdex=False,
         dry_run=False
     )
     args = parser.parse_args()
