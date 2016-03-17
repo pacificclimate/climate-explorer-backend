@@ -34,7 +34,8 @@ def iter_matching(dirpath, regexp):
 
 def create_annual_avg_file(in_fp, out_fp, variable):
     '''
-    Generates file with annual averages for the given variable across all time within an input file
+    Generates file with annual averages for the given variable across
+    all time within an input file
 
     Parameters:
         in_fp: input file path
@@ -94,10 +95,12 @@ def has_valid_time_bounds(bounds_var):
 def update_annual_avg_file_time_metadata(nc, start_year=None):
     '''
     Converts time values of a newly produced annual average NetCDF file
-    to annual midpoints. Checks validity of the time bounds variable (initially set by
-    CDO), overwriting it if necessary, and assigns correct units and calendar attributes.
+    to annual midpoints. Checks validity of the time bounds variable
+    (initially set by CDO), overwriting it if necessary, and assigns
+    correct units and calendar attributes.
 
-    time values are the calculated midpoint between <year n>-01-01 and <year n+1>-01-01
+    time values are the calculated midpoint between <year n>-01-01 and
+    <year n+1>-01-01
     time bounds are <year n>-01-01 00:00:00 and <year n+1>-01-01 00:00:00
 
     Optional parameter: 
@@ -113,7 +116,8 @@ def update_annual_avg_file_time_metadata(nc, start_year=None):
 
     if start_year is None:
         start_year = num2date(time_var[0], units, calendar).year
-    else: # we are (possibly) setting a new start_year, so units will change, and thus bounds too
+    # we are (possibly) setting a new start_year, so units and bounds will change
+    else:
         units = "days since {}-01-01 00:00:00".format(start_year)
         time_var.units = units
         write_new_bounds = True
@@ -126,7 +130,8 @@ def update_annual_avg_file_time_metadata(nc, start_year=None):
         write_new_bounds = True
 
     for year in range(start_year, end_year):
-        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
+        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) \
+            - datetime(year, 1, 1)).days/2
         mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
         new_times.append(mid)
         if write_new_bounds:
@@ -140,7 +145,9 @@ def update_annual_avg_file_time_metadata(nc, start_year=None):
 
 def main(args):
     vars = '|'.join(args.variables)
-    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'.format(vars)))
+    test_files = iter_matching(args.basedir, \
+        re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'\
+        .format(vars)))
 
     if args.dry_run:
         for f in test_files:
@@ -151,7 +158,8 @@ def main(args):
         log.info('Processing input file: {}'.format(fp))
         file_ = Cmip5File(fp, freq='yr', mip_table='yr')
         file_.root = args.outdir
-        # trim time range that will appear in filename to just the years, as that is the limit of resolution
+        # trim time range that will appear in filename to just the years, as
+        # that is the limit of resolution
         file_.t_start = file_.t_start[0:4]
         file_.t_end = file_.t_end[0:4]
         variable = file_.variable
@@ -167,11 +175,14 @@ def main(args):
         nc.close()
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Create annual averages from CMIP5 data')
-    parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
+    parser = ArgumentParser(description='Creates annual averages from CMIP5 \
+        data and writes to new CMIP5 path+file.')
+    parser.add_argument('-o', '--outdir', required=True, help='Output directory')
+    parser.add_argument('-b', '--basedir', help='Base directory from which to \
+        search for climate model output files to process.')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
-    parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
+    parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true', \
+        help='Just list the climate model output files found, and exit.')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
         basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/',
