@@ -371,7 +371,7 @@ def test_metadata_empty(populateddb):
 @pytest.mark.parametrize(('model'), ('cgcm3', ''))
 def test_multimeta(populateddb, model):
     sesh = populateddb.session
-    rv = multimeta.__wrapped__(sesh, model=model) # Multimeta is wrapped for caching. Call the wrapped function
+    rv = multimeta(sesh, model=model) # Multimeta is wrapped for caching. Call the wrapped function
     assert 'file0' in rv
     assert rv['file0']['model_id'] == 'cgcm3'
     # times are not included in the multimeta API call
