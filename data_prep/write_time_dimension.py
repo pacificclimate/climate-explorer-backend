@@ -1,4 +1,3 @@
-
 from argparse import ArgumentParser
 
 from netCDF4 import Dataset

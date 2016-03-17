@@ -5,7 +5,6 @@ import sys
 
 from argparse import ArgumentParser
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
