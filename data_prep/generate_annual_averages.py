@@ -55,7 +55,7 @@ def create_annual_avg_file(in_fp, out_fp, variable):
     cdo = Cdo()
     cdo.yearmean(input=in_fp, output=out_fp)
 
-def update_annual_avg_file_global_metadata(nc):
+def prepend_frequency_to_global_attrs(nc):
     '''
     Modifies global metadata of generated yearmean NetCDF file
     '''
@@ -64,7 +64,7 @@ def update_annual_avg_file_global_metadata(nc):
     new_frequency = 'yr'
     nc.setncatts({'title': new_title, 'frequency': new_frequency})
 
-def update_annual_avg_file_variable_metadata(nc, variable):
+def prepend_frequency_to_var_attrs(nc, variable):
     '''
     Modifies metadata of one variable of generated yearmean NetCDF file
     '''
