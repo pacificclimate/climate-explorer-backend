@@ -4,10 +4,14 @@
 import numpy as np
 import numpy.ma as ma
 from sqlalchemy.orm.exc import NoResultFound
+import logging
 
 from modelmeta import DataFile, Time
 
 from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime
+
+log = logging.getLogger(__name__)
+
 
 na_array_stats = {
     key: np.nan
@@ -76,7 +80,8 @@ def stats(sesh, id_, time, area, variable):
 
     try:
         array = get_array(fname, time, area, variable)
-    except:
+    except Exception as e:
+        log.error(e)
         return {id_: na_array_stats}
     stats = array_stats(array)
 
