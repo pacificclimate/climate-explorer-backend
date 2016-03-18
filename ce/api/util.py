@@ -42,7 +42,7 @@ def get_grid_from_netcdf_file(fname):
 def get_array(fname, time, area, variable):
     if not os.path.exists(fname):
         raise Exception(
-            "The meatadata database is out of sync with the filesystem. "
+            "The metadata database is out of sync with the filesystem. "
             "I was told to open the file {}, but it does not exist."
             .format(fname)
         )
