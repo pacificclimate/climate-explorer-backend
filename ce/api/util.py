@@ -90,8 +90,7 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='', varia
                   .join(DataFileVariable, EnsembleDataFileVariables, Ensemble, Run, Model, Emission, TimeSet, Time)\
                   .filter(Ensemble.name == ensemble_name)\
                   .filter(DataFileVariable.netcdf_variable_name == variable)\
-                  .filter(Time.time_idx == time)\
-                  .filter(TimeSet.multi_year_mean == True)
+                  .filter(Time.time_idx == time)
 
     if model:
         query = query.filter(Model.short_name == model)
