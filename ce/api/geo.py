@@ -69,7 +69,7 @@ class memoize_mask(object):
 
         nc, wkt = args
         # If we have no key, automatic cache miss
-        if (not hasattr(nc, model_id)):
+        if (not hasattr(nc, 'model_id')):
             log.debug('Cache MISS (attribute \'model_id\' not found)')
             return self.func(*args)
 
