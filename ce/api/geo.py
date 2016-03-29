@@ -67,8 +67,14 @@ class memoize_mask(object):
 
     def __call__(self, *args):
 
+        nc, wkt = args
+        # If we have no key, automatic cache miss
+        if (not hasattr(nc, 'model_id')):
+            log.debug('Cache MISS (attribute \'model_id\' not found)')
+            return self.func(*args)
+
         # Set key to model_id and wkt polygon
-        key = (args[0].model_id, args[1])
+        key = (nc.model_id, wkt)
         log.debug('Checking cache for key {}'.format(key))
 
         with cache_lock:
