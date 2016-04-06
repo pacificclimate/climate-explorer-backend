@@ -5,11 +5,12 @@ import math
 from collections import OrderedDict
 from threading import RLock
 
+from netCDF4 import Dataset
 import numpy as np
-import numpy.ma as ma
-from shapely.geometry import Polygon, Point, CAP_STYLE
 from shapely.wkt import loads
-
+from shapely.affinity import translate
+import rasterio
+from rasterio.features import rasterize
 
 ### From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -67,14 +68,9 @@ class memoize_mask(object):
 
     def __call__(self, *args):
 
-        nc, wkt = args
-        # If we have no key, automatic cache miss
-        if (not hasattr(nc, 'model_id')):
-            log.debug('Cache MISS (attribute \'model_id\' not found)')
-            return self.func(*args)
+        fname, wkt = args
 
-        # Set key to model_id and wkt polygon
-        key = (nc.model_id, wkt)
+        key = (fname, wkt)
         log.debug('Checking cache for key {}'.format(key))
 
         with cache_lock:
@@ -104,55 +100,19 @@ class memoize_mask(object):
             self.hits = 0
             self.misses = 0
 
-def pointInPoly(x, y, poly):
-    if x is ma.masked or y is ma.masked:
-        return ma.masked
-
-    cell_center = Point(x, y)
-    if poly.contains(cell_center):
-        return not ma.masked
-    else:
-        return ma.masked
-
-pointsInPoly = np.vectorize(pointInPoly)
-
 @memoize_mask
-def wktToMask(nc, wkt):
+def wktToMask(filename, wkt):
     poly = loads(wkt)
-    return polygonToMask(nc, poly)
+    return polygonToMask(filename, poly)
 
-def polygonToMask(nc, poly):
+def polygonToMask(filename, poly):
 
-    nclats = nc.variables['lat'][:]
+    nc = Dataset(filename, 'r')
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
-        nclons -= 180
+        poly = translate(poly, xoff=180)
+    nc.close()
 
-    lons, lats = np.meshgrid(nclons, nclats)
-    lons = ma.masked_array(lons)
-    lats = ma.masked_array(lats, mask=lons.mask)
-    # The mask is now shared between both arrays, so you can mask one and the
-    # other will be masked as well
-    assert lons.sharedmask == True
-
-    # Gather grid properties
-    min_width = np.min(np.diff(nclons))
-    min_height = np.min(np.diff(nclons))
-    min_cell_area = min_width * min_height
-
-    if poly.area < min_cell_area * 2:
-        # Buffer the polygon by 1/2 the diagonal distance
-        # FIXME: use something better than min_cell_area * 2.
-        # Maybe buffer based on function of selected size vs grid cell size to avoid hard cutoff
-        dist = math.sqrt(math.pow(min_width,2)+math.pow(min_height,2))/2
-        poly = poly.buffer(dist)
-
-    # Calculate the polygon extent
-    minx, miny, maxx, maxy = poly.bounds
-
-    lons = ma.masked_where((lons < minx) | (lons > maxx), lons, copy=False)
-    lats = ma.masked_where((lats < miny) | (lats > maxy), lats, copy=False)
-
-    polygon_mask = pointsInPoly(lons, lats, poly)
-
-    return polygon_mask.mask
+    raster = rasterio.open(filename, 'r', driver='NetCDF')
+    mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
+    return mask == 0

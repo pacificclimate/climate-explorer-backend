@@ -29,7 +29,9 @@ setup(
         'shapely',
         'numpy',
         'netcdf4',
-        'python-dateutil'
+        'python-dateutil',
+        'GDAL',
+        'rasterio'
     ],
     scripts = ['scripts/devserver.py'],
     package_dir = {'ce': 'ce'},

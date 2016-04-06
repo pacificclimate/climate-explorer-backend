@@ -66,7 +66,7 @@ def get_array(fname, time, area, variable):
 
     if area:
         # Mask out data that isn't inside the input polygon
-        mask = wktToMask(nc, area)
+        mask = wktToMask(fname, area)
 
         # Extend the mask into the time dimension (if it exists)
         mask = np.repeat(mask, a.size / mask.size).reshape(a.shape)
