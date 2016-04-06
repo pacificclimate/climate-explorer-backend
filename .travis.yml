@@ -6,6 +6,29 @@ addons:
     packages:
       - libhdf5-serial-dev
       - libnetcdf-dev
+env:
+  global:
+    - GDALINST=$HOME/gdalinstall
+    - GDALBUILD=$HOME/gdalbuild
+    - GDALVERSION="2.0.2"
+    - CPLUS_INCLUDE_PATH=$GDALINST/include
+    - C_INCLUDE_PATH=$GDALINST/include
+    - CFLAGS=-I$GDALINST/include
+
+before_install:
+  - mkdir $GDALBUILD
+  - mkdir $GDALINST
+  - cd $GDALBUILD
+  - wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
+  - tar -xzf gdal-$GDALVERSION.tar.gz
+  - cd gdal-$GDALVERSION
+  - ./configure --prefix=$GDALINST
+  - make -s -j 2
+  - make install
+  - cd $TRAVIS_BUILD_DIR
+  - export PATH=$GDALINST/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/lib:$LD_LIBRARY_PATH
+  - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL"
 install:
   - pip install -i http://tools.pacificclimate.org/pypiserver/ --trusted-host tools.pacificclimate.org .
 script:
