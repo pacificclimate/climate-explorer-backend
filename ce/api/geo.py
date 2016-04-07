@@ -1,5 +1,4 @@
 import logging
-import collections
 import sys
 import math
 from collections import OrderedDict

@@ -3,10 +3,21 @@
 
 import modelmeta as mm
 
-from ce.api.metadata import metadata
-
 def multimeta(sesh, ensemble_name='ce', model=''):
-    '''
+    '''Retrieve metadata for all data files in an ensemble
+
+    The ``multimeta`` API call is available to retrieve summarized
+    metadata from all data files in a given ensemble, optionally
+    filtered by the name of some model.
+
+    Unlike the ``metadata`` API call, ``multimeta`` omits information
+    about the timesteps which are available. To discover this
+    information, one is required to make a follow-up all to
+    ``metadata`` for the specific unique_id in question.
+
+    The ``model`` argument is optional. If it is omitted, all models
+    are included in the results.
+
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         ensemble (str): Some named ensemble
@@ -43,6 +54,9 @@ def multimeta(sesh, ensemble_name='ce', model=''):
             .join(mm.DataFileVariable).join(mm.EnsembleDataFileVariables)\
             .join(mm.Ensemble).join(mm.VariableAlias)\
             .filter(mm.Ensemble.name == ensemble_name)
+
+    if model:
+        q = q.filter(mm.Model.short_name == model)
 
     rv = {}
     results = q.all()

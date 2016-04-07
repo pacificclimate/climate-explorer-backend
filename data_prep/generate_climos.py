@@ -7,8 +7,6 @@ from argparse import ArgumentParser
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
-import numpy as np
-
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
