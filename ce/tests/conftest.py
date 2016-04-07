@@ -47,6 +47,13 @@ def netcdf_file(request):
 def big_nc_file(request):
     return resource_filename('ce', 'tests/data/anuspline_na.nc')
 
+@pytest.fixture(params=(
+    resource_filename('ce', 'tests/data/cgcm.nc'),
+    resource_filename('ce', 'tests/data/anuspline_na.nc'),
+))
+def ncfile(request):
+    return request.param
+
 @pytest.fixture
 def populateddb(cleandb):
 

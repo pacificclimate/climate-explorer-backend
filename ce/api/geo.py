@@ -68,7 +68,7 @@ class memoize_mask(object):
 
     def __call__(self, *args):
 
-        fname, wkt = args
+        fname, wkt, varname = args
 
         key = (fname, wkt)
         log.debug('Checking cache for key {}'.format(key))
@@ -101,11 +101,11 @@ class memoize_mask(object):
             self.misses = 0
 
 @memoize_mask
-def wktToMask(filename, wkt):
+def wktToMask(filename, wkt, variable):
     poly = loads(wkt)
-    return polygonToMask(filename, poly)
+    return polygonToMask(filename, poly, variable)
 
-def polygonToMask(filename, poly):
+def polygonToMask(filename, poly, variable):
 
     nc = Dataset(filename, 'r')
     nclons = nc.variables['lon'][:]
@@ -113,6 +113,12 @@ def polygonToMask(filename, poly):
         poly = translate(poly, xoff=180)
     nc.close()
 
-    raster = rasterio.open(filename, 'r', driver='NetCDF')
+    dst_name = 'NETCDF:"{}":{}'.format(filename, variable)
+    raster = rasterio.open(dst_name, 'r', driver='NetCDF')
+
+    if raster.affine == rasterio.Affine.identity():
+        raise Exception("Unable to determine projection parameters for GDAL "
+                        "dataset {}".format(dst_name))
+
     mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
     return mask == 0
