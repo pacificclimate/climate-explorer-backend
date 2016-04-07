@@ -25,7 +25,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
         timescale (str): Description of the resolution of time to be
-            returned (e.g. "monthly" or "annual")
+            returned (e.g. "monthly" or "yearly")
         ensemble_name (str): Some named ensemble
 
     Returns:
@@ -97,7 +97,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         for time in timeset.times:
             if time.time_idx == idx:
                 return time.timestep
-        raise Exception('Timeset has not time with index value {}'.format(idx))
+        raise Exception('Timeset has no time with index value {}'.format(idx))
 
     return {
         run.name: {
