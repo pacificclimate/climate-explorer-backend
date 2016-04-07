@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import numpy as np
 import numpy.ma as ma
 from netCDF4 import Dataset
-from modelmeta import *
+import modelmeta as mm
 
 from ce.api.geo import wktToMask
 
@@ -82,21 +82,27 @@ def get_array(nc, fname, time, area, variable):
     return ma.masked_array(a, mask)
 
 def mean_datetime(datetimes):
-    timestamps = [ dt.replace(tzinfo=timezone.utc).timestamp() for dt in datetimes ]
+    timestamps = [
+        dt.replace(tzinfo=timezone.utc).timestamp()
+        for dt in datetimes
+    ]
     mean = np.mean(timestamps)
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
-def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='', variable='', time=0):
-    query = sesh.query(DataFile.unique_id).distinct(DataFile.unique_id)\
-                  .join(DataFileVariable, EnsembleDataFileVariables, Ensemble, Run, Model, Emission, TimeSet, Time)\
-                  .filter(Ensemble.name == ensemble_name)\
-                  .filter(DataFileVariable.netcdf_variable_name == variable)\
-                  .filter(Time.time_idx == time)
+def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
+                          variable='', time=0):
+    query = sesh.query(mm.DataFile.unique_id)\
+            .distinct(mm.DataFile.unique_id)\
+            .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble,
+                  mm.Run, mm.Model, mm.Emission, mm.TimeSet, mm.Time)\
+            .filter(mm.Ensemble.name == ensemble_name)\
+            .filter(mm.DataFileVariable.netcdf_variable_name == variable)\
+            .filter(mm.Time.time_idx == time)
 
     if model:
-        query = query.filter(Model.short_name == model)
+        query = query.filter(mm.Model.short_name == model)
 
     if emission:
-        query = query.filter(Emission.short_name == emission)
+        query = query.filter(mm.Emission.short_name == emission)
 
     return ( r[0] for r in query.all() )

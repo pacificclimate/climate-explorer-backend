@@ -24,7 +24,9 @@ except NameError: # Python 3
 
 def getsize(obj):
     """Recursively iterate to sum size of object & members."""
-    def inner(obj, _seen_ids = set()):
+    def inner(obj, _seen_ids = None):
+        if not _seen_ids:
+            _seen_ids = set()
         obj_id = id(obj)
         if obj_id in _seen_ids:
             return 0

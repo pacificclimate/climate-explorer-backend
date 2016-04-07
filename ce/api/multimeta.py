@@ -1,7 +1,7 @@
 '''module for requesting metadata from multiple files based on model or ensemble
 '''
 
-from modelmeta import *
+import modelmeta as mm
 
 from ce.api.metadata import metadata
 
@@ -35,12 +35,14 @@ def multimeta(sesh, ensemble_name='ce', model=''):
 
     '''
 
-    q = sesh.query(DataFile.unique_id, Model.organization, Model.short_name,
-            Model.long_name, Emission.short_name, Run.name,
-            DataFileVariable.netcdf_variable_name, VariableAlias.long_name)\
-            .join(Run).join(Model).join(Emission).join(DataFileVariable)\
-            .join(EnsembleDataFileVariables).join(Ensemble)\
-            .join(VariableAlias).filter(Ensemble.name == ensemble_name)
+    q = sesh.query(mm.DataFile.unique_id, mm.Model.organization,
+            mm.Model.short_name, mm.Model.long_name, mm.Emission.short_name,
+            mm.Run.name, mm.DataFileVariable.netcdf_variable_name,
+            mm.VariableAlias.long_name)\
+            .join(mm.Run).join(mm.Model).join(mm.Emission)\
+            .join(mm.DataFileVariable).join(mm.EnsembleDataFileVariables)\
+            .join(mm.Ensemble).join(mm.VariableAlias)\
+            .filter(mm.Ensemble.name == ensemble_name)
 
     rv = {}
     results = q.all()
