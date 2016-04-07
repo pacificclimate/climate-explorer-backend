@@ -73,12 +73,7 @@ def get_array(fname, time, area, variable):
     else:
         mask = False
 
-    # We may or may not have received a masked array from the NetCDF file
-    if hasattr(a, 'mask'):
-        mask = a.mask | mask
-        return ma.masked_array(a.data, mask)
-    else:
-        return ma.masked_array(a, mask)
+    return ma.masked_array(a, mask)
 
 def mean_datetime(datetimes):
     timestamps = [ dt.replace(tzinfo=timezone.utc).timestamp() for dt in datetimes ]
