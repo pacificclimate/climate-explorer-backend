@@ -15,8 +15,7 @@ from ce.api.util import get_array, mean_datetime
     ('cgcm.nc', 'tasmax'),
     ('cgcm-tmin.nc', 'tasmin'),
     ('prism_pr_small.nc', 'pr'), # a file with masked values
-    ('bccaq_tnx.nc', 'tnxETCCDI'),
-), ids=('cgcm3', 'cgcm-tmin', 'prism_pr_small', 'bccaq_tnx'), scope='function')
+), ids=('cgcm3', 'cgcm-tmin', 'prism_pr_small'), scope='function')
 def ncfilevar(request):
     fname, varname = request.param
     return (resource_filename('ce', 'tests/data/' + fname), varname)

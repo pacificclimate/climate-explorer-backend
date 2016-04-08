@@ -183,7 +183,6 @@ def test_timeseries_bad_id(populateddb, id_):
 @pytest.mark.parametrize(('id_', 'var'), (
     ('file0', 'tasmax'),
     ('file4', 'tasmin'),
-    ('big_file', 'tnxETCCDI'),
 ))
 def test_timeseries_speed(populateddb, polygon, id_, var):
     sesh = populateddb.session
