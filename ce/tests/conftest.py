@@ -7,6 +7,7 @@ import pytest
 import modelmeta
 from modelmeta import *
 from flask.ext.sqlalchemy import SQLAlchemy
+from netCDF4 import Dataset
 
 from ce import get_app
 
@@ -41,11 +42,17 @@ def cleandb(app):
 
 @pytest.fixture(scope='function')
 def netcdf_file(request):
-    return resource_filename('ce', 'tests/data/cgcm.nc')
+    fname = resource_filename('ce', 'tests/data/cgcm.nc')
+    nc = Dataset(fname)
+    def fin():
+        print("teardown netcdf_file")
+        nc.close()
+    request.addfinalizer(fin)
+    return nc
 
-@pytest.fixture(scope='function')
-def big_nc_file(request):
-    return resource_filename('ce', 'tests/data/anuspline_na.nc')
+# @pytest.fixture(scope='function')
+# def big_nc_file(request):
+#     return resource_filename('ce', 'tests/data/anuspline_na.nc')
 
 @pytest.fixture(params=(
     resource_filename('ce', 'tests/data/cgcm.nc'),
@@ -53,6 +60,15 @@ def big_nc_file(request):
 ))
 def ncfile(request):
     return request.param
+
+@pytest.fixture(scope='function')
+def ncobject(request, ncfile):
+    nc = Dataset(ncfile)
+    def fin():
+        print("teardown netcdf_file")
+        nc.close()
+    request.addfinalizer(fin)
+    return nc
 
 @pytest.fixture
 def populateddb(cleandb):

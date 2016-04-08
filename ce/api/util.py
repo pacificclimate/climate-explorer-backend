@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 import numpy as np
@@ -13,8 +14,7 @@ def get_files_from_run_variable(run, variable):
                 [dfv.netcdf_variable_name for dfv in file_.data_file_variables]
            ]
 
-def get_units_from_netcdf_file(fname, variable):
-    nc = Dataset(fname)
+def get_units_from_netcdf_file(nc, variable):
     return nc.variables[variable].units
 
 def get_units_from_file_object(file_, varname):
@@ -32,14 +32,14 @@ def get_units_from_run_object(run, varname):
 
     return units.pop()
 
-def get_grid_from_netcdf_file(fname):
-    nc = Dataset(fname)
+def get_grid_from_netcdf_file(nc):
     return {
         'latitudes': np.ndarray.tolist(nc.variables['lat'][:]),
         'longitudes': np.ndarray.tolist(nc.variables['lon'][:])
     }
 
-def get_array(fname, time, area, variable):
+@contextmanager
+def open_nc(fname):
     if not os.path.exists(fname):
         raise Exception(
             "The metadata database is out of sync with the filesystem. "
@@ -47,12 +47,18 @@ def get_array(fname, time, area, variable):
             .format(fname)
         )
 
-    nc = Dataset(fname)
+    try:
+        nc = Dataset(fname, 'r')
+        yield nc
+    finally:
+        nc.close()
+
+def get_array(nc, fname, time, area, variable):
 
     if variable not in nc.variables:
         raise Exception(
             "File {} does not have variable {}."
-            .format(fname, variable)
+            .format(nc.filepath(), variable)
         )
 
     a = nc.variables[variable]
@@ -66,7 +72,7 @@ def get_array(fname, time, area, variable):
 
     if area:
         # Mask out data that isn't inside the input polygon
-        mask = wktToMask(fname, area, variable)
+        mask = wktToMask(nc, fname, area, variable)
 
         # Extend the mask into the time dimension (if it exists)
         mask = np.repeat(mask, a.size / mask.size).reshape(a.shape)

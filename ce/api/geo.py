@@ -68,9 +68,14 @@ class memoize_mask(object):
 
     def __call__(self, *args):
 
-        fname, wkt, varname = args
+        nc, fname, wkt, varname = args
+        # If we have no key, automatic cache miss
+        if (not hasattr(nc, 'model_id')):
+            log.debug('Cache MISS (attribute \'model_id\' not found)')
+            return self.func(*args)
 
-        key = (fname, wkt)
+        # Set key to model_id and wkt polygon
+        key = (nc.model_id, wkt)
         log.debug('Checking cache for key {}'.format(key))
 
         with cache_lock:
@@ -101,24 +106,22 @@ class memoize_mask(object):
             self.misses = 0
 
 @memoize_mask
-def wktToMask(filename, wkt, variable):
+def wktToMask(nc, fname, wkt, variable):
     poly = loads(wkt)
-    return polygonToMask(filename, poly, variable)
+    return polygonToMask(nc, fname, poly, variable)
 
-def polygonToMask(filename, poly, variable):
+def polygonToMask(nc, fname, poly, variable):
 
-    nc = Dataset(filename, 'r')
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
         poly = translate(poly, xoff=180)
-    nc.close()
 
-    dst_name = 'NETCDF:"{}":{}'.format(filename, variable)
-    raster = rasterio.open(dst_name, 'r', driver='NetCDF')
+    dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
+    with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
 
-    if raster.affine == rasterio.Affine.identity():
-        raise Exception("Unable to determine projection parameters for GDAL "
-                        "dataset {}".format(dst_name))
+        if raster.affine == rasterio.Affine.identity():
+            raise Exception("Unable to determine projection parameters for GDAL "
+                            "dataset {}".format(dst_name))
 
-    mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
+        mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
     return mask == 0

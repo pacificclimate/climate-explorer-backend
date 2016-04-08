@@ -10,28 +10,31 @@ test_polygons = [
     'POLYGON ((-125 55, -116 55, -116 60, -125 60, -125 55))'
 ]
 
+def test_netcdf_filepath_is_available(ncobject):
+    assert ncobject.filepath()
+
 def test_cache(netcdf_file):
     f = wktToMask
     var = 'tasmax'
     f.cache_clear()
-    f(netcdf_file, test_polygons[0], var)
+    f(netcdf_file, netcdf_file.filepath(), test_polygons[0], var)
     assert f.hits == 0, f.misses == 1
-    f(netcdf_file, test_polygons[0], var)
+    f(netcdf_file, netcdf_file.filepath(), test_polygons[0], var)
     assert f.hits == 1, f.misses == 1
-    f(netcdf_file, test_polygons[1], var)
+    f(netcdf_file, netcdf_file.filepath(), test_polygons[1], var)
     assert f.hits == 1, f.misses == 2
-    f(netcdf_file, test_polygons[1], var)
+    f(netcdf_file, netcdf_file.filepath(), test_polygons[1], var)
     assert f.hits == 2, f.misses == 2
-    f(netcdf_file, test_polygons[1], var)
+    f(netcdf_file, netcdf_file.filepath(), test_polygons[1], var)
     assert f.hits == 3, f.misses == 2
 
-def test_clip_speed(ncfile, polygon):
+def test_clip_speed(ncobject, polygon):
     try:
         poly = loads(polygon)
     except:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
-    polygonToMask(ncfile, poly, 'tasmax')
+    polygonToMask(ncobject, ncobject.filepath(), poly, 'tasmax')
     t = time.time() - t0
     # Ensure that we can clip our largest polygons in under 100ms
     assert t < .1

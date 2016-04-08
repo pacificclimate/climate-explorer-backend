@@ -155,13 +155,15 @@ def test_data_multiple_times(multitime_db):
     for run in rv.values():
         assert len(run['data']) > 1
 
-
-def test_timeseries(populateddb, polygon):
+@pytest.mark.parametrize(('id_', 'var'), (
+    ('file0', 'tasmax'),
+))
+def test_timeseries(populateddb, polygon, id_, var):
     sesh = populateddb.session
-    rv = timeseries(sesh, 'file0', polygon, 'tasmax')
+    rv = timeseries(sesh, id_, polygon, var)
     for key in ('id', 'data', 'units'):
         assert key in rv
-    assert rv['id'] == 'file0'
+    assert rv['id'] == id_
     assert set(rv['data'].keys()) == {'1985-01-15T00:00:00Z',
             '1985-08-15T00:00:00Z', '1985-04-15T00:00:00Z',
             '1985-09-15T00:00:00Z', '1985-06-15T00:00:00Z',
@@ -178,10 +180,15 @@ def test_timeseries_bad_id(populateddb, id_):
     rv = timeseries(populateddb.session, id_, None, None)
     assert rv == {}
 
-def test_timeseries_speed(populateddb, polygon):
+@pytest.mark.parametrize(('id_', 'var'), (
+    ('file0', 'tasmax'),
+    ('file4', 'tasmin'),
+    ('big_file', 'tnxETCCDI'),
+))
+def test_timeseries_speed(populateddb, polygon, id_, var):
     sesh = populateddb.session
     t0 = time()
-    rv = timeseries(sesh, 'big_file', polygon, 'tnxETCCDI')
+    rv = timeseries(sesh, id_, polygon, var)
     t = time() - t0
     print(t)
     assert t < 3

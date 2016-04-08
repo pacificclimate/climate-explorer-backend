@@ -5,7 +5,7 @@ import numpy as np
 
 from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
-from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable
+from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable, open_nc
 
 def data(sesh, model, emission, time, area, variable, timescale='other',
          ensemble_name='ce'):
@@ -90,7 +90,8 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         return {}
 
     def getdata(file_, time_idx):
-        a = get_array(file_.filename, time_idx, area, variable)
+        with open_nc(file_.filename) as nc:
+            a = get_array(nc, file_.filename, time_idx, area, variable)
         return np.asscalar(np.mean(a))
 
     def get_timeval(timeset, idx):

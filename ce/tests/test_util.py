@@ -7,19 +7,34 @@ import pytest
 import numpy as np
 from numpy.ma import MaskedArray
 from dateutil.parser import parse
+from netCDF4 import Dataset
 
 from ce.api.util import get_array, mean_datetime
 
-@pytest.mark.parametrize(('fname', 'var'), (
+@pytest.fixture(params=(
     ('cgcm.nc', 'tasmax'),
     ('cgcm-tmin.nc', 'tasmin'),
     ('prism_pr_small.nc', 'pr'), # a file with masked values
     ('bccaq_tnx.nc', 'tnxETCCDI'),
-))
-def test_get_array(fname, var, polygon):
-    fname = resource_filename('ce', 'tests/data/' + fname)
+), ids=('cgcm3', 'cgcm-tmin', 'prism_pr_small', 'bccaq_tnx'), scope='function')
+def ncfilevar(request):
+    fname, varname = request.param
+    return (resource_filename('ce', 'tests/data/' + fname), varname)
+
+@pytest.fixture(scope='function')
+def nctuple(request, ncfilevar):
+    fname, varname = ncfilevar
+    nc = Dataset(fname)
+    def fin():
+        print("teardown netcdf_file")
+        nc.close()
+    request.addfinalizer(fin)
+    return nc, fname, varname
+
+def test_get_array(request, nctuple, polygon):
+    nc, fname, var = nctuple
     t0 = time()
-    x = get_array(fname, 0, polygon, var)
+    x = get_array(nc, fname, 0, polygon, var)
     t = time() - t0
     print(t)
     assert t < .030

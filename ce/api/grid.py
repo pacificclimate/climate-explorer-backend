@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from modelmeta import DataFile
 
-from ce.api.util import get_grid_from_netcdf_file
+from ce.api.util import get_grid_from_netcdf_file, open_nc
 
 na_grid = {
     key: []
@@ -67,14 +67,14 @@ def grid(sesh, id_):
     '''
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
-        fname = df.filename
     except NoResultFound:
         return {}
 
-    try:
-        grid = get_grid_from_netcdf_file(fname)
-    except:
-        return {id_: na_grid}
-   
+    with open_nc(df.filename) as nc:
+        try:
+            grid = get_grid_from_netcdf_file(nc)
+        except:
+            return {id_: na_grid}
+
     return {id_: grid}
 

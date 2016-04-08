@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from collections import OrderedDict
 
 from modelmeta import DataFile
-from ce.api.util import get_array, get_units_from_netcdf_file
+from ce.api.util import get_array, get_units_from_netcdf_file, open_nc
 
 def timeseries(sesh, id_, area, variable):
     '''Delegate for performing data lookups within a single file
@@ -60,15 +60,18 @@ def timeseries(sesh, id_, area, variable):
     ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
     ti.sort(key=lambda x: x[1])
 
-    data = OrderedDict([(
-        timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
-        np.asscalar(np.mean(get_array(file_.filename, idx, area, variable)))
-    )
-        for timeval, idx in ti
-    ])
+    with open_nc(file_.filename) as nc:
+
+        data = OrderedDict([(
+            timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            np.asscalar(np.mean(get_array(nc, file_.filename, idx, area, variable)))
+        )
+            for timeval, idx in ti
+        ])
+        units = get_units_from_netcdf_file(nc, variable)
 
     return {
         'id': id_,
         'data': data,
-        'units': get_units_from_netcdf_file(file_.filename, variable)
+        'units': units
     }
