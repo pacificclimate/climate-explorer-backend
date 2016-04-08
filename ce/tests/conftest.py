@@ -100,9 +100,16 @@ def populateddb(cleandb):
                      x_dim_name='lon', y_dim_name='lat', index_time=now,
                      run=run2)
 
+    big_file = DataFile(filename=resource_filename('ce', 'tests/data/bccaq_tnx.nc'),
+                        unique_id='big_file', first_1mib_md5sum='xxxx',
+                        x_dim_name='lon', y_dim_name='lat', index_time=now,
+                        run=run2)
+
     tasmin = VariableAlias(long_name='Daily Minimum Temperature',
                          standard_name='air_temperature', units='degC')
     tasmax = VariableAlias(long_name='Daily Maximum Temperature',
+                         standard_name='air_temperature', units='degC')
+    tnx = VariableAlias(long_name='TNX',
                          standard_name='air_temperature', units='degC')
 
     anuspline_grid = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
@@ -131,8 +138,11 @@ def populateddb(cleandb):
     tmax2 = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
                             range_max=50, file=file3,
                             variable_alias=tasmax, grid=anuspline_grid)
+    tnx = DataFileVariable(netcdf_variable_name='tnxETCCDI', range_min=0,
+                            range_max=50, file=big_file,
+                            variable_alias=tnx, grid=anuspline_grid)
 
-    sesh.add_all([tmin, tmax, tmin1, tmax1, tmax2])
+    sesh.add_all([tmin, tmax, tmin1, tmax1, tmax2, tnx])
     sesh.flush()
 
     ens0.data_file_variables.append(tmin)
@@ -151,6 +161,15 @@ def populateddb(cleandb):
                  num_times=12, time_resolution='other',
                  times = [ Time(time_idx=i, timestep=datetime(1985, 1+i, 15)) for i in range(12) ])
     ts.files = [file0, file2, file3, file4]
+
+    dts = [ datetime(1950+i, 7, 2) for i in range(151) ]
+    times = [ Time(time_idx=i, timestep=dt) for i, dt in enumerate(dts) ]
+    ts = TimeSet(calendar='gregorian', start_date=min(dts),
+                 end_date=max(dts), multi_year_mean=False,
+                 num_times=len(dts), time_resolution='yearly',
+                 times = times
+    )
+    ts.files = [big_file]
     sesh.add_all(sesh.dirty)
 
     sesh.commit()

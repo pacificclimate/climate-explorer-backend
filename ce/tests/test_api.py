@@ -1,4 +1,5 @@
 import math
+from time import time
 
 import pytest
 
@@ -176,6 +177,14 @@ def test_timeseries(populateddb, polygon):
 def test_timeseries_bad_id(populateddb, id_):
     rv = timeseries(populateddb.session, id_, None, None)
     assert rv == {}
+
+def test_timeseries_speed(populateddb, polygon):
+    sesh = populateddb.session
+    t0 = time()
+    rv = timeseries(sesh, 'big_file', polygon, 'tnxETCCDI')
+    t = time() - t0
+    print(t)
+    assert t < 3
 
 @pytest.mark.parametrize(('id_'), ('file0',))
 def test_grid(populateddb, id_):
