@@ -58,7 +58,7 @@ def get_array(nc, fname, time, area, variable):
     if variable not in nc.variables:
         raise Exception(
             "File {} does not have variable {}."
-            .format(nc.filepath(), variable)
+            .format(fname, variable)
         )
 
     a = nc.variables[variable]

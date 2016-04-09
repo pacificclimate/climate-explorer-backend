@@ -28,7 +28,6 @@ before_install:
   - cd $TRAVIS_BUILD_DIR
   - export PATH=$GDALINST/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/lib:$LD_LIBRARY_PATH
-  - pip install Cython
   - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL"
 install:
   - pip install -i http://tools.pacificclimate.org/pypiserver/ --trusted-host tools.pacificclimate.org .

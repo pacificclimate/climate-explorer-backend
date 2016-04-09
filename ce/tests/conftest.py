@@ -48,7 +48,7 @@ def netcdf_file(request):
         print("teardown netcdf_file")
         nc.close()
     request.addfinalizer(fin)
-    return nc
+    return nc, fname
 
 # @pytest.fixture(scope='function')
 # def big_nc_file(request):
@@ -68,7 +68,7 @@ def ncobject(request, ncfile):
         print("teardown netcdf_file")
         nc.close()
     request.addfinalizer(fin)
-    return nc
+    return (nc, ncfile)
 
 @pytest.fixture
 def populateddb(cleandb):
