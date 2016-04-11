@@ -8,7 +8,7 @@ import logging
 
 from modelmeta import DataFile, Time
 
-from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime
+from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime, open_nc
 
 log = logging.getLogger(__name__)
 
@@ -79,10 +79,13 @@ def stats(sesh, id_, time, area, variable):
         return {}
 
     try:
-        array = get_array(fname, time, area, variable)
+        with open_nc(fname) as nc:
+            array = get_array(nc, fname, time, area, variable)
+            units = get_units_from_netcdf_file(nc, variable)
     except Exception as e:
         log.error(e)
         return {id_: na_array_stats}
+
     stats = array_stats(array)
 
     query = sesh.query(Time.timestep).filter(Time.time_set_id == df.timeset.id)
@@ -92,7 +95,7 @@ def stats(sesh, id_, time, area, variable):
     timeval = mean_datetime(timevals)
 
     stats.update({
-        'units': get_units_from_netcdf_file(fname, variable),
+        'units': units,
         'time': timeval.strftime('%Y-%m-%dT%H:%M:%SZ')
     })
     return {id_: stats}

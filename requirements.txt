@@ -5,5 +5,7 @@ modelmeta
 shapely
 numpy
 netcdf4
+GDAL
+rasterio
 # For testing
 python-dateutil
