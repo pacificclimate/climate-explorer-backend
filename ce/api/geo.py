@@ -77,7 +77,7 @@ class memoize_mask(object):
 
         # Set key to model_id and wkt polygon
         key = (nc.model_id, wkt)
-        log.debug('Checking cache for key {}'.format(key))
+        log.debug('Checking cache for key %s', key)
 
         with cache_lock:
             try:
