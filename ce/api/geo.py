@@ -1,5 +1,4 @@
 import logging
-import collections
 import sys
 import math
 from collections import OrderedDict
@@ -24,7 +23,9 @@ except NameError: # Python 3
 
 def getsize(obj):
     """Recursively iterate to sum size of object & members."""
-    def inner(obj, _seen_ids = set()):
+    def inner(obj, _seen_ids = None):
+        if not _seen_ids:
+            _seen_ids = set()
         obj_id = id(obj)
         if obj_id in _seen_ids:
             return 0
@@ -76,7 +77,7 @@ class memoize_mask(object):
 
         # Set key to model_id and wkt polygon
         key = (nc.model_id, wkt)
-        log.debug('Checking cache for key {}'.format(key))
+        log.debug('Checking cache for key %s', key)
 
         with cache_lock:
             try:

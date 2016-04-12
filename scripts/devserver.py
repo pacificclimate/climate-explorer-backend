@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from logging import basicConfig, DEBUG
+from logging import basicConfig
 from argparse import ArgumentParser
 
 from ce.wsgi import app

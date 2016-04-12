@@ -73,7 +73,7 @@ def grid(sesh, id_):
     with open_nc(df.filename) as nc:
         try:
             grid = get_grid_from_netcdf_file(nc)
-        except:
+        except (RuntimeError, KeyError):
             return {id_: na_grid}
 
     return {id_: grid}

@@ -7,8 +7,6 @@ from argparse import ArgumentParser
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
-import numpy as np
-
 from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
@@ -48,7 +46,7 @@ def iter_matching(dirpath, regexp):
            >>> for filename in iter_matching('/', r'/home.*\.bak'):
            ....    # do something
     """
-    for dir_, dirnames, filenames in os.walk(dirpath):
+    for dir_, _, filenames in os.walk(dirpath):
         for filename in filenames:
             abspath = os.path.join(dir_, filename)
             if regexp.match(abspath):
@@ -132,7 +130,7 @@ def determine_climo_periods(nc):
 
     return dict([(k, v) for k, v in climo_periods.items() if v[0] > s_date and v[1] < e_date])
 
-def generate_climo_time_var(t_start, t_end, units, types=('monthly', 'seasonal', 'annual')):
+def generate_climo_time_var(t_start, t_end, types=('monthly', 'seasonal', 'annual')):
     '''
     '''
 
@@ -201,13 +199,13 @@ def update_climo_time_meta(fp, file_type=Cmip5File):
     else:
         time_types = ('monthly', 'seasonal', 'annual')
 
-    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), timevar.units, time_types)
+    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), time_types)
 
     timevar[:] = date2num(times, timevar.units, timevar.calendar)
 
     # Create new climatology_bounds variable and required bnds dimension
     timevar.climatology = 'climatology_bounds'
-    bnds_dim = nc.createDimension(u'bnds', 2)
+    nc.createDimension('bnds', 2)
     climo_bnds_var = nc.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
     climo_bnds_var.calendar = timevar.calendar
     climo_bnds_var.units = timevar.units
@@ -217,8 +215,8 @@ def update_climo_time_meta(fp, file_type=Cmip5File):
 
 
 def main(args):
-    vars = '|'.join(args.variables)
-    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'.format(vars)))
+    vars_ = '|'.join(args.variables)
+    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'.format(vars_)))
 
     if args.dry_run:
         for f in test_files:
@@ -236,12 +234,12 @@ def main(args):
         file_ = FileType(fp)
         variable = file_.variable
 
-        for period, t_range in available_climo_periods.items():
+        for _, t_range in available_climo_periods.items():
 
             # Create climatological period and update metadata
-            log.info('Generating climo period {} to {}'.format(d2s(t_range[0]), d2s(t_range[1])))
+            log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
             out_fp = file_.generate_climo_fp(t_range, args.outdir)
-            log.info('Output file: {}'.format(out_fp))
+            log.info('Output file: %s', format(out_fp))
             try:
                 create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
             except:

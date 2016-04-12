@@ -1,12 +1,23 @@
 '''module for requesting metadata from multiple files based on model or ensemble
 '''
 
-from modelmeta import *
-
-from ce.api.metadata import metadata
+import modelmeta as mm
 
 def multimeta(sesh, ensemble_name='ce', model=''):
-    '''
+    '''Retrieve metadata for all data files in an ensemble
+
+    The ``multimeta`` API call is available to retrieve summarized
+    metadata from all data files in a given ensemble, optionally
+    filtered by the name of some model.
+
+    Unlike the ``metadata`` API call, ``multimeta`` omits information
+    about the timesteps which are available. To discover this
+    information, one is required to make a follow-up all to
+    ``metadata`` for the specific unique_id in question.
+
+    The ``model`` argument is optional. If it is omitted, all models
+    are included in the results.
+
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         ensemble (str): Some named ensemble
@@ -35,12 +46,17 @@ def multimeta(sesh, ensemble_name='ce', model=''):
 
     '''
 
-    q = sesh.query(DataFile.unique_id, Model.organization, Model.short_name,
-            Model.long_name, Emission.short_name, Run.name,
-            DataFileVariable.netcdf_variable_name, VariableAlias.long_name)\
-            .join(Run).join(Model).join(Emission).join(DataFileVariable)\
-            .join(EnsembleDataFileVariables).join(Ensemble)\
-            .join(VariableAlias).filter(Ensemble.name == ensemble_name)
+    q = sesh.query(mm.DataFile.unique_id, mm.Model.organization,
+            mm.Model.short_name, mm.Model.long_name, mm.Emission.short_name,
+            mm.Run.name, mm.DataFileVariable.netcdf_variable_name,
+            mm.VariableAlias.long_name)\
+            .join(mm.Run).join(mm.Model).join(mm.Emission)\
+            .join(mm.DataFileVariable).join(mm.EnsembleDataFileVariables)\
+            .join(mm.Ensemble).join(mm.VariableAlias)\
+            .filter(mm.Ensemble.name == ensemble_name)
+
+    if model:
+        q = q.filter(mm.Model.short_name == model)
 
     rv = {}
     results = q.all()

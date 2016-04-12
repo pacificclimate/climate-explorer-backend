@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from modelmeta import Run, Time, Emission, Model, TimeSet, DataFile
+from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable, open_nc
 
