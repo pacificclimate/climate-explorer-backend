@@ -4,6 +4,7 @@ import pytest
 
 from ce.api.geo import wktToMask, polygonToMask
 from shapely.wkt import loads
+from shapely.geos import ReadingError
 
 test_polygons = [
     'POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))',
@@ -30,7 +31,7 @@ def test_clip_speed(ncobject, polygon):
     ncobject, fname = ncobject
     try:
         poly = loads(polygon)
-    except:
+    except ReadingError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
     polygonToMask(ncobject, fname, poly, 'tasmax')
