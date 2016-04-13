@@ -69,6 +69,7 @@ def test_multimeta(populateddb, model):
     assert 'file0' in rv
     assert rv['file0']['model_id'] == 'cgcm3'
     # times are not included in the multimeta API call
+    assert 'timescale' in rv['file0']
     assert 'times' not in rv['file0']
 
 def test_stats(populateddb, polygon):
