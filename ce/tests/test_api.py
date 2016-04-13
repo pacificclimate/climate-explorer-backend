@@ -23,6 +23,22 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     response = test_client.get(url, query_string=query_params)
     assert response.status_code == 200
 
+def test_missing_query_param(test_client, cleandb):
+    url = 'api/metadata'
+    response = test_client.get(url)
+    assert response.status_code == 400
+    assert response.data.decode(response.charset) == "Missing query param: model_id"
+
+def test_missing_query_params(test_client, cleandb):
+    url = '/api/data'
+    response = test_client.get(url)
+    assert response.status_code == 400
+    content = response.data.decode(response.charset)
+    assert "Missing query params:" in content
+    # Ensure that the response *tells* you what's wrong!
+    for param in ('model', 'emission', 'time', 'area', 'variable'):
+        assert param in content
+
 def test_models(populateddb):
     sesh = populateddb.session
     rv = models(sesh, 'ce')

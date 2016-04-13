@@ -57,8 +57,12 @@ def call(session, request_type):
     required_params = set(get_required_args(func)).difference(['sesh'])
     provided_params = set(request.args.keys())
     optional_params = set(get_keyword_args(func))
-    if required_params.difference(provided_params):
-        return Response("Missing query params", status=400)
+    missing = required_params.difference(provided_params)
+    if missing:
+        return Response("Missing query param{}: {}".format(
+                's' if len(missing) > 1 else '',
+                ', '.join(missing)),
+                status=400)
 
     # FIXME: Sanitize input
     args = { key: request.args.get(key) for key in required_params }
