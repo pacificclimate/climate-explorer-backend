@@ -25,11 +25,23 @@ $ source venv/bin/activate
 
 ### Testing
 
-Within the virtual environment:
+#### Within the virtual environment:
 
 ```bash
 pip install pytest
 py.test -v
+```
+
+#### Using Docker container to test current directory:
+
+```bash
+sudo docker run --rm -it -v ${PWD}:/app --name backend-test pcic/climate-explorer-backend bash -c "pip install pytest; py.test -v ce/tests"
+```
+
+#### Using Docker container to test remote code changes:
+
+```bash
+sudo docker run --rm -it --name backend-test pcic/climate-explorer-backend bash -c "apt-get update; apt-get install -yq git; git fetch; git checkout <commit-ish>; pip install pytest; py.test -v ce/tests"
 ```
 
 ### Setup using Docker *IN PROGRESS*:
