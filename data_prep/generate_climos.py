@@ -220,7 +220,7 @@ def main(args):
 
     if args.dry_run:
         for f in test_files:
-            print f
+            print(f)
         sys.exit(0)
 
     FileType = ClimdexFile if args.climdex else Cmip5File
