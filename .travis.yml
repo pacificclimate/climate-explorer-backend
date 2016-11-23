@@ -28,8 +28,9 @@ before_install:
   - cd $TRAVIS_BUILD_DIR
   - export PATH=$GDALINST/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/lib:$LD_LIBRARY_PATH
-  - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL"
+  - export GDAL_MINOR_VERSION=$(echo $GDALVERSION | sed -e "s/\\.[0-9]\+$//")
+  - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL==$GDAL_MINOR_VERSION"
 install:
-  - pip install -i http://tools.pacificclimate.org/pypiserver/ --trusted-host tools.pacificclimate.org .
+  - pip install -i https://pypi.pacificclimate.org/simple/ .
 script:
   - py.test -v
