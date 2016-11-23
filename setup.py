@@ -1,13 +1,13 @@
 import os
-
 from setuptools import setup, find_packages
+
 
 def recursive_list(pkg_dir, basedir):
     def find():
         for dirname, dirnames, filenames in os.walk(basedir):
             for filename in filenames:
                 yield os.path.join(dirname, filename).lstrip(pkg_dir)
-    return [ x for x in find() ]
+    return [x for x in find()]
 
 __version__ = '0.1.1'
 
@@ -18,9 +18,9 @@ setup(
     packages=find_packages(),
     version=__version__,
     url="http://www.pacificclimate.org/",
-    author="Basil Veerman",
-    author_email="bveerman@uvic.ca",
-    install_requires = [
+    author="James Hiebert",
+    author_email="hiebert@uvic.ca",
+    install_requires=[
         'flask',
         'Flask-SQLAlchemy',
         'Flask-Cors',
@@ -33,8 +33,11 @@ setup(
         'GDAL',
         'rasterio'
     ],
-    scripts = ['scripts/devserver.py'],
-    package_dir = {'ce': 'ce'},
-    package_data = {'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static')},
+    scripts=['scripts/devserver.py'],
+    package_dir={'ce': 'ce'},
+    package_data={
+        'ce': ['tests/data/*.nc', 'templates/*.html']
+        + recursive_list('ce/', 'ce/static')
+    },
     zip_safe=False
 )
