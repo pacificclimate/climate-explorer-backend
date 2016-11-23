@@ -4,8 +4,9 @@ ADD . /app
 WORKDIR /app
 
 RUN pip3 install -U pip
-RUN pip3 install --trusted-host tools.pacificclimate.org -i http://tools.pacificclimate.org/pypiserver/ -e .
+RUN pip3 install -i https://pypi.pacificclimate.org/simple/ -r requirements.txt
+RUN python3 ./setup.py install
 
 EXPOSE 8000
 
-CMD python3 scripts/devserver.py -p 8000 -t
+CMD devserver.py -p 8000 -t
