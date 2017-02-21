@@ -6,10 +6,11 @@ This script:
 
 1. Opens an existing NetCDF file
 2. Determines what climatological periods to generate
-3. Aggregates the daily data to each respective climatological period
-4. Revises the time variable to meet CF1.6/CMIP5 specification
-5. Adds a climatology_bounds variable to match climatological period
-6. Revises output file name with climatological period
+3. For requested variable and each climatological period:
+   a. Aggregates the daily data for the period into a separate output file
+   b. Revises the time variable of the output file to meet CF1.6/CMIP5 specification
+   c. Adds a climatology_bounds variable to the output file match climatological period
+   d. Revises output file name with climatological period
 
 ### Installation
 

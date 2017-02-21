@@ -11,31 +11,13 @@ from cdo import Cdo
 from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
 
-from Cmip5File import Cmip5File, ClimdexFile
+from util import s2d, ss2d, d2ss, d2s
+from ClimateFile import ClimateFile, standard_climo_periods
 
-def s2d(s):
-    return datetime.strptime(s, '%Y-%m-%d')
-
-def ss2d(s):
-    return datetime.strptime(s, '%Y%m%d')
-
-def d2s(d):
-    return datetime.strftime(d, '%Y-%m-%d')
-
-def d2ss(d):
-    return datetime.strftime(d, '%Y%m%d')
 
 log = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, level=4)
 
-climo_periods = {
-    '6190': [s2d('1961-01-01'),s2d('1990-12-31')],
-    '7100': [s2d('1971-01-01'),s2d('2000-12-31')],
-    '8110': [s2d('1981-01-01'),s2d('2010-12-31')],
-    '2020': [s2d('2010-01-01'),s2d('2039-12-31')],
-    '2050': [s2d('2040-01-01'),s2d('2069-12-31')],
-    '2080': [s2d('2070-01-01'),s2d('2099-12-31')]
-}
 
 def iter_matching(dirpath, regexp):
     # http://stackoverflow.com/questions/4639506/os-walk-with-regex
@@ -52,19 +34,6 @@ def iter_matching(dirpath, regexp):
             if regexp.match(abspath):
                 yield abspath
 
-def find_var_name(keys):
-    to_remove = [u'lat', u'lat_bnds', u'lon', u'lon_bnds', u'height', u'time', u'climatology_bounds']
-    varnames = [x for x in keys if x not in to_remove]
-    if len(varnames) == 1:
-        return varnames[0]
-    else:
-        raise
-
-def var_trans(variable):
-    # Returns additional variable specific commands
-    if variable == 'pr':
-        return '-mulc,86400'
-    return ''
 
 def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     '''
@@ -80,6 +49,13 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     Requested date range MUST exist in the input file
 
     '''
+
+    def var_trans(variable):
+        # Returns additional variable specific commands
+        if variable == 'pr':
+            return '-mulc,86400'
+        return ''
+
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
@@ -118,17 +94,6 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
-def determine_climo_periods(nc):
-    '''
-    Determine what climatological periods are available in a given netCDF file
-    '''
-
-    # Detect which climatological periods can be created
-    time_var = nc.variables['time']
-    s_date = num2date(time_var[0], units=time_var.units, calendar=time_var.calendar)
-    e_date = num2date(time_var[-1], units=time_var.units, calendar=time_var.calendar)
-
-    return dict([(k, v) for k, v in climo_periods.items() if v[0] > s_date and v[1] < e_date])
 
 def generate_climo_time_var(t_start, t_end, types=('monthly', 'seasonal', 'annual')):
     '''
@@ -176,7 +141,8 @@ def generate_climo_time_var(t_start, t_end, types=('monthly', 'seasonal', 'annua
 
     return times, climo_bounds
 
-def update_climo_time_meta(fp, file_type=Cmip5File):
+
+def update_climo_time_meta(filepath):
     '''
     Updates the time varaible in an existing netCDF file to reflect climatological values.
 
@@ -189,63 +155,73 @@ def update_climo_time_meta(fp, file_type=Cmip5File):
       - PCIC CMIP5 style file path
     '''
     
-    cf = file_type(fp)
-    nc = Dataset(fp, 'r+')
-    timevar = nc.variables['time']
+    cf = ClimateFile(filepath)
+    nc = Dataset(filepath, 'r+')
+    time_var = nc.variables['time']
 
     # Generate new time/climo_bounds data
-    if cf.freq == 'yrClim':
+    if cf.frequency == 'yrClim':
         time_types = ('annual')
     else:
         time_types = ('monthly', 'seasonal', 'annual')
 
-    times, climo_bounds = generate_climo_time_var(ss2d(cf.t_start), ss2d(cf.t_end), time_types)
+    times, climo_bounds = generate_climo_time_var(ss2d(cf.start_date), ss2d(cf.end_date), time_types)
 
-    timevar[:] = date2num(times, timevar.units, timevar.calendar)
+    time_var[:] = date2num(times, time_var.units, time_var.calendar)
 
     # Create new climatology_bounds variable and required bnds dimension
-    timevar.climatology = 'climatology_bounds'
+    time_var.climatology = 'climatology_bounds'
     nc.createDimension('bnds', 2)
     climo_bnds_var = nc.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
-    climo_bnds_var.calendar = timevar.calendar
-    climo_bnds_var.units = timevar.units
-    climo_bnds_var[:] = date2num(climo_bounds, timevar.units, timevar.calendar)
+    climo_bnds_var.calendar = time_var.calendar
+    climo_bnds_var.units = time_var.units
+    climo_bnds_var[:] = date2num(climo_bounds, time_var.units, time_var.calendar)
 
     nc.close()
 
 
 def main(args):
-    vars_ = '|'.join(args.variables)
-    test_files = iter_matching(args.basedir, re.compile('.*({}).*(_rcp26|_rcp45|_rcp85|_historical_).*r1i1p1.*nc'.format(vars_)))
+    variables = '|'.join(args.variables)
+    filepaths = list(iter_matching(
+        args.basedir,
+        re.compile('.*({}).*_(historical)?((?<=l)\+(?=r))?(rcp26|rcp45|rcp85)?_.*r\di\dp\d.*nc'.format(variables))
+    ))
+
+    log.info('Will process the following files:')
+    for filepath in filepaths:
+        log.info(filepath)
 
     if args.dry_run:
-        for f in test_files:
-            print(f)
+        log.info('DRY RUN')
+        for filepath in filepaths:
+            log.info('')
+            log.info('File: {}'.format(filepath))
+            input_file = ClimateFile(filepath, raise_=False)
+            log.info('   climo_periods: {}'.format(input_file.climo_periods.keys()))
+            for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
+                log.info('   {}: {}'.format(attr, getattr(input_file, attr)))
+            log.info('output_filename: {}'.format(input_file.output_filename(standard_climo_periods()['6190'])))
         sys.exit(0)
 
-    FileType = ClimdexFile if args.climdex else Cmip5File
+    for filepath in filepaths:
+        log.info('')
+        log.info('Processing: {}'.format(filepath))
+        input_file = ClimateFile(filepath)
 
-    for fp in test_files:
-        log.info(fp)
-
-        nc = Dataset(fp)
-        available_climo_periods = determine_climo_periods(nc)
-        nc.close()
-        file_ = FileType(fp)
-        variable = file_.variable
-
-        for _, t_range in available_climo_periods.items():
+        for _, t_range in input_file.climo_periods.items():
 
             # Create climatological period and update metadata
             log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-            out_fp = file_.generate_climo_fp(t_range, args.outdir)
-            log.info('Output file: %s', format(out_fp))
+            output_filepath = input_file.output_filepath(args.basedir, t_range)
+            log.info('Output file: %s', format(output_filepath))
             try:
-                create_climo_file(fp, out_fp, t_range[0], t_range[1], variable)
+                create_climo_file(filepath, output_filepath, t_range[0], t_range[1], input_file.variable)
             except:
                 log.warn('Failed to create climatology file')
             else:
-                update_climo_time_meta(out_fp, FileType)
+                update_climo_time_meta(output_filepath)
+
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
