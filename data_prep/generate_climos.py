@@ -181,11 +181,17 @@ def update_climo_time_meta(filepath):
 
 
 def main(args):
-    variables = '|'.join(args.variables)
-    filepaths = list(iter_matching(
-        args.basedir,
-        re.compile('.*({}).*_(historical)?((?<=l)\+(?=r))?(rcp26|rcp45|rcp85)?_.*r\di\dp\d.*nc'.format(variables))
-    ))
+    if args.basedir:
+        variables = '|'.join(args.variables)
+        filepaths = list(iter_matching(
+            args.basedir,
+            re.compile('.*({}).*_(historical)?((?<=l)\+(?=r))?(rcp26|rcp45|rcp85)?_.*r\di\dp\d.*nc'.format(variables))
+        ))
+    elif args.file_list:
+        with open(args.file_list) as f:
+            filepaths = [l.strip() for l in f]
+    else:
+        filepaths = []
 
     log.info('Will process the following files:')
     for filepath in filepaths:
@@ -196,31 +202,36 @@ def main(args):
         for filepath in filepaths:
             log.info('')
             log.info('File: {}'.format(filepath))
-            input_file = ClimateFile(filepath, raise_=False)
-            log.info('   climo_periods: {}'.format(input_file.climo_periods.keys()))
-            for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
-                log.info('   {}: {}'.format(attr, getattr(input_file, attr)))
-            log.info('output_filename: {}'.format(input_file.output_filename(standard_climo_periods()['6190'])))
+            try:
+                input_file = ClimateFile(filepath, raise_=False)
+            except IOError as e:
+                log.info('IOError: {}'.format(e))
+            else:
+                log.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
+                for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
+                    log.info('{}: {}'.format(attr, getattr(input_file, attr)))
+                log.info('output_filename: {}'.format(input_file.output_filename(standard_climo_periods()['6190'])))
         sys.exit(0)
 
     for filepath in filepaths:
         log.info('')
         log.info('Processing: {}'.format(filepath))
-        input_file = ClimateFile(filepath)
-
-        for _, t_range in input_file.climo_periods.items():
-
-            # Create climatological period and update metadata
-            log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-            output_filepath = input_file.output_filepath(args.basedir, t_range)
-            log.info('Output file: %s', format(output_filepath))
-            try:
-                create_climo_file(filepath, output_filepath, t_range[0], t_range[1], input_file.variable)
-            except:
-                log.warn('Failed to create climatology file')
-            else:
-                update_climo_time_meta(output_filepath)
-
+        try:
+            input_file = ClimateFile(filepath)
+        except IOError as e:
+            log.info('IOError: {}'.format(e))
+        else:
+            for _, t_range in input_file.climo_periods.items():
+                # Create climatological period and update metadata
+                log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
+                output_filepath = input_file.output_filepath(args.basedir, t_range)
+                log.info('Output file: %s', format(output_filepath))
+                try:
+                    create_climo_file(filepath, output_filepath, t_range[0], t_range[1], input_file.variable)
+                except:
+                    log.warn('Failed to create climatology file')
+                else:
+                    update_climo_time_meta(output_filepath)
 
 
 if __name__ == '__main__':
@@ -228,12 +239,12 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
 #    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
+    parser.add_argument('-f', '--file-list', help='File containing list of filepaths (one per line) to process')
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
     parser.add_argument('-C', '--climdex', action='store_true')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
-        basedir='/home/data/climate/CMIP5/CCCMA/CanESM2/',
         climdex=False,
         dry_run=False
     )
