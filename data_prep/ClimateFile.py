@@ -57,8 +57,8 @@ class ClimateFile(object):
                                    date2num(v[1], units=time_var.units, calendar=time_var.calendar) < e_time])
 
         # Expose the start and end dates of this file, as strings
-        self.start_date = s_date.strftime('%Y%m%d')
-        self.end_date = e_date.strftime('%Y%m%d')
+        self.start_date = d2ss(s_date)
+        self.end_date = d2ss(e_date)
 
         # Find the dependent variables in this file. We expect only one, either taxmax, tasmin, or pr.
         # Expose that one as self.variable
