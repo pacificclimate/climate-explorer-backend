@@ -27,13 +27,13 @@ def standard_climo_periods(calendar='standard'):
 
 
 class ClimateFile(object):
-    '''Exposes the salient characteristics, for the purposes of this script, of a climate data file. These
-    characteristics are extracted from the metadata and exposed as the following properties:
+    '''Exposes the salient characteristics, for the purposes of this script, of a climate data file stored as netCDF.
+    These characteristics are extracted from the metadata and exposed as the following properties:
         climo_periods: the subset of the standard climo periods which this file covers
         start_date: first date in time dimension in this file
         end_date: last date in time dimension in this file
         variable: dependent variable in this file (tasmax, tasmin, pr)
-        frequency: frequency of data in this file
+        frequency: frequency (time step) of data grids in this file
         model: name of model used to generate data in this file
         experiment: code for experiment conditions provided to model, formatted for use in filenames
         ensemble_member: ensemble member code
@@ -42,7 +42,14 @@ class ClimateFile(object):
     climatology script. For details see their docstrings.
     '''
 
-    def __init__(self, filepath, raise_=True):
+    def __init__(self, filepath, raise_for_variable=True):
+        '''Initializer
+
+        Args:
+            filepath (str): path to netCDF file to be processed
+            raise_for_variable (bool): if true, raise an exception if an unexpected value is determined
+                for `variable` property; otherwise the exception message is used for the property (for dry-run testing)
+        '''
         nc = Dataset(filepath)
 
         time_var = nc.variables['time']
@@ -51,7 +58,8 @@ class ClimateFile(object):
         s_date = num2date(s_time, units=time_var.units, calendar=time_var.calendar)
         e_date = num2date(e_time, units=time_var.units, calendar=time_var.calendar)
 
-        # Detect which climatological periods can be created
+        # Detect which climatological periods can be created:
+        # those periods that are a subset of the date range in the file.
         self.climo_periods = dict([(k, v) for k, v in standard_climo_periods(time_var.calendar).items()
                                    if date2num(v[0], units=time_var.units, calendar=time_var.calendar) > s_time and
                                    date2num(v[1], units=time_var.units, calendar=time_var.calendar) < e_time])
@@ -75,7 +83,7 @@ class ClimateFile(object):
                     ', '.join(expected_dependent_variables), self.variable
                 ))
         except ValueError as e:
-            if raise_:
+            if raise_for_variable:
                 raise
             else:
                 self.variable = 'ERROR: {}'.format(e)

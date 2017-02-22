@@ -203,9 +203,9 @@ def main(args):
             log.info('')
             log.info('File: {}'.format(filepath))
             try:
-                input_file = ClimateFile(filepath, raise_=False)
-            except IOError as e:
-                log.info('IOError: {}'.format(e))
+                input_file = ClimateFile(filepath, raise_for_variable=False)
+            except Exception as e:
+                log.info('{}: {}'.format(e.__class__.__name__, e))
             else:
                 log.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
                 for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
@@ -218,8 +218,11 @@ def main(args):
         log.info('Processing: {}'.format(filepath))
         try:
             input_file = ClimateFile(filepath)
-        except IOError as e:
-            log.info('IOError: {}'.format(e))
+        except Exception as e:
+            # Likeliest exceptions:
+            # - IOError: file not found
+            # - ValueError: from processing variable in nc file
+            log.info('{}: {}'.format(e.__class__.__name__, e))
         else:
             for _, t_range in input_file.climo_periods.items():
                 # Create climatological period and update metadata
