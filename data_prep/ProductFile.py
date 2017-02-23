@@ -26,7 +26,7 @@ def standard_climo_periods(calendar='standard'):
     return dict([(k, (s2d(year[0]+'-01-01'), s2d(year[1]+'-12-'+day))) for k, year in standard_climo_years.items()])
 
 
-class ClimateFile(object):
+class ProductFile(object):
     '''Exposes the salient characteristics, for the purposes of this script, of a climate data file stored as netCDF.
     These characteristics are extracted from the metadata and exposed as the following properties:
         climo_periods: the subset of the standard climo periods which this file covers
@@ -50,6 +50,8 @@ class ClimateFile(object):
             raise_for_variable (bool): if true, raise an exception if an unexpected value is determined
                 for `variable` property; otherwise the exception message is used for the property (for dry-run testing)
         '''
+        self.input_file_path = filepath
+
         nc = Dataset(filepath)
 
         time_var = nc.variables['time']

@@ -12,7 +12,7 @@ from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
 
 from util import s2d, ss2d, d2ss, d2s
-from ClimateFile import ClimateFile, standard_climo_periods
+from ProductFile import ProductFile, standard_climo_periods
 
 
 log = logging.getLogger(__name__)
@@ -155,7 +155,7 @@ def update_climo_time_meta(filepath):
       - PCIC CMIP5 style file path
     '''
     
-    cf = ClimateFile(filepath)
+    cf = ProductFile(filepath)
     nc = Dataset(filepath, 'r+')
     time_var = nc.variables['time']
 
@@ -203,34 +203,34 @@ def main(args):
             log.info('')
             log.info('File: {}'.format(filepath))
             try:
-                input_file = ClimateFile(filepath, raise_for_variable=False)
+                product_file = ProductFile(filepath, raise_for_variable=False)
             except Exception as e:
                 log.info('{}: {}'.format(e.__class__.__name__, e))
             else:
-                log.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
+                log.info('climo_periods: {}'.format(product_file.climo_periods.keys()))
                 for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
-                    log.info('{}: {}'.format(attr, getattr(input_file, attr)))
-                log.info('output_filename: {}'.format(input_file.output_filename(standard_climo_periods()['6190'])))
+                    log.info('{}: {}'.format(attr, getattr(product_file, attr)))
+                log.info('output_filename: {}'.format(product_file.output_filename(standard_climo_periods()['6190'])))
         sys.exit(0)
 
     for filepath in filepaths:
         log.info('')
         log.info('Processing: {}'.format(filepath))
         try:
-            input_file = ClimateFile(filepath)
+            product_file = ProductFile(filepath)
         except Exception as e:
             # Likeliest exceptions:
             # - IOError: file not found
             # - ValueError: from processing variable in nc file
             log.info('{}: {}'.format(e.__class__.__name__, e))
         else:
-            for _, t_range in input_file.climo_periods.items():
+            for _, t_range in product_file.climo_periods.items():
                 # Create climatological period and update metadata
                 log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-                output_filepath = input_file.output_filepath(args.basedir, t_range)
+                output_filepath = product_file.output_filepath(args.basedir, t_range)
                 log.info('Output file: %s', format(output_filepath))
                 try:
-                    create_climo_file(filepath, output_filepath, t_range[0], t_range[1], input_file.variable)
+                    create_climo_file(filepath, output_filepath, t_range[0], t_range[1], product_file.variable)
                 except:
                     log.warn('Failed to create climatology file')
                 else:
