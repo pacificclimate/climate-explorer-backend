@@ -50,12 +50,6 @@ def create_climo_file(product_file, outdir, t_start, t_end):
     '''
     variable = product_file.variable
 
-    def var_trans(variable):
-        # Returns additional variable specific commands
-        if variable == 'pr':
-            return '-mulc,86400'
-        return ''
-
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
@@ -69,9 +63,6 @@ def create_climo_file(product_file, outdir, t_start, t_end):
     if variable not in supported_vars:
         raise Exception("Unsupported variable: cant't yet process {}".format(variable))
 
-    # Allow different ops by variable? # op = 'sum' if variable == 'pr' else 'mean'
-    op = 'mean'
-
     cdo = Cdo()
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
 
@@ -80,21 +71,32 @@ def create_climo_file(product_file, outdir, t_start, t_end):
         os.makedirs(os.path.dirname(output_file_path))
 
     with NamedTemporaryFile(suffix='.nc') as tempf:
-        cdo.seldate(date_range, input=product_file.input_filepath, output=tempf.name)
-
-        # Add extra postprocessing for specific variables.
-        vt = var_trans(variable)
-
-        if product_file.frequency == 'year':
-            cdo_cmd = '{vt} -tim{op} {fname}'.format(fname=tempf.name, op=op, vt=vt)
-        elif product_file.frequency == 'day':
-            cdo_cmd = '{vt} -ymon{op} {fname} {vt} -yseas{op} {fname} {vt} -tim{op} {fname}'\
-                .format(fname=tempf.name, op=op, vt=vt)
+        # Select input data within time range into temporary file
+        if variable == 'pr':
+            # ... and premultiply input values by 86400
+            cdo.mulc('86400',
+                     input=cdo.seldate(date_range, input=product_file.input_filepath),
+                     output=tempf.name)
         else:
-            raise ValueError("Expected input file to have frequency 'year' or 'day', found {}"
-                             .format(product_file.frequency))
+            cdo.seldate(date_range, input=product_file.input_filepath, output=tempf.name)
 
-        cdo.copy(input=cdo_cmd, output=output_file_path)
+        # Process selected data into climatological means
+        def climo_outputs(frequency):
+            '''Return a list of cdo operators that generate the desired climo outputs.
+            What is generated depends on frequency of input file data - different operators applied depending.
+            If operators depend also on variable, then modify this function to depend on variable as well.
+            '''
+            ops_by_freq = {
+                'day': ['ymonmean', 'yseasmean', 'timmean'],
+                'year': ['timmean']
+            }
+            try:
+                return [getattr(cdo, op)(input=tempf.name) for op in ops_by_freq[frequency]]
+            except:
+                raise ValueError("Expected input file to have frequency {}, found {}"
+                             .format(' or '.join(ops_by_freq.keys()), frequency))
+
+        cdo.copy(' '.join(climo_outputs(product_file.frequency)), output=output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
