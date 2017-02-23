@@ -4,15 +4,6 @@ from netCDF4 import Dataset, num2date, date2num
 from util import s2d, d2ss
 
 
-# standard_climo_periods = {
-#     '6190': [s2d('1961-01-01'), s2d('1990-12-31')],
-#     '7100': [s2d('1971-01-01'), s2d('2000-12-31')],
-#     '8110': [s2d('1981-01-01'), s2d('2010-12-31')],
-#     '2020': [s2d('2010-01-01'), s2d('2039-12-31')],
-#     '2050': [s2d('2040-01-01'), s2d('2069-12-31')],
-#     '2080': [s2d('2070-01-01'), s2d('2099-12-31')]
-# }
-
 def standard_climo_periods(calendar='standard'):
     standard_climo_years = {
         '6190': ['1961', '1990'],
@@ -42,17 +33,18 @@ class ProductFile(object):
     climatology script. For details see their docstrings.
     '''
 
-    def __init__(self, filepath, raise_for_variable=True):
+    def __init__(self, input_filepath, output_dir='', raise_for_variable=True):
         '''Initializer
 
         Args:
-            filepath (str): path to netCDF file to be processed
+            input_filepath (str): path to netCDF file to be processed
             raise_for_variable (bool): if true, raise an exception if an unexpected value is determined
                 for `variable` property; otherwise the exception message is used for the property (for dry-run testing)
         '''
-        self.input_file_path = filepath
+        self.input_filepath = input_filepath
+        self.output_dir = output_dir
 
-        nc = Dataset(filepath)
+        nc = Dataset(input_filepath)
 
         time_var = nc.variables['time']
         s_time = time_var[0]
@@ -98,7 +90,7 @@ class ProductFile(object):
 
         nc.close()
 
-    def output_filename(self, t_range):
+    def output_filename(self, t_start, t_end):
         '''Generate an appropriate CMOR filename for the climatology output file that will be generated 
         by this script.
         '''
@@ -108,12 +100,12 @@ class ProductFile(object):
             model=self.model,
             experiment=self.experiment,
             ensemble_member=self.ensemble_member,
-            t_start=d2ss(t_range[0]),
-            t_end=d2ss(t_range[1])
+            t_start=d2ss(t_start),
+            t_end=d2ss(t_end)
         )
 
-    def output_filepath(self, output_dir, t_range):
+    def output_filepath(self, t_start, t_end):
         '''Join the output directory to the output filename for this file'''
-        return os.path.realpath(os.path.join(output_dir, self.output_filename(t_range)))
+        return os.path.realpath(os.path.join(self.output_dir, self.output_filename(t_start, t_end)))
 
 

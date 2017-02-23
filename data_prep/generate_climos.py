@@ -35,20 +35,20 @@ def iter_matching(dirpath, regexp):
                 yield abspath
 
 
-def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
+def create_climo_file(product_file, outdir, t_start, t_end):
     '''
     Generates climatological files from an input file and a selected time range
 
-    Paramenters:
-        f_in: input file path
-        f_out: output file path
-        t_start (datetime.datetime): start date of climo period
-        t_end (datetime.datetime): end date of climo period
-        variable (str): name of the variable which is being processed
+    Parameters:
+        product_file (ProductFile): object representing the input data product file
+        outdir (str): path to base directory in which to store output climo file
+        t_start (datetime.datetime): start date of climo period to process
+        t_end (datetime.datetime): end date of climo period to process
 
     Requested date range MUST exist in the input file
 
     '''
+    variable = product_file.variable
 
     def var_trans(variable):
         # Returns additional variable specific commands
@@ -75,22 +75,26 @@ def create_climo_file(fp_in, fp_out, t_start, t_end, variable):
     cdo = Cdo()
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
 
-    if not os.path.exists(os.path.dirname(fp_out)):
-        os.makedirs(os.path.dirname(fp_out))
+    output_file_path = product_file.output_file_path(outdir, t_start, t_end)
+    if not os.path.exists(os.path.dirname(output_file_path)):
+        os.makedirs(os.path.dirname(output_file_path))
 
     with NamedTemporaryFile(suffix='.nc') as tempf:
-        cdo.seldate(date_range, input=fp_in, output=tempf.name)
+        cdo.seldate(date_range, input=product_file.input_filepath, output=tempf.name)
 
         # Add extra postprocessing for specific variables.
         vt = var_trans(variable)
 
-        if 'yr' in fp_in:
+        if product_file.frequency == 'year':
             cdo_cmd = '{vt} -tim{op} {fname}'.format(fname=tempf.name, op=op, vt=vt)
-        else:
+        elif product_file.frequency == 'day':
             cdo_cmd = '{vt} -ymon{op} {fname} {vt} -yseas{op} {fname} {vt} -tim{op} {fname}'\
                 .format(fname=tempf.name, op=op, vt=vt)
+        else:
+            raise ValueError("Expected input file to have frequency 'year' or 'day', found {}"
+                             .format(product_file.frequency))
 
-        cdo.copy(input=cdo_cmd, output=fp_out)
+        cdo.copy(input=cdo_cmd, output=output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
@@ -183,15 +187,17 @@ def update_climo_time_meta(filepath):
 def main(args):
     if args.basedir:
         variables = '|'.join(args.variables)
-        filepaths = list(iter_matching(
+        filepaths = iter_matching(
             args.basedir,
             re.compile('.*({}).*_(historical)?((?<=l)\+(?=r))?(rcp26|rcp45|rcp85)?_.*r\di\dp\d.*nc'.format(variables))
-        ))
+        )
     elif args.file_list:
         with open(args.file_list) as f:
             filepaths = [l.strip() for l in f]
     else:
         filepaths = []
+
+    filepaths = list(filepaths)  # Not very nice, but we reuse the list, at least for now
 
     log.info('Will process the following files:')
     for filepath in filepaths:
@@ -203,14 +209,15 @@ def main(args):
             log.info('')
             log.info('File: {}'.format(filepath))
             try:
-                product_file = ProductFile(filepath, raise_for_variable=False)
+                product_file = ProductFile(filepath, args.outdir, raise_for_variable=False)
             except Exception as e:
                 log.info('{}: {}'.format(e.__class__.__name__, e))
             else:
                 log.info('climo_periods: {}'.format(product_file.climo_periods.keys()))
                 for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
                     log.info('{}: {}'.format(attr, getattr(product_file, attr)))
-                log.info('output_filename: {}'.format(product_file.output_filename(standard_climo_periods()['6190'])))
+                log.info('output_filename: {}'.format(product_file.output_filename(*standard_climo_periods()['6190'])))
+                log.info('output_filepath: {}'.format(product_file.output_filepath(*standard_climo_periods()['6190'])))
         sys.exit(0)
 
     for filepath in filepaths:
@@ -227,10 +234,11 @@ def main(args):
             for _, t_range in product_file.climo_periods.items():
                 # Create climatological period and update metadata
                 log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-                output_filepath = product_file.output_filepath(args.basedir, t_range)
+                output_filepath = product_file.output_filepath(*t_range)
                 log.info('Output file: %s', format(output_filepath))
                 try:
-                    create_climo_file(filepath, output_filepath, t_range[0], t_range[1], product_file.variable)
+                    # create_climo_file(filepath, output_filepath, t_range[0], t_range[1], product_file.variable)
+                    create_climo_file(product_file, *t_range)
                 except:
                     log.warn('Failed to create climatology file')
                 else:
