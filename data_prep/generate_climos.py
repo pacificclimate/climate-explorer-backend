@@ -50,6 +50,7 @@ def create_climo_file(product_file, outdir, t_start, t_end):
     '''
     variable = product_file.variable
 
+    # TODO: Are these all really legitimate variables for processing, i.e., for forming temporal means over?
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
@@ -64,39 +65,35 @@ def create_climo_file(product_file, outdir, t_start, t_end):
         raise Exception("Unsupported variable: cant't yet process {}".format(variable))
 
     cdo = Cdo()
-    date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
 
     output_file_path = product_file.output_file_path(outdir, t_start, t_end)
     if not os.path.exists(os.path.dirname(output_file_path)):
         os.makedirs(os.path.dirname(output_file_path))
 
-    with NamedTemporaryFile(suffix='.nc') as tempf:
-        # Select input data within time range into temporary file
-        if variable == 'pr':
-            # ... and premultiply input values by 86400
-            cdo.mulc('86400',
-                     input=cdo.seldate(date_range, input=product_file.input_filepath),
-                     output=tempf.name)
-        else:
-            cdo.seldate(date_range, input=product_file.input_filepath, output=tempf.name)
+    # Select input data within time range into temporary file
+    date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
+    temporal_subset = cdo.seldate(date_range, input=product_file.input_filepath)
+    if variable == 'pr':
+        # Premultiply input values by 86400
+        temporal_subset = cdo.mulc('86400', input=temporal_subset)
 
-        # Process selected data into climatological means
-        def climo_outputs(frequency):
-            '''Return a list of cdo operators that generate the desired climo outputs.
-            What is generated depends on frequency of input file data - different operators applied depending.
-            If operators depend also on variable, then modify this function to depend on variable as well.
-            '''
-            ops_by_freq = {
-                'day': ['ymonmean', 'yseasmean', 'timmean'],
-                'year': ['timmean']
-            }
-            try:
-                return [getattr(cdo, op)(input=tempf.name) for op in ops_by_freq[frequency]]
-            except:
-                raise ValueError("Expected input file to have frequency {}, found {}"
-                             .format(' or '.join(ops_by_freq.keys()), frequency))
+    # Process selected data into climatological means
+    def climo_outputs(frequency):
+        '''Return a list of cdo operators that generate the desired climo outputs.
+        What is generated depends on frequency of input file data - different operators applied depending.
+        If operators depend also on variable, then modify this function to depend on variable as well.
+        '''
+        ops_by_freq = {
+            'day': ['ymonmean', 'yseasmean', 'timmean'],
+            'year': ['timmean']
+        }
+        try:
+            return [getattr(cdo, op)(input=temporal_subset) for op in ops_by_freq[frequency]]
+        except:
+            raise ValueError("Expected input file to have frequency {}, found {}"
+                         .format(' or '.join(ops_by_freq.keys()), frequency))
 
-        cdo.copy(' '.join(climo_outputs(product_file.frequency)), output=output_file_path)
+    cdo.copy(' '.join(climo_outputs(product_file.frequency)), output=output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
