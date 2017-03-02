@@ -13,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 
 from util import s2d, ss2d, d2ss, d2s
 from ProductFile import ProductFile, standard_climo_periods
+from nchelpers import CFDataset
 
 
 log = logging.getLogger(__name__)
@@ -35,21 +36,18 @@ def iter_matching(dirpath, regexp):
                 yield abspath
 
 
-def create_climo_file(product_file, outdir, t_start, t_end):
-    '''
-    Generates climatological files from an input file and a selected time range
+def create_climo_file(outdir, input_file, t_start, t_end):
+    """Generate climatological files from an input file and a selected time range.
 
     Parameters:
-        product_file (ProductFile): object representing the input data product file
         outdir (str): path to base directory in which to store output climo file
+        input_file (nchelpers.CFDataset): the input data file
         t_start (datetime.datetime): start date of climo period to process
         t_end (datetime.datetime): end date of climo period to process
 
-    Requested date range MUST exist in the input file
+    Requested date range MUST exist in the input file.
 
-    '''
-    variable = product_file.variable
-
+    """
     # TODO: Are these all really legitimate variables for processing, i.e., for forming temporal means over?
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
@@ -61,18 +59,19 @@ def create_climo_file(product_file, outdir, t_start, t_end):
         'tasmax', 'pr'
     }
 
-    if variable not in supported_vars:
-        raise Exception("Unsupported variable: cant't yet process {}".format(variable))
+    for variable in input_file.dependent_variables:
+        if variable not in supported_vars:
+            raise Exception("Unsupported variable: cant't yet process {}".format(variable))
 
     cdo = Cdo()
 
-    output_file_path = product_file.output_file_path(outdir, t_start, t_end)
+    output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end)
     if not os.path.exists(os.path.dirname(output_file_path)):
         os.makedirs(os.path.dirname(output_file_path))
 
     # Select input data within time range into temporary file
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
-    temporal_subset = cdo.seldate(date_range, input=product_file.input_filepath)
+    temporal_subset = cdo.seldate(date_range, input=input_file.input_filepath)
     if variable == 'pr':
         # Premultiply input values by 86400
         temporal_subset = cdo.mulc('86400', input=temporal_subset)
@@ -93,7 +92,7 @@ def create_climo_file(product_file, outdir, t_start, t_end):
             raise ValueError("Expected input file to have frequency {}, found {}"
                          .format(' or '.join(ops_by_freq.keys()), frequency))
 
-    cdo.copy(' '.join(climo_outputs(product_file.frequency)), output=output_file_path)
+    cdo.copy(' '.join(climo_outputs(input_file.frequency)), output=output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
@@ -158,29 +157,64 @@ def update_climo_time_meta(filepath):
       - PCIC CMIP5 style file path
     '''
     
-    cf = ProductFile(filepath)
-    nc = Dataset(filepath, 'r+')
-    time_var = nc.variables['time']
+    cf = CFDataset(filepath)
+    time_var = cf.variables['time']
 
     # Generate new time/climo_bounds data
-    if cf.frequency == 'yrClim':
+    if cf.time_resolution == 'yearly':
         time_types = ('annual')
     else:
         time_types = ('monthly', 'seasonal', 'annual')
 
-    times, climo_bounds = generate_climo_time_var(ss2d(cf.start_date), ss2d(cf.end_date), time_types)
+    start_date, end_date = cf.time_range
+    # Migration note: start_date, end_date may need to be converted to real datetime.datetime values
+    times, climo_bounds = generate_climo_time_var(start_date, end_date, time_types)
 
     time_var[:] = date2num(times, time_var.units, time_var.calendar)
 
     # Create new climatology_bounds variable and required bnds dimension
     time_var.climatology = 'climatology_bounds'
-    nc.createDimension('bnds', 2)
-    climo_bnds_var = nc.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
+    cf.createDimension('bnds', 2)
+    climo_bnds_var = cf.createVariable('climatology_bounds', 'f4', ('time', 'bnds', ))
     climo_bnds_var.calendar = time_var.calendar
     climo_bnds_var.units = time_var.units
     climo_bnds_var[:] = date2num(climo_bounds, time_var.units, time_var.calendar)
 
-    nc.close()
+    cf.close()
+
+
+def climo_output_filename(input_file, t_start, t_end):
+    '''Generate an appropriate CMOR filename for the climatology output file that will be generated
+    by this script.
+    '''
+    # Establish the file-independent components of the output filename
+    components = {
+        'variable': '+'.join(input_file.dependent_varnames),
+        'mip_table': {'daily': 'Amon', 'monthly': 'aMon', 'yearly': 'Ayr'}.get(input_file.time_resolution, 'unknown'),
+        't_start': d2ss(t_start),
+        't_end': d2ss(t_end)
+    }
+
+    # Fill in the rest, depending on whether the file is unprocessed or processed model output
+    if input_file.is_unprocessed_model_output:
+        components.update(
+            model=input_file.metadata.model,
+            experiment=input_file.metadata.emissions,
+            ensemble_member=input_file.metadata.run
+        )
+    else:
+        components.update(
+            model=input_file.driving_model_id,
+            experiment='+'.join(re.split('\s*,\s*', input_file.driving_experiment_name)),
+            ensemble_member=input_file.driving_model_ensemble_member
+        )
+
+    return '{variable}_{mip_table}_{model}_{experiment}_{ensemble_member}_{t_start}-{t_end}'.format(**components)
+
+
+def climo_output_filepath(output_dir, input_file, t_start, t_end):
+    '''Join the output directory to the output filename for this file'''
+    return os.path.realpath(os.path.join(output_dir, climo_output_filename(input_file, t_start, t_end)))
 
 
 def main(args):
@@ -192,7 +226,7 @@ def main(args):
         )
     elif args.file_list:
         with open(args.file_list) as f:
-            filepaths = [l.strip() for l in f]
+            filepaths = [l for l in (l.strip() for l in f) if l[0] != '#']
     else:
         filepaths = []
 
@@ -208,36 +242,39 @@ def main(args):
             log.info('')
             log.info('File: {}'.format(filepath))
             try:
-                product_file = ProductFile(filepath, args.outdir, raise_for_variable=False)
+                input_file = CFDataset(filepath)
             except Exception as e:
                 log.info('{}: {}'.format(e.__class__.__name__, e))
             else:
-                log.info('climo_periods: {}'.format(product_file.climo_periods.keys()))
-                for attr in 'start_date end_date variable frequency model experiment ensemble_member'.split():
-                    log.info('{}: {}'.format(attr, getattr(product_file, attr)))
-                log.info('output_filename: {}'.format(product_file.output_filename(*standard_climo_periods()['6190'])))
-                log.info('output_filepath: {}'.format(product_file.output_filepath(*standard_climo_periods()['6190'])))
+                log.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
+                for attr in 'project institution model emissions run'.split():
+                    try:
+                        log.info('{}: {}'.format(attr, getattr(input_file.metadata, attr)))
+                    except Exception as e:
+                        log.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
+                for attr in 'dependent_varnames time_resolution'.split():
+                    log.info('{}: {}'.format(attr, getattr(input_file, attr)))
+                log.info('output_filename: {}'.format(climo_output_filename(input_file, *standard_climo_periods()['6190'])))
+                log.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
         sys.exit(0)
 
     for filepath in filepaths:
         log.info('')
         log.info('Processing: {}'.format(filepath))
         try:
-            product_file = ProductFile(filepath)
+            input_file = CFDataset(filepath)
         except Exception as e:
             # Likeliest exceptions:
             # - IOError: file not found
-            # - ValueError: from processing variable in nc file
             log.info('{}: {}'.format(e.__class__.__name__, e))
         else:
-            for _, t_range in product_file.climo_periods.items():
+            for _, t_range in input_file.climo_periods.items():
                 # Create climatological period and update metadata
                 log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-                output_filepath = product_file.output_filepath(*t_range)
+                output_filepath = climo_output_filepath(args.outdir, input_file, *t_range)
                 log.info('Output file: %s', format(output_filepath))
                 try:
-                    # create_climo_file(filepath, output_filepath, t_range[0], t_range[1], product_file.variable)
-                    create_climo_file(product_file, *t_range)
+                    create_climo_file(args.outdir, input_file, *t_range)
                 except:
                     log.warn('Failed to create climatology file')
                 else:
@@ -250,7 +287,7 @@ if __name__ == '__main__':
 #    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-f', '--file-list', help='File containing list of filepaths (one per line) to process')
-    parser.add_argument('-v', '--variables', nargs='+', help='Variables to include')
+    parser.add_argument('-v', '--variables', nargs='+', help='Variables to include; used only to select files')
     parser.add_argument('-C', '--climdex', action='store_true')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     parser.set_defaults(
