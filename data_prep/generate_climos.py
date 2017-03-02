@@ -15,8 +15,12 @@ from util import s2d, ss2d, d2ss, d2s
 from nchelpers import CFDataset, standard_climo_periods
 
 
-log = logging.getLogger(__name__)
-logging.basicConfig(stream=sys.stdout, level=4)
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
 
 
 def iter_matching(dirpath, regexp):
@@ -231,51 +235,51 @@ def main(args):
 
     filepaths = list(filepaths)  # Not very nice, but we reuse the list, at least for now
 
-    log.info('Will process the following files:')
+    logger.info('Will process the following files:')
     for filepath in filepaths:
-        log.info(filepath)
+        logger.info(filepath)
 
     if args.dry_run:
-        log.info('DRY RUN')
+        logger.info('DRY RUN')
         for filepath in filepaths:
-            log.info('')
-            log.info('File: {}'.format(filepath))
+            logger.info('')
+            logger.info('File: {}'.format(filepath))
             try:
                 input_file = CFDataset(filepath)
             except Exception as e:
-                log.info('{}: {}'.format(e.__class__.__name__, e))
+                logger.info('{}: {}'.format(e.__class__.__name__, e))
             else:
-                log.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
+                logger.info('climo_periods: {}'.format(input_file.climo_periods.keys()))
                 for attr in 'project institution model emissions run'.split():
                     try:
-                        log.info('{}: {}'.format(attr, getattr(input_file.metadata, attr)))
+                        logger.info('{}: {}'.format(attr, getattr(input_file.metadata, attr)))
                     except Exception as e:
-                        log.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
+                        logger.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
                 for attr in 'dependent_varnames time_resolution'.split():
-                    log.info('{}: {}'.format(attr, getattr(input_file, attr)))
-                log.info('output_filename: {}'.format(climo_output_filename(input_file, *standard_climo_periods()['6190'])))
-                log.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
+                    logger.info('{}: {}'.format(attr, getattr(input_file, attr)))
+                logger.info('output_filename: {}'.format(climo_output_filename(input_file, *standard_climo_periods()['6190'])))
+                logger.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
         sys.exit(0)
 
     for filepath in filepaths:
-        log.info('')
-        log.info('Processing: {}'.format(filepath))
+        logger.info('')
+        logger.info('Processing: {}'.format(filepath))
         try:
             input_file = CFDataset(filepath)
         except Exception as e:
             # Likeliest exceptions:
             # - IOError: file not found
-            log.info('{}: {}'.format(e.__class__.__name__, e))
+            logger.info('{}: {}'.format(e.__class__.__name__, e))
         else:
             for _, t_range in input_file.climo_periods.items():
                 # Create climatological period and update metadata
-                log.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
+                logger.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
                 output_filepath = climo_output_filepath(args.outdir, input_file, *t_range)
-                log.info('Output file: %s', format(output_filepath))
+                logger.info('Output file: %s', format(output_filepath))
                 try:
                     create_climo_file(args.outdir, input_file, *t_range)
                 except:
-                    log.warn('Failed to create climatology file')
+                    logger.warn('Failed to create climatology file')
                 else:
                     update_climo_time_meta(output_filepath)
 
@@ -289,10 +293,14 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--variables', nargs='+', help='Variables to include; used only to select files')
     parser.add_argument('-C', '--climdex', action='store_true')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
+    log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
+    parser.add_argument('-l', '--loglevel', help='Logging level',
+                        choices=log_level_choices, default='INFO')
     parser.set_defaults(
         variables=['tasmin', 'tasmax'],
         climdex=False,
         dry_run=False
     )
     args = parser.parse_args()
+    logger.setLevel(getattr(logging, args.loglevel))
     main(args)
