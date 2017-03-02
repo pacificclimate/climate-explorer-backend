@@ -186,38 +186,9 @@ def update_climo_time_meta(filepath):
     cf.close()
 
 
-def climo_output_filename(input_file, t_start, t_end):
-    '''Generate an appropriate CMOR filename for the climatology output file that will be generated
-    by this script.
-    '''
-    # Establish the file-independent components of the output filename
-    components = {
-        'variable': '+'.join(input_file.dependent_varnames),
-        'mip_table': {'daily': 'Amon', 'monthly': 'aMon', 'yearly': 'Ayr'}.get(input_file.time_resolution, 'unknown'),
-        't_start': d2ss(t_start),
-        't_end': d2ss(t_end)
-    }
-
-    # Fill in the rest, depending on whether the file is unprocessed or processed model output
-    if input_file.is_unprocessed_model_output:
-        components.update(
-            model=input_file.metadata.model,
-            experiment=input_file.metadata.emissions,
-            ensemble_member=input_file.metadata.run
-        )
-    else:
-        components.update(
-            model=input_file.driving_model_id,
-            experiment='+'.join(re.split('\s*,\s*', input_file.driving_experiment_name)),
-            ensemble_member=input_file.driving_model_ensemble_member
-        )
-
-    return '{variable}_{mip_table}_{model}_{experiment}_{ensemble_member}_{t_start}-{t_end}'.format(**components)
-
-
 def climo_output_filepath(output_dir, input_file, t_start, t_end):
     '''Join the output directory to the output filename for this file'''
-    return os.path.realpath(os.path.join(output_dir, climo_output_filename(input_file, t_start, t_end)))
+    return os.path.realpath(os.path.join(output_dir, input_file.climo_output_filename(t_start, t_end)))
 
 
 def main(args):
@@ -255,9 +226,8 @@ def main(args):
                         logger.info('{}: {}'.format(attr, getattr(input_file.metadata, attr)))
                     except Exception as e:
                         logger.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
-                for attr in 'dependent_varnames time_resolution'.split():
+                for attr in 'dependent_varnames time_resolution is_multi_year_mean first_MiB_md5sum unique_id'.split():
                     logger.info('{}: {}'.format(attr, getattr(input_file, attr)))
-                logger.info('output_filename: {}'.format(climo_output_filename(input_file, *standard_climo_periods()['6190'])))
                 logger.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
         sys.exit(0)
 
