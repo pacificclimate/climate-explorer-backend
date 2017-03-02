@@ -12,8 +12,7 @@ from netCDF4 import Dataset, num2date, date2num
 from dateutil.relativedelta import relativedelta
 
 from util import s2d, ss2d, d2ss, d2s
-from ProductFile import ProductFile, standard_climo_periods
-from nchelpers import CFDataset
+from nchelpers import CFDataset, standard_climo_periods
 
 
 log = logging.getLogger(__name__)
