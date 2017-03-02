@@ -5,10 +5,9 @@ import sys
 
 from argparse import ArgumentParser
 from datetime import datetime
-from tempfile import NamedTemporaryFile
 
 from cdo import Cdo
-from netCDF4 import Dataset, num2date, date2num
+from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 
 from util import s2d, ss2d, d2ss, d2s
@@ -74,28 +73,28 @@ def create_climo_file(outdir, input_file, t_start, t_end):
 
     # Select input data within time range into temporary file
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
-    temporal_subset = cdo.seldate(date_range, input=input_file.input_filepath)
+    temporal_subset = cdo.seldate(date_range, input=input_file.filepath)
     if variable == 'pr':
         # Premultiply input values by 86400
         temporal_subset = cdo.mulc('86400', input=temporal_subset)
 
     # Process selected data into climatological means
-    def climo_outputs(frequency):
+    def climo_outputs(time_resolution):
         '''Return a list of cdo operators that generate the desired climo outputs.
-        What is generated depends on frequency of input file data - different operators applied depending.
+        Result depends on the time resolution of input file data - different operators are applied depending.
         If operators depend also on variable, then modify this function to depend on variable as well.
         '''
-        ops_by_freq = {
-            'day': ['ymonmean', 'yseasmean', 'timmean'],
-            'year': ['timmean']
+        ops_by_resolution = {
+            'daily': ['ymonmean', 'yseasmean', 'timmean'],
+            'yearly': ['timmean']
         }
         try:
-            return [getattr(cdo, op)(input=temporal_subset) for op in ops_by_freq[frequency]]
+            return [getattr(cdo, op)(input=temporal_subset) for op in ops_by_resolution[time_resolution]]
         except:
-            raise ValueError("Expected input file to have frequency {}, found {}"
-                         .format(' or '.join(ops_by_freq.keys()), frequency))
+            raise ValueError("Expected input file to have time resolution {}, found {}"
+                             .format(' or '.join(ops_by_resolution.keys()), time_resolution))
 
-    cdo.copy(' '.join(climo_outputs(input_file.frequency)), output=output_file_path)
+    cdo.copy(' '.join(climo_outputs(input_file.time_resolution)), output=output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
 
