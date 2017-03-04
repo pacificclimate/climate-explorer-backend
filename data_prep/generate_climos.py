@@ -1,7 +1,7 @@
 import os, os.path
-import re
 import logging
 import sys
+from itertools import chain
 
 from argparse import ArgumentParser
 from datetime import datetime
@@ -20,22 +20,6 @@ handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(handler)
-
-
-def iter_matching(dirpath, regexp):
-    # http://stackoverflow.com/questions/4639506/os-walk-with-regex
-    """Generator yielding all files under `dirpath` whose absolute path
-       matches the regular expression `regexp`.
-       Usage:
-
-           >>> for filename in iter_matching('/', r'/home.*\.bak'):
-           ....    # do something
-    """
-    for dir_, _, filenames in os.walk(dirpath):
-        for filename in filenames:
-            abspath = os.path.join(dir_, filename)
-            if regexp.match(abspath):
-                yield abspath
 
 
 def create_climo_file(outdir, input_file, t_start, t_end):
@@ -191,17 +175,10 @@ def climo_output_filepath(output_dir, input_file, t_start, t_end):
 
 
 def main(args):
-    if args.basedir:
-        variables = '|'.join(args.variables)
-        filepaths = iter_matching(
-            args.basedir,
-            re.compile('.*({}).*_(historical)?((?<=l)\+(?=r))?(rcp26|rcp45|rcp85)?_.*r\di\dp\d.*nc'.format(variables))
-        )
-    elif args.file_list:
+    filepaths = args.filepaths
+    if args.file_list:
         with open(args.file_list) as f:
-            filepaths = [l for l in (l.strip() for l in f) if l[0] != '#']
-    else:
-        filepaths = []
+            filepaths = chain(filepaths, [l for l in (l.strip() for l in f) if l[0] != '#'])
 
     filepaths = list(filepaths)  # Not very nice, but we reuse the list, at least for now
 
@@ -255,18 +232,16 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
-    parser.add_argument('-o', '--outdir', required=True, help='Output folder')
+    parser.add_argument('filepaths', nargs='*', help='Files to process')
 #    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
-    parser.add_argument('-b', '--basedir', help='Root directory from which to search for climate model output')
     parser.add_argument('-f', '--file-list', help='File containing list of filepaths (one per line) to process')
-    parser.add_argument('-v', '--variables', nargs='+', help='Variables to include; used only to select files')
     parser.add_argument('-C', '--climdex', action='store_true')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
+    parser.add_argument('-o', '--outdir', required=True, help='Output folder')
     parser.set_defaults(
-        variables=['tasmin', 'tasmax'],
         climdex=False,
         dry_run=False
     )
