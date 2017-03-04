@@ -225,7 +225,7 @@ def main(args):
                         logger.info('{}: {}'.format(attr, getattr(input_file.metadata, attr)))
                     except Exception as e:
                         logger.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
-                for attr in 'dependent_varnames time_resolution is_multi_year_mean first_MiB_md5sum unique_id'.split():
+                for attr in 'dependent_varnames time_resolution is_multi_year_mean'.split():
                     logger.info('{}: {}'.format(attr, getattr(input_file, attr)))
                 logger.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
         sys.exit(0)
