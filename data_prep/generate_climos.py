@@ -10,8 +10,8 @@ from cdo import Cdo
 from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 
-from util import s2d, ss2d, d2ss, d2s
 from nchelpers import CFDataset, standard_climo_periods
+from nchelpers.date_utils import d2s
 
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
