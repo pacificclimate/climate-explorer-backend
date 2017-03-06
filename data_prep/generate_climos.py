@@ -34,7 +34,6 @@ def create_climo_file(outdir, input_file, t_start, t_end):
     Requested date range MUST exist in the input file.
 
     """
-    # TODO: Are these all really legitimate variables for processing, i.e., for forming temporal means over?
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
