@@ -175,20 +175,9 @@ def climo_output_filepath(output_dir, input_file, t_start, t_end):
 
 
 def main(args):
-    filepaths = args.filepaths
-    if args.file_list:
-        with open(args.file_list) as f:
-            filepaths = chain(filepaths, [l for l in (l.strip() for l in f) if l[0] != '#'])
-
-    filepaths = list(filepaths)  # Not very nice, but we reuse the list, at least for now
-
-    logger.info('Will process the following files:')
-    for filepath in filepaths:
-        logger.info(filepath)
-
     if args.dry_run:
         logger.info('DRY RUN')
-        for filepath in filepaths:
+        for filepath in args.filepaths:
             logger.info('')
             logger.info('File: {}'.format(filepath))
             try:
@@ -207,7 +196,7 @@ def main(args):
                 logger.info('output_filepath: {}'.format(climo_output_filepath(args.outdir, input_file, *standard_climo_periods()['6190'])))
         sys.exit(0)
 
-    for filepath in filepaths:
+    for filepath in args.filepaths:
         logger.info('')
         logger.info('Processing: {}'.format(filepath))
         try:
