@@ -22,18 +22,39 @@ logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 
 
-def create_climo_file(outdir, input_file, t_start, t_end):
+def create_climo_files(outdir, input_file, t_start, t_end):
     """Generate climatological files from an input file and a selected time range.
+    At present the climatological files contain multi-year means of the dependent variables in the input file.
 
     Parameters:
-        outdir (str): path to base directory in which to store output climo file
+        outdir (str): path to base directory in which to store output climo files
         input_file (nchelpers.CFDataset): the input data file
         t_start (datetime.datetime): start date of climo period to process
         t_end (datetime.datetime): end date of climo period to process
 
-    Requested date range MUST exist in the input file.
+    We use CDO to perform the key computations for the climatology outputs.
+
+    One output file is generated per dependent variable in the input file. This simplifies the processing somewhat,
+    since in order to apply variable-specific operations using CDO, the variable must at least temporarily be split
+    out of the file. We can avoid copying all that back into a single file.
+
+    To process an input file we must perform the following operations:
+    - Select the temporal subset defined by t_start, t_end
+    - Form climatological means over each dependent variable
+    - Split multiple variables into separate files
+    - Apply any special per-variable operations (e.g., scaling pr to mm/day)
+
+    The above operations could validly be performed in several different orders, but the ordering given optimizes
+    execution time and uses less intermediate storage space than some others.
+    This ordering/optimization may need to change if different climatological outputs are later required.
+
+    If the requested date range is not fully included in the input file, then output file will contain a smaller date
+    range (defined by what's actually availabe in the input file) and the date range part of output file name will be
+    misleading.
 
     """
+    logger.info('Generating climo period %s to %s', d2s(t_start), d2s(t_end))
+
     supported_vars = {
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
@@ -50,18 +71,12 @@ def create_climo_file(outdir, input_file, t_start, t_end):
 
     cdo = Cdo()
 
-    output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end)
-    if not os.path.exists(os.path.dirname(output_file_path)):
-        os.makedirs(os.path.dirname(output_file_path))
-
-    # Select input data within time range into temporary file
+    # Select the temporal subset defined by t_start, t_end
+    logger.info('Selecting temporal subset')
     date_range = '{},{}'.format(d2s(t_start), d2s(t_end))
     temporal_subset = cdo.seldate(date_range, input=input_file.filepath)
-    if variable == 'pr':
-        # Premultiply input values by 86400
-        temporal_subset = cdo.mulc('86400', input=temporal_subset)
 
-    # Process selected data into climatological means
+    # Form climatological means over dependent variables
     def climo_outputs(time_resolution):
         '''Return a list of cdo operators that generate the desired climo outputs.
         Result depends on the time resolution of input file data - different operators are applied depending.
@@ -69,6 +84,7 @@ def create_climo_file(outdir, input_file, t_start, t_end):
         '''
         ops_by_resolution = {
             'daily': ['ymonmean', 'yseasmean', 'timmean'],
+            'monthly': ['yseasmean', 'timmean'],
             'yearly': ['timmean']
         }
         try:
@@ -77,9 +93,42 @@ def create_climo_file(outdir, input_file, t_start, t_end):
             raise ValueError("Expected input file to have time resolution {}, found {}"
                              .format(' or '.join(ops_by_resolution.keys()), time_resolution))
 
-    cdo.copy(' '.join(climo_outputs(input_file.time_resolution)), output=output_file_path)
+    logger.info('Forming climatological means')
+    climo_means = cdo.copy(' '.join(climo_outputs(input_file.time_resolution)))
 
-    # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
+    # Split climo means file into separate files, one per variable
+    for variable in input_file.dependent_variables:
+        logger.info('Splitting into single-variable files')
+        try:
+            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable)
+            logger.info('Output file: {}'.format(output_file_path))
+            if not os.path.exists(os.path.dirname(output_file_path)):
+                os.makedirs(os.path.dirname(output_file_path))
+
+            by_var_name = 'name={}'.format(variable) # for cdo select cmd
+
+            # Apply per-variable processing
+            if variable == 'pr' and 's-1' in input_file.variables[variable].units: # units can be 'mm s-1', 'kg m-2 s-1'
+                logger.info("Converting 'pr' variable to units mm/day")
+                # Extract variable
+                single_variable = cdo.select(by_var_name, input=climo_means)
+                # Multiply values by 86400 to convert from mm/s to mm/day
+                single_variable = cdo.mulc('86400', input=single_variable)
+                # Update units attribute
+                # TODO: Verify that "d-1" is desired way to express "per day" (alternaive is "day-1")
+                # TODO: Reconsider whether we want to use CDO to set attributes - it copies the file to do so
+                attribute_to_set = 'pr@units="{}"'.format(input_file.variables[variable].units.replace('s-1', 'd-1'))
+                cdo.setattribute(attribute_to_set, input=single_variable, output=output_file_path)
+            else:
+                # Just extract variable
+                cdo.select(by_var_name, input=climo_means, output=output_file_path)
+            # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
+            # TODO: Does the above TODO make any sense? Each variable has had up to 3 different aggregations applied
+            # to it, and there is no standard cell_method string that expresses more than one.
+        except Exception as e:
+            logger.warn('Failed to create climatology file. {}: {}'.format(e.__class__.__name__, e))
+        else:
+            update_climo_time_meta(output_file_path)
 
 
 def generate_climo_time_var(t_start, t_end, types=('monthly', 'seasonal', 'annual')):
@@ -142,7 +191,7 @@ def update_climo_time_meta(filepath):
       - PCIC CMIP5 style file path
     '''
     
-    cf = CFDataset(filepath)
+    cf = CFDataset(filepath, mode='r+')
     time_var = cf.variables['time']
 
     # Generate new time/climo_bounds data
@@ -201,38 +250,21 @@ def main(args):
         try:
             input_file = CFDataset(filepath)
         except Exception as e:
-            # Likeliest exceptions:
-            # - IOError: file not found
             logger.info('{}: {}'.format(e.__class__.__name__, e))
         else:
             for _, t_range in input_file.climo_periods.items():
-                # Create climatological period and update metadata
-                logger.info('Generating climo period %s to %s', d2s(t_range[0]), d2s(t_range[1]))
-                output_filepath = climo_output_filepath(args.outdir, input_file, *t_range)
-                logger.info('Output file: %s', format(output_filepath))
-                try:
-                    create_climo_file(args.outdir, input_file, *t_range)
-                except:
-                    logger.warn('Failed to create climatology file')
-                else:
-                    update_climo_time_meta(output_filepath)
-
+                create_climo_files(args.outdir, input_file, *t_range)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
     parser.add_argument('filepaths', nargs='*', help='Files to process')
 #    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
-    parser.add_argument('-f', '--file-list', help='File containing list of filepaths (one per line) to process')
-    parser.add_argument('-C', '--climdex', action='store_true')
-    parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
+    parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.set_defaults(
-        climdex=False,
-        dry_run=False
-    )
+    parser.set_defaults(dry_run=False, split_vars=False)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
     main(args)
