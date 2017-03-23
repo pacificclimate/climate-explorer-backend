@@ -62,13 +62,17 @@ def create_climo_files(outdir, input_file, split_vars, t_start, t_end):
     logger.info('Generating climo period %s to %s', d2s(t_start), d2s(t_end))
 
     supported_vars = {
+        # Standard climate variables
+        'tasmin', 'tasmax', 'pr',
+        # Hydrological modelling variables
+        'RUNOFF', 'BASEFLOW', 'EVAP', 'GLAC_MBAL_BAND', 'GLAC_AREA_BAND', 'SWE_BAND',
+        # Climdex variables
         'cddETCCDI', 'csdiETCCDI', 'cwdETCCDI', 'dtrETCCDI', 'fdETCCDI',
         'gslETCCDI', 'idETCCDI', 'prcptotETCCDI', 'r10mmETCCDI', 'r1mmETCCDI',
         'r20mmETCCDI', 'r95pETCCDI', 'r99pETCCDI', 'rx1dayETCCDI',
         'rx5dayETCCDI', 'sdiiETCCDI', 'suETCCDI', 'thresholds', 'tn10pETCCDI',
         'tn90pETCCDI', 'tnnETCCDI', 'tnxETCCDI', 'trETCCDI', 'tx10pETCCDI',
-        'tx90pETCCDI', 'txnETCCDI', 'txxETCCDI', 'wsdiETCCDI', 'tasmin',
-        'tasmax', 'pr'
+        'tx90pETCCDI', 'txnETCCDI', 'txxETCCDI', 'wsdiETCCDI',
     }
 
     for variable in input_file.dependent_varnames:
@@ -137,7 +141,8 @@ def create_climo_files(outdir, input_file, split_vars, t_start, t_end):
                              .format(resolution_to_frequency.keys(), input_file.time_resolution))
         cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
         cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
-        cf.climo_tracking_id=getattr(input_file, 'tracking_id', '')
+        if hasattr(input_file, 'tracking_id'):
+            cf.climo_tracking_id=input_file.tracking_id
         try:
             cf.variables['pr'].units = pr_units_attr
         except NameError:
@@ -169,9 +174,9 @@ def create_climo_files(outdir, input_file, split_vars, t_start, t_end):
 
     if split_vars and len(input_file.dependent_varnames) > 1:
         # Split climo means file into separate files, one per variable
+        logger.info('Splitting into single-variable files')
         for variable in input_file.dependent_varnames:
-            logger.info('Splitting into single-variable files')
-            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable)
+            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable=variable)
             create_output_file(lambda **io: cdo.select('name={}'.format(variable), **io), output_file_path)
     else:
         # Don't split; copy the temporary file to the final output filename
