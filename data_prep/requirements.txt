@@ -3,3 +3,4 @@ cdo
 numpy
 netCDF4
 nchelpers
+pytest
