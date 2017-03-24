@@ -61,6 +61,9 @@ def create_climo_files(outdir, input_file, split_vars, t_start, t_end):
     """
     logger.info('Generating climo period %s to %s', d2s(t_start), d2s(t_end))
 
+    if input_file.is_multi_year_mean:
+        raise Exception('This file already contains climatological means!')
+
     supported_vars = {
         # Standard climate variables
         'tasmin', 'tasmax', 'pr',
