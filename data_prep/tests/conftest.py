@@ -17,12 +17,17 @@ def tiny_downscaled_tasmax():
 
 
 @fixture(scope='session')
+def tiny_downscaled_pr():
+    return CFDataset(resource_filename('dp', 'data/tiny_downscaled_pr.nc'))
+
+
+@fixture(scope='session')
 def tiny_hydromodel_gcm():
     return CFDataset(resource_filename('dp', 'data/tiny_hydromodel_gcm.nc'))
 
 
 @fixture(scope='session')
-def get_input_file(tiny_gcm, tiny_downscaled_tasmax, tiny_hydromodel_gcm):
+def get_input_file(tiny_gcm, tiny_downscaled_tasmax, tiny_downscaled_pr, tiny_hydromodel_gcm):
     """Helper fixture: Returns a function that returns a test input file selected by its param.
     This fixture is used by other resources to DRY up their parametrization over input file resources.
     """
@@ -33,6 +38,7 @@ def get_input_file(tiny_gcm, tiny_downscaled_tasmax, tiny_hydromodel_gcm):
         return {
             'gcm': tiny_gcm,
             'downscaled_tasmax': tiny_downscaled_tasmax,
+            'downscaled_pr': tiny_downscaled_pr,
             'hydromodel_gcm': tiny_hydromodel_gcm,
         }[code]
     return get

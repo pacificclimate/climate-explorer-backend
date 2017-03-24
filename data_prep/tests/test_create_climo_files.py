@@ -22,7 +22,6 @@ input_and_climo_files
     returns: (input_file, climo_files) as above
 """
 # TODO: Add more test input files:
-# - downscaled with pr variable
 # - hydromodel from observed data
 
 import os
@@ -54,6 +53,7 @@ def basename_components(filepath):
     (('gcm', False, t_start(1965), t_end(1970)), 1),
     (('gcm', True, t_start(1965), t_end(1970)), 1),
     (('downscaled_tasmax', False, t_start(1961), t_end(1990)), 1),
+    (('downscaled_pr', False, t_start(1961), t_end(1990)), 1),
     (('hydromodel_gcm', False, t_start(1984), t_end(1995)), 1),
     (('hydromodel_gcm', True, t_start(1984), t_end(1995)), 6),
 ], indirect=['climo_files'])
@@ -70,6 +70,7 @@ def test_existence(outdir, climo_files, num_files):
     ('gcm', False, t_start(1965), t_end(1970)),
     ('gcm', True, t_start(1965), t_end(1970)),
     ('downscaled_tasmax', False, t_start(1961), t_end(1990)),
+    ('downscaled_pr', False, t_start(1961), t_end(1990)),
     ('hydromodel_gcm', False, t_start(1984), t_end(1995)),
     ('hydromodel_gcm', True, t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
@@ -94,6 +95,7 @@ def test_filenames(input_and_climo_files):
 @mark.parametrize('input_and_climo_files, t_start, t_end', [
     (('gcm', False, t_start(1965), t_end(1970)), t_start(1965), t_end(1970)),
     (('downscaled_tasmax', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
+    (('downscaled_pr', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
     (('hydromodel_gcm', True, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
 def test_climo_metadata(input_and_climo_files, t_start, t_end):
@@ -117,6 +119,7 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
 @mark.parametrize('input_and_climo_files', [
     ('gcm', False, t_start(1965), t_end(1970)),
     ('downscaled_tasmax', False, t_start(1961), t_end(1990)),
+    ('downscaled_pr', False, t_start(1961), t_end(1990)),
     ('hydromodel_gcm', False, t_start(1984), t_end(1995)),
     ('hydromodel_gcm', True, t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
@@ -137,6 +140,7 @@ def test_dependent_variables(input_and_climo_files):
 @mark.parametrize('input_and_climo_files, climo_year', [
     (('gcm', False, t_start(1965), t_end(1970)), 1968),
     (('downscaled_tasmax', False, t_start(1961), t_end(1990)), 1976),
+    # No need to repleat with downscaled_pr
     (('hydromodel_gcm', False, t_start(1984), t_end(1995)), 1990),
     (('hydromodel_gcm', True, t_start(1984), t_end(1995)), 1990),
 ], indirect=['input_and_climo_files'])
