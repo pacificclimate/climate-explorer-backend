@@ -269,9 +269,9 @@ def update_climo_time_meta(filepath):
     with CFDataset(filepath, mode='r+') as cf:
         # Generate new time/climo_bounds data
         frequency_to_time_types = {
-            'msaClim': ('monthly', 'seasonal', 'annual'),
-            'saClim': ('seasonal', 'annual'),
-            'aClim': ('annual'),
+            'msaClim': {'monthly', 'seasonal', 'annual'},
+            'saClim': {'seasonal', 'annual'},
+            'aClim': {'annual'},
         }
         try:
             time_types = frequency_to_time_types[cf.frequency]
