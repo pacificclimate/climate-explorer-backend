@@ -101,6 +101,7 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
     input_file, climo_files = input_and_climo_files
     for fp in climo_files:
         with CFDataset(fp) as cf:
+            assert cf.is_multi_year_mean
             assert cf.frequency == {
                 'daily': 'msaClim',
                 'monthly': 'saClim',
