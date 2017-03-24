@@ -129,14 +129,9 @@ def test_dependent_variables(input_and_climo_files):
             dependent_varnames_in_cfs.update(cf.dependent_varnames)
             if len(climo_files) > 1:
                 # There should be one dependent variable from the input file
-                # plus the added climatology_bnds dependent variable (TODO: is that right? see below)
-                assert 'climatology_bnds' in cf.dependent_varnames
-                assert len(cf.dependent_varnames) == 2
+                assert len(cf.dependent_varnames) == 1
     # All the input dependent variables should be covered by all the output files
-    # TODO: Find out if climatology_bnds should really be a dependent variable. If not, fix it
-    # either by modifying how it is created create_climo_files() or by modifying how nchelpers#dependent_variables
-    # works, as appropriate to how it really should be created
-    assert dependent_varnames_in_cfs == set(input_file.dependent_varnames) | {'climatology_bnds'}
+    assert dependent_varnames_in_cfs == set(input_file.dependent_varnames)
 
 
 @mark.parametrize('input_and_climo_files, climo_year', [
