@@ -25,19 +25,21 @@ input_and_climo_files
 # - hydromodel from observed data
 
 import os
-import datetime
+from datetime import datetime
 from pytest import mark
+from netCDF4 import date2num
 from nchelpers import CFDataset
+from dateutil.relativedelta import relativedelta
 
 
 def t_start(year):
     """Returns the start date of a climatological processing period beginning at start of year"""
-    return datetime.datetime(year, 1, 1)
+    return datetime(year, 1, 1)
 
 
 def t_end(year):
     """Returns the end date of a climatological processing period ending at end of year"""
-    return datetime.datetime(year, 12, 30)
+    return datetime(year, 12, 30)
 
 
 def basename_components(filepath):
@@ -137,43 +139,67 @@ def test_dependent_variables(input_and_climo_files):
     assert dependent_varnames_in_cfs == set(input_file.dependent_varnames)
 
 
-@mark.parametrize('input_and_climo_files, climo_year', [
-    (('gcm', False, t_start(1965), t_end(1970)), 1968),
-    (('downscaled_tasmax', False, t_start(1961), t_end(1990)), 1976),
+@mark.parametrize('input_and_climo_files, t_start, t_end', [
+    (('gcm', False, t_start(1965), t_end(1970)), t_start(1965), t_end(1970)),
+    (('downscaled_tasmax', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    (('hydromodel_gcm', False, t_start(1984), t_end(1995)), 1990),
-    (('hydromodel_gcm', True, t_start(1984), t_end(1995)), 1990),
+    (('hydromodel_gcm', False, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
+    (('hydromodel_gcm', True, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
-def test_time_var(input_and_climo_files, climo_year):
-    """Test that the climo output files contain the expected time values.
-    Precise testing of time values is hard. Defer to tests of generate_climo_time_var?
-    """
+def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
+    """Test that the climo output files contain the expected time values and climo bounds. """
     input_file, climo_files = input_and_climo_files
+
     expected_num_time_values = {
         'daily': 17,
         'monthly': 5,
         'yearly': 1,
     }[input_file.time_resolution]
+
     for fp in climo_files:
         with CFDataset(fp) as cf:
             assert cf.time_var
             assert cf.time_var.climatology == 'climatology_bnds'
+            climo_bnds_var = cf.variables[cf.time_var.climatology]
+            assert climo_bnds_var
+
             assert len(cf.time_var) == expected_num_time_values
+            assert len(climo_bnds_var) == expected_num_time_values
+
+            climo_year = (t_start.year + t_end.year + 1) / 2
             time_steps = (t for t in cf.time_steps['datetime'])
-            # Test monthly mean timesteps
+            climo_bnds = (cb for cb in climo_bnds_var)
+
+            def d2n(date):
+                return date2num(date, cf.time_var.units, cf.time_var.calendar)
+
+            # Test monthly mean timesteps and climo bounds
             if expected_num_time_values == 17:
-                for month in range(1,13):
+                for month in range(1, 13):
                     t = next(time_steps)
                     assert t.year == climo_year
                     assert t.month == month
                     assert t.day in [15, 16]
-            # Test seasonal mean timesteps
+                    cb = next(climo_bnds)
+                    assert len(cb) == 2
+                    assert cb[0] == d2n(datetime(t_start.year, month, 1))
+                    assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=1))
+
+            # Test seasonal mean timesteps and climo bounds
             if expected_num_time_values >= 5:
                 for month in [1, 4, 7, 10]:  # center months of seasons
                     t = next(time_steps)
                     assert t.year == climo_year
                     assert t.month == month
-                    assert t.day in [15, 16, 17]  # TODO: Is day 17 really right?? Need unit tests for generate_climo_time_var
-            # Test annual mean timestep
+                    assert t.day in [15, 16, 17]
+                    cb = next(climo_bnds)
+                    assert cb[0] == d2n(datetime(t_start.year, month, 1) + relativedelta(months=-1))
+                    assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=2))
+
+            # Test annual mean timestep and climo bounds
             t = next(time_steps)
             assert t.year == climo_year
+            cb = next(climo_bnds)
+            assert cb[0] == d2n(t_start)
+            assert cb[1] == d2n(t_end + relativedelta(days=1))
+
