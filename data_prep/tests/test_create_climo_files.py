@@ -7,19 +7,23 @@ that they use to determine their behaviour, i.e. what input file to return or pr
 
 The key indirected fixtures are:
 
-input_file
-    param: (str) selects the input file to be processed by create_climo_files
-    returns: (nchelpers.CFDataset) input file to be processed by create_climo_files
-
-climo_files
-    request.param: (tuple)
-        [0]: code for selecting input file; selected input file is passed as first param to create_climo_files
-        [1:]: remaining parameters of create_climo_files
-    returns: result of invoking create_climo_files: list of output filepaths
-
-input_and_climo_files
-    request.param: as for climo_files
-    returns: (input_file, climo_files) as above
+    input_file
+        param: (str) selects the input file to be processed by create_climo_files
+        returns: (nchelpers.CFDataset) input file to be processed by create_climo_files
+    
+    climo_files
+        request.param: (tuple): (code, t_start, t_end, options)
+            code: (str) code for selecting input file; selected input file is passed as first param to create_climo_files
+            t_start: (datetime.datetime) start date of climo period
+            t_end: (datetime.datetime) end date of climo period
+            options: (dict) keyword parameters (options) of create_climo_files
+        returns: result of invoking create_climo_files: list of output filepaths
+    
+    input_and_climo_files
+        request.param: as for climo_files
+        returns: (input_file, climo_files) as above
+    
+Values for climo period options are only specified when they are different from the default.
 """
 # TODO: Add more test input files:
 # - hydromodel from observed data
@@ -53,11 +57,11 @@ def basename_components(filepath):
 
 @mark.parametrize('climo_files, num_files', [
     # climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), 1),
+    (('gcm', t_start(1965), t_end(1970), {}), 1),
     (('gcm', t_start(1965), t_end(1970), {'split_vars': True}), 1),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), 1),
-    (('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}), 1),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}), 1),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), 1),
+    (('downscaled_pr', t_start(1961), t_end(1990), {}), 1),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {}), 1),
     (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), 6),
 ], indirect=['climo_files'])
 def test_existence(outdir, climo_files, num_files):
@@ -71,11 +75,11 @@ def test_existence(outdir, climo_files, num_files):
 
 @mark.parametrize('input_and_climo_files', [
     # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('gcm', t_start(1965), t_end(1970), {'split_vars': False}),
+    ('gcm', t_start(1965), t_end(1970), {}),
     ('gcm', t_start(1965), t_end(1970), {'split_vars': True}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}),
+    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
+    ('downscaled_pr', t_start(1961), t_end(1990), {}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
     ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
 ], indirect=['input_and_climo_files'])
 def test_filenames(input_and_climo_files):
@@ -98,9 +102,9 @@ def test_filenames(input_and_climo_files):
 
 @mark.parametrize('input_and_climo_files, t_start, t_end', [
     # input_and_climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
-    (('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
+    (('gcm', t_start(1965), t_end(1970), {}), t_start(1965), t_end(1970)),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
+    (('downscaled_pr', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
     (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
 def test_climo_metadata(input_and_climo_files, t_start, t_end):
@@ -123,10 +127,10 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
 
 @mark.parametrize('input_and_climo_files', [
     # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('gcm', t_start(1965), t_end(1970), {'split_vars': False}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}),
+    ('gcm', t_start(1965), t_end(1970), {}),
+    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
+    ('downscaled_pr', t_start(1961), t_end(1990), {}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
     ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
 ], indirect=['input_and_climo_files'])
 def test_dependent_variables(input_and_climo_files):
@@ -145,10 +149,10 @@ def test_dependent_variables(input_and_climo_files):
 
 @mark.parametrize('input_and_climo_files, t_start, t_end', [
     # input_and_climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
+    (('gcm', t_start(1965), t_end(1970), {}), t_start(1965), t_end(1970)),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}), t_start(1984), t_end(1995)),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {}), t_start(1984), t_end(1995)),
     (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
 def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
