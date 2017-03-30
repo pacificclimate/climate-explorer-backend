@@ -24,7 +24,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)  # For testing, overridden by -l when run as a script
 
 
-def create_climo_files(outdir, input_file, split_vars, t_start, t_end):
+def create_climo_files(outdir, input_file, t_start, t_end, split_vars=False):
     """Generate climatological files from an input file and a selected time range.
 
     Parameters:

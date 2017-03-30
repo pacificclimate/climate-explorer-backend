@@ -73,7 +73,8 @@ def climo_files(request, outdir, get_input_file):
     This fixture should be invoked with indirection.
     """
     # print('\nclimo_files: SETUP')
-    yield create_climo_files(outdir, get_input_file(request.param[0]), *request.param[1:])
+    code, t_start, t_end, options = request.param
+    yield create_climo_files(outdir, get_input_file(code), t_start, t_end, **options)
     # print('\nclimo_files: TEARDOWN')
 
 
@@ -85,6 +86,7 @@ def input_and_climo_files(request, outdir, get_input_file):
     This fixture should be invoked with indirection.
     """
     # print('\input_and_climo_files: SETUP')
-    yield get_input_file(request.param[0]),\
-          create_climo_files(outdir, get_input_file(request.param[0]), *request.param[1:])
+    code, t_start, t_end, options = request.param
+    yield get_input_file(code),\
+          create_climo_files(outdir, get_input_file(code), t_start, t_end, **options)
     # print('\input_and_climo_files: TEARDOWN')

@@ -52,12 +52,13 @@ def basename_components(filepath):
 
 
 @mark.parametrize('climo_files, num_files', [
-    (('gcm', False, t_start(1965), t_end(1970)), 1),
-    (('gcm', True, t_start(1965), t_end(1970)), 1),
-    (('downscaled_tasmax', False, t_start(1961), t_end(1990)), 1),
-    (('downscaled_pr', False, t_start(1961), t_end(1990)), 1),
-    (('hydromodel_gcm', False, t_start(1984), t_end(1995)), 1),
-    (('hydromodel_gcm', True, t_start(1984), t_end(1995)), 6),
+    # climo_files parameters: (code, t_start, t_end, options)
+    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), 1),
+    (('gcm', t_start(1965), t_end(1970), {'split_vars': True}), 1),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), 1),
+    (('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}), 1),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}), 1),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), 6),
 ], indirect=['climo_files'])
 def test_existence(outdir, climo_files, num_files):
     """Test that the expected number of files was created and that the filenames returned by
@@ -69,12 +70,13 @@ def test_existence(outdir, climo_files, num_files):
 
 
 @mark.parametrize('input_and_climo_files', [
-    ('gcm', False, t_start(1965), t_end(1970)),
-    ('gcm', True, t_start(1965), t_end(1970)),
-    ('downscaled_tasmax', False, t_start(1961), t_end(1990)),
-    ('downscaled_pr', False, t_start(1961), t_end(1990)),
-    ('hydromodel_gcm', False, t_start(1984), t_end(1995)),
-    ('hydromodel_gcm', True, t_start(1984), t_end(1995)),
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    ('gcm', t_start(1965), t_end(1970), {'split_vars': False}),
+    ('gcm', t_start(1965), t_end(1970), {'split_vars': True}),
+    ('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}),
+    ('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
 ], indirect=['input_and_climo_files'])
 def test_filenames(input_and_climo_files):
     """Test that the filenames are as expected. Tests only the following easy-to-test filename components:
@@ -95,10 +97,11 @@ def test_filenames(input_and_climo_files):
 
 
 @mark.parametrize('input_and_climo_files, t_start, t_end', [
-    (('gcm', False, t_start(1965), t_end(1970)), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
-    (('downscaled_pr', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
-    (('hydromodel_gcm', True, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), t_start(1965), t_end(1970)),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
+    (('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
 def test_climo_metadata(input_and_climo_files, t_start, t_end):
     """Test that the correct climo-specific metadata has been added/updated."""
@@ -119,11 +122,12 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
 
 
 @mark.parametrize('input_and_climo_files', [
-    ('gcm', False, t_start(1965), t_end(1970)),
-    ('downscaled_tasmax', False, t_start(1961), t_end(1990)),
-    ('downscaled_pr', False, t_start(1961), t_end(1990)),
-    ('hydromodel_gcm', False, t_start(1984), t_end(1995)),
-    ('hydromodel_gcm', True, t_start(1984), t_end(1995)),
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    ('gcm', t_start(1965), t_end(1970), {'split_vars': False}),
+    ('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}),
+    ('downscaled_pr', t_start(1961), t_end(1990), {'split_vars': False}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
 ], indirect=['input_and_climo_files'])
 def test_dependent_variables(input_and_climo_files):
     """Test that the output files contain the expected dependent variables"""
@@ -140,11 +144,12 @@ def test_dependent_variables(input_and_climo_files):
 
 
 @mark.parametrize('input_and_climo_files, t_start, t_end', [
-    (('gcm', False, t_start(1965), t_end(1970)), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', False, t_start(1961), t_end(1990)), t_start(1961), t_end(1990)),
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    (('gcm', t_start(1965), t_end(1970), {'split_vars': False}), t_start(1965), t_end(1970)),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {'split_vars': False}), t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    (('hydromodel_gcm', False, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
-    (('hydromodel_gcm', True, t_start(1984), t_end(1995)), t_start(1984), t_end(1995)),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': False}), t_start(1984), t_end(1995)),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
 ], indirect=['input_and_climo_files'])
 def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
     """Test that the climo output files contain the expected time values and climo bounds. """
