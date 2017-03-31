@@ -62,11 +62,13 @@ def outdir(tmpdir_factory):
 
 @fixture(scope='function')
 def climo_files(request, outdir, get_input_file):
-    """Returns the result of create_climo_files applied to values specified by reequest param tuple.
+    """Returns the result of create_climo_files applied to values specified by request param tuple.
 
-    request.param: (tuple)
-        [0]: code for selecting input file, which is passed as first param to create_climo_files
-        [1:]: remaining parameters of create_climo_files
+    request.param: (tuple): (code, t_start, t_end, options)
+        code: (str) code for selecting input file, which is passed as first param to create_climo_files
+        t_start: (datetime.datetime) start date of climo period
+        t_end: (datetime.datetime) end date of climo period
+        options: (dict) keyword args for create_climo_files
     returns: (list) result of invoking create_climo_files: list of output filepaths
 
     Output files are placed in a temporary directory created by the fixture outdir.

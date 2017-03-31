@@ -164,6 +164,8 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
         except KeyError:
             raise ValueError("Expected input file to have time resolution in {}, found '{}'"
                              .format(resolution_to_frequency.keys(), input_file.time_resolution))
+        # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
+        # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
         cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
         cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
         if hasattr(input_file, 'tracking_id'):

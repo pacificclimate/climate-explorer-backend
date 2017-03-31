@@ -30,11 +30,13 @@ Values for climo period options are only specified when they are different from 
 
 import os
 from datetime import datetime
-from pytest import mark
+
 from netCDF4 import date2num
-from nchelpers import CFDataset
 from dateutil.relativedelta import relativedelta
+from pytest import mark
 import numpy as np
+
+from nchelpers import CFDataset
 
 
 def t_start(year):
@@ -119,6 +121,8 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
                 'monthly': 'saClim',
                 'yearly': 'aClim'
             }[input_file.time_resolution]
+            # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
+            # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
             assert cf.climo_start_time == t_start.isoformat()[:19] + 'Z'
             assert cf.climo_end_time == t_end.isoformat()[:19] + 'Z'
             assert getattr(cf, 'climo_tracking_id', None) == getattr(input_file, 'tracking_id', None)
