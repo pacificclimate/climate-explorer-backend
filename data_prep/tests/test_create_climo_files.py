@@ -191,9 +191,7 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
             if expected_num_time_values == 17:
                 for month in range(1, 13):
                     t = next(time_steps)
-                    assert t.year == climo_year
-                    assert t.month == month
-                    assert t.day in [15, 16]
+                    assert (t.year, t.month, t.day) == (climo_year, month, 15)
                     cb = next(climo_bnds)
                     assert len(cb) == 2
                     assert cb[0] == d2n(datetime(t_start.year, month, 1))
@@ -203,16 +201,14 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
             if expected_num_time_values >= 5:
                 for month in [1, 4, 7, 10]:  # center months of seasons
                     t = next(time_steps)
-                    assert t.year == climo_year
-                    assert t.month == month
-                    assert t.day in [15, 16, 17]
+                    assert (t.year, t.month, t.day) == (climo_year, month, 16)
                     cb = next(climo_bnds)
                     assert cb[0] == d2n(datetime(t_start.year, month, 1) + relativedelta(months=-1))
                     assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=2))
 
             # Test annual mean timestep and climo bounds
             t = next(time_steps)
-            assert t.year == climo_year
+            assert (t.year, t.month, t.day) == (climo_year, 7, 2)
             cb = next(climo_bnds)
             assert cb[0] == d2n(t_start)
             assert cb[1] == d2n(t_end + relativedelta(days=1))

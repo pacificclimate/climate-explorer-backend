@@ -236,42 +236,31 @@ def generate_climo_time_var(t_start, t_end, types={'monthly', 'seasonal', 'annua
     # Year of all time values is middle year of period
     year = (t_start + (t_end - t_start)/2).year + 1
 
+    # We follow the examples in sec 7.4 Climatological Statistics of the CF Metadata Standard
+    # (http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#climatological-statistics),
+    # in which for climatological times they use the 15th day of each month for multi-year monthly averages
+    # and the 16th day of the mid-season months (Jan, Apr, July, Oct) for multi-year seasonal averages.
+    # In that spirit, we use July 2 as the middle day of the year (https://en.wikipedia.org/wiki/July_2).
     times = []
     climo_bounds = []
 
     # Monthly time values
     if 'monthly' in types:
-        for month in range(1,13):
-            start = datetime(year, month, 1)
-            end = start + relativedelta(months=1)
-            mid =  start + (end - start)/2
-            mid = mid.replace(hour = 0)
-            times.append(mid)
-
-            climo_bounds.append([datetime(t_start.year, month, 1), (datetime(t_end.year, month, 1) + relativedelta(months=1))])
+        for month in range(1, 13):
+            times.append(datetime(year, month, 15))
+            climo_bounds.append([datetime(t_start.year, month, 1),
+                                 datetime(t_end.year, month, 1) + relativedelta(months=1)])
 
     # Seasonal time values
     if 'seasonal' in types:
-        for month in range(-1, 9, 3): # Index is start month of season
-            start = datetime(year, 1, 1) + relativedelta(months=month)
-            end = start + relativedelta(months=3)
-            mid = (start + (end - start)/2).replace(hour=0)
-            while mid in times: mid += relativedelta(days=1)
-            times.append(mid)
-
-            climo_start = datetime(t_start.year, 1, 1) + relativedelta(months=month)
-            climo_end = datetime(t_end.year, 1, 1) + relativedelta(months=month) + relativedelta(months=3)
-            # Account for DJF being a shorter season (crosses year boundary)
-            if climo_end > t_end: climo_end -= relativedelta(years=1)
-            climo_bounds.append([climo_start, climo_end])
+        for month in [1, 4, 7, 10]: # Center months of season
+            times.append(datetime(year, month, 16))
+            climo_bounds.append([datetime(t_start.year, month, 1) + relativedelta(months=-1),
+                                 datetime(t_end.year, month, 1) + relativedelta(months=2)])
 
     # Annual time value
     if 'annual' in types:
-        days_to_mid = ((datetime(year, 1, 1) + relativedelta(years=1)) - datetime(year, 1, 1)).days/2
-        mid = datetime(year, 1, 1) + relativedelta(days=days_to_mid)
-        while mid in times: mid += relativedelta(days=1)
-        times.append(mid)
-
+        times.append(datetime(year, 7, 2))
         climo_bounds.append([t_start, t_end + relativedelta(days=1)])
 
     return times, climo_bounds
