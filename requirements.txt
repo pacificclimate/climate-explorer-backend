@@ -10,5 +10,5 @@ GDAL
 rasterio
 cdo
 # For testing
-pytest>=3.0.0
+pytest
 python-dateutil

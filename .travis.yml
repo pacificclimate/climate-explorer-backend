@@ -31,6 +31,7 @@ before_install:
   - export GDAL_MINOR_VERSION=$(echo $GDALVERSION | sed -e "s/\\.[0-9]\+$//")
   - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL==$GDAL_MINOR_VERSION"
 install:
+  - pip install -I pytest>=3.0.0
   - pip install -i https://pypi.pacificclimate.org/simple/ .
 script:
   - py.test -v
