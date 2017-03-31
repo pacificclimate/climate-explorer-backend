@@ -12,4 +12,3 @@ cdo
 # For testing
 pytest>=3.0.0
 python-dateutil
-pip
