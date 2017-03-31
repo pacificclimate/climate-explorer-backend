@@ -6,6 +6,7 @@ import re
 from argparse import ArgumentParser
 from datetime import datetime
 import dateutil.parser
+import numpy as np
 
 from cdo import Cdo
 from netCDF4 import date2num
@@ -24,28 +25,34 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)  # For testing, overridden by -l when run as a script
 
 
-def create_climo_files(outdir, input_file, t_start, t_end, split_vars=False):
+def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=False, split_vars=False):
     """Generate climatological files from an input file and a selected time range.
 
     Parameters:
         outdir (str): path to base directory in which to store output climo file(s)
         input_file (nchelpers.CFDataset): the input data file
-        split_vars: (bool) if True, produce one file per dependent variable in input file;
+        convert_longitudes (bool): If True, convert longitudes from [0, 360) to [-180, 180).
+        split_vars (bool): if True, produce one file per dependent variable in input file;
             otherwise produce a single output file containing all variables
         t_start (datetime.datetime): start date of climo period to process
         t_end (datetime.datetime): end date of climo period to process
 
-    We use CDO to perform the key computations for the climatology outputs.
+    The input file is not modified.
 
-    One output file is generated per dependent variable in the input file. This simplifies the processing somewhat,
-    since in order to apply variable-specific operations using CDO, the variable must at least temporarily be split
-    out of the file. We can avoid copying all that back into a single file.
+    Output is either one file containing all variables, or one output file for each dependent variable in the
+    input file. This behaviour is selected by the --split-vars flag.
+
+    We use CDO to where it is convenient; in particular, to form the climatological means.
+    Other operations are performed directly by this code, in-place on intermediate or final output files.
 
     To process an input file we must perform the following operations:
 
     - Select the temporal subset defined by t_start, t_end
     - Form climatological means over each dependent variable
-    - Apply any special per-variable operations (e.g., scaling pr to mm/day)
+    - Post-process climatological results:
+        - if convert_longitudes, transform longitude range from [0, 360) to [-180, 180)
+    - Apply any special per-variable post-processing:
+        - pr: scale to mm/day
     - Update global attributes to reflect the fact this is a climatological means file
     - if split_vars:
         - Split multiple variables into separate files
@@ -108,6 +115,21 @@ def create_climo_files(outdir, input_file, t_start, t_end, split_vars=False):
 
     logger.info('Forming climatological means')
     climo_means = cdo.copy(input=' '.join(climo_outputs(input_file.time_resolution)))
+
+    # Post-process climatological means
+    if convert_longitudes:
+        # Transform longitude range from [0, 360) to [-180, 180)
+        # CDO offers no simple way to do this computation, therefore we do it directly.
+        # This code modifies the file with filepath climo_means in place.
+        with CFDataset(climo_means, mode='r+') as cf:
+            convert_these = [cf.lon_var]
+            if hasattr(cf.lon_var, 'bounds'):
+                lon_bnds_var = cf.variables[cf.lon_var.bounds]
+                convert_these.append(lon_bnds_var)
+            for lon_var in convert_these:
+                for i, lon in np.ndenumerate(lon_var):
+                    if lon >= 180:
+                        lon_var[i] = lon - 360
 
     # Apply per-variable processing
     # - Scale pr variable if it is not in desired units
@@ -339,7 +361,8 @@ def main(args):
             logger.info('{}: {}'.format(e.__class__.__name__, e))
         else:
             for _, t_range in input_file.climo_periods.items():
-                create_climo_files(args.outdir, input_file, args.split_vars, *t_range)
+                create_climo_files(args.outdir, input_file, *t_range,
+                                   convert_longitudes=args.convert_longitudes, split_vars=args.split_vars)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
@@ -349,9 +372,10 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
+    parser.add_argument('-g', '--convert-longitudes', dest='convert_longitudes', action='store_true')
     parser.add_argument('-s', '--split-vars', dest='split_vars', action='store_true')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.set_defaults(dry_run=False, split_vars=False)
+    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
     main(args)

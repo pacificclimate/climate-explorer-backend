@@ -34,6 +34,7 @@ from pytest import mark
 from netCDF4 import date2num
 from nchelpers import CFDataset
 from dateutil.relativedelta import relativedelta
+import numpy as np
 
 
 def t_start(year):
@@ -212,3 +213,35 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
             assert cb[0] == d2n(t_start)
             assert cb[1] == d2n(t_end + relativedelta(days=1))
 
+
+@mark.parametrize('input_and_climo_files, convert_longitudes', [
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    (('gcm', t_start(1965), t_end(1970), {'convert_longitudes': False}), False),
+    (('gcm', t_start(1965), t_end(1970), {'convert_longitudes': True}), True),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': False}), False),
+    (('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': True}), True),
+    # No need to repleat with downscaled_pr
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': False}), False),
+    (('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': True}), True),
+], indirect=['input_and_climo_files'])
+def test_convert_longitudes(input_and_climo_files, convert_longitudes):
+    """Test that longitude conversion is performed correctly."""
+    input_file, climo_files = input_and_climo_files
+    input_lon_var = input_file.lon_var
+    for fp in climo_files:
+        with CFDataset(fp) as output_file:
+            output_lon_var = output_file.lon_var
+            check_these = [(input_lon_var, output_lon_var)]
+            if hasattr(input_lon_var, 'bounds'):
+                check_these.append((input_file.variables[input_lon_var.bounds],
+                                    output_file.variables[output_lon_var.bounds]))
+            for input_lon_var, output_lon_var in check_these:
+                if convert_longitudes:
+                    assert all(-180 <= lon < 180 for _, lon in np.ndenumerate(output_lon_var))
+                    assert all(output_lon_var[i] == input_lon if input_lon < 180 else input_lon - 360
+                               for i, input_lon in np.ndenumerate(input_lon_var))
+                else:
+                    assert all(-180 <= lon < 360 for _, lon in np.ndenumerate(output_lon_var))
+                    assert all(output_lon_var[i] == input_lon for i, input_lon in np.ndenumerate(input_lon_var))
+
+    
