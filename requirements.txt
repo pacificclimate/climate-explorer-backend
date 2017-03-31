@@ -6,7 +6,7 @@ shapely
 numpy
 netcdf4
 # nchelpers
-GDAL<2.0 # Allow pip or system install for travis
+GDAL
 rasterio
 cdo
 # For testing
