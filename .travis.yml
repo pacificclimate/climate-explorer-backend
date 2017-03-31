@@ -1,11 +1,12 @@
 language: python
 python:
   - 3.4
-addons:
-  apt:
-    packages:
-      - libhdf5-serial-dev
-      - libnetcdf-dev
+#addons:
+#  apt:
+#    packages:
+#      - cdo
+#      - libhdf5-serial-dev
+#      - libnetcdf-dev
 env:
   global:
     - GDALINST=$HOME/gdalinstall
@@ -16,6 +17,12 @@ env:
     - CFLAGS=-I$GDALINST/include
 
 before_install:
+  - sudo apt-get update
+#  - sudo apt-get upgrade
+#  - sudo apt-get install cdo
+#  - sudo apt-get install libhdf5-serial-dev
+#  - sudo apt-get install libnetcdf-dev
+  - sudo apt-get install cdo libhdf5-serial-dev libnetcdf-dev
   - mkdir $GDALBUILD
   - mkdir $GDALINST
   - cd $GDALBUILD
