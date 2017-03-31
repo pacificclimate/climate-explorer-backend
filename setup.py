@@ -14,12 +14,12 @@ __version__ = '0.1.1'
 setup(
     name="ce",
     description="PCIC's Climate Explorer (CE)",
-    keywords="science climate meteorology downscaling modelling",
-    packages=find_packages(),
     version=__version__,
-    url="http://www.pacificclimate.org/",
     author="James Hiebert",
     author_email="hiebert@uvic.ca",
+    url="https://github.com/pacificclimate/climate-explorer-backend",
+    keywords="science climate meteorology downscaling modelling",
+    packages=find_packages(),
     install_requires=[
         'flask',
         'Flask-SQLAlchemy',
@@ -30,14 +30,20 @@ setup(
         'numpy',
         'netcdf4',
         'python-dateutil',
+        'nchelpers',
         'GDAL',
-        'rasterio'
+        'rasterio',
+        'cdo',
+        'pytest',
     ],
     scripts=['scripts/devserver.py'],
-    package_dir={'ce': 'ce'},
+    package_dir={  # necessary?
+        'ce': 'ce',
+        'dp': 'dp',
+    },
     package_data={
-        'ce': ['tests/data/*.nc', 'templates/*.html']
-        + recursive_list('ce/', 'ce/static')
+        'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static'),
+        'dp': ['data/*.nc']  # TODO: move this into tests/
     },
     zip_safe=False
 )

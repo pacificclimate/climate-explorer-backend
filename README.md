@@ -3,25 +3,41 @@
 [![Build Status](https://travis-ci.org/pacificclimate/climate-explorer-backend.svg?branch=master)](https://travis-ci.org/pacificclimate/climate-explorer-backend)
 [![Code Climate](https://codeclimate.com/github/pacificclimate/climate-explorer-backend/badges/gpa.svg)](https://codeclimate.com/github/pacificclimate/climate-explorer-backend)
 
-## Requirements
+## Dependencies
 
-libpq-dev python-dev
+```bash
+$ sudo apt-get install libpq-dev python-dev libhdf5-dev libnetcdf-dev libgdal-dev
+```
+
+GDAL doesn't properly source its own lib paths when installing the python package, so we have to define
+these environment variables:
+
+```bash
+$ export CPLUS_INCLUDE_PATH=/usr/include/gdal
+$ export C_INCLUDE_PATH=/usr/include/gdal
+```
 
 ## Development
 
-### Config
+### Installation
+
+Setup using virtual environment. 
+Use Python 3 module `venv`, not `virtualenv`, which installs Python 2. 
+Unit tests use `datetime.timezone`, which is available only in Python 3.
+
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate
+(venv)$ pip install -U pip
+(venv)$ pip install -i https://pypi.pacificclimate.org/simple/ -r requirements.txt
+(venv)$ pip install -e .
+```
+
+### Running the dev server
 
 Database dsn can be configured with the MDDB_DSN environment variable. Defaults to 'postgresql://httpd_meta@monsoon.pcic.uvic.ca/pcic_meta'
 
-Setup using virtualenv:
-
-```bash
-$ virtualenv venv
-$ source venv/bin/activate
-(venv)$ pip install -U pip
-(venv)$ pip install --trusted-host tools.pacificclimate.org -i http://tools.pacificclimate.org/pypiserver/ -e .
 (venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname python scripts/devserver.py -p <port>
-```
 
 ### Testing
 
@@ -67,3 +83,64 @@ git commit -m"Bump to version x.x.x"
 git tag -a -m"x.x.x" x.x.x
 git push --follow-tags
   ```
+## Data file preparation
+
+Input data files can be created from CMIP5 compliant input using the `generate_climos.py` script.
+
+This script:
+
+1. Opens an existing NetCDF file
+
+2. Determines what climatological periods to generate
+
+3. For each climatological period:
+
+    a. Aggregates the daily data for the period into a new climatological output file.
+    
+    b. Revises the time variable of the output file to meet CF1.6/CMIP5 specification.
+    
+    c. Adds a climatology_bounds variable to the output file match climatological period.
+    
+    d. Optionally splits the climatology file into one file per dependent variable in the input file.
+    
+    e. Uses PCIC standards-compliant filename(s) for the output file(s).
+
+All input file metadata is obtained from standard metadata attributes in the netCDF file. 
+No metadata is deduced from the filename or path.
+
+All output files contain PCIC standard metadata attributes appropriate to climatology files.
+
+For information on PCIC metadata standards, see
+see https://pcic.uvic.ca/confluence/display/CSG/PCIC+metadata+standard+for+downscaled+data+and+hydrology+modelling+data 
+
+### Usage
+
+```bash
+# Use defaults:
+python generate_climos.py -o outdir files...
+
+# Split output into separate files per dependent variable
+python generate_climos.py -s -o outdir files...
+```
+
+Usage is further detailed in the script help information `python generate_climos.py -h`
+
+### Indexing
+
+Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
+
+To create a fresh modelmeta database, you can use the `mkblankdb.py` script in the modelmeta package.
+
+```bash
+python modelmeta/scripts/mkblankdb.py -d sqlite:////tmp/mddb.sqlite3
+```
+
+```R
+source("db/index_netcdf.r")
+f.list <- list.files("<input_directory>", full.name=TRUE, pattern = "\\.nc$", recursive=TRUE)
+index.netcdf.files(f.list, host="dbhost", db="dbname", user="dbuser", password="optional")
+# Or using sqlite
+index.netcdf.files.sqlite(f.list, "/tmp/mddb.sqlite3")
+```
+
+Finally, you'll have to add all of the indexed files to an "ensemble", i.e. a group of files to be served in a given application. There currently exists another script in the modelmeta package that searches a database for all of the existing data_file_variables and adds them to a newly created ensemble. This works for the simple case, but you may want to do something more customized.

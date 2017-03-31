@@ -1,6 +1,0 @@
-python-dateutil
-cdo
-numpy
-netCDF4
-nchelpers
-pytest

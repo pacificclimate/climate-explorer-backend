@@ -5,7 +5,11 @@ modelmeta
 shapely
 numpy
 netcdf4
-GDAL
+# nchelpers
+GDAL<2.0 # Allow pip or system install for travis
 rasterio
+cdo
 # For testing
+pytest
 python-dateutil
+pip
