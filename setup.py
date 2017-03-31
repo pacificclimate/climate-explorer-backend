@@ -43,7 +43,7 @@ setup(
     },
     package_data={
         'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static'),
-        'dp': ['data/*.nc']  # TODO: move this into tests/
+        'dp': ['tests/data/*.nc']
     },
     zip_safe=False
 )

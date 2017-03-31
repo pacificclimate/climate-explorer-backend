@@ -8,22 +8,22 @@ from dp.generate_climos import create_climo_files
 
 @fixture(scope='session')
 def tiny_gcm():
-    return CFDataset(resource_filename('dp', 'data/tiny_gcm.nc'))
+    return CFDataset(resource_filename('dp', 'tests/data/tiny_gcm.nc'))
 
 
 @fixture(scope='session')
 def tiny_downscaled_tasmax():
-    return CFDataset(resource_filename('dp', 'data/tiny_downscaled_tasmax.nc'))
+    return CFDataset(resource_filename('dp', 'tests/data/tiny_downscaled_tasmax.nc'))
 
 
 @fixture(scope='session')
 def tiny_downscaled_pr():
-    return CFDataset(resource_filename('dp', 'data/tiny_downscaled_pr.nc'))
+    return CFDataset(resource_filename('dp', 'tests/data/tiny_downscaled_pr.nc'))
 
 
 @fixture(scope='session')
 def tiny_hydromodel_gcm():
-    return CFDataset(resource_filename('dp', 'data/tiny_hydromodel_gcm.nc'))
+    return CFDataset(resource_filename('dp', 'tests/data/tiny_hydromodel_gcm.nc'))
 
 
 @fixture(scope='session')
