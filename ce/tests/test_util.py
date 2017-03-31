@@ -36,7 +36,7 @@ def test_get_array(request, nctuple, polygon):
     x = get_array(nc, fname, 0, polygon, var)
     t = time() - t0
     print(t)
-    assert t < .030
+    assert t < 0.04
     assert type(x) == MaskedArray
     assert hasattr(x, 'mask')
     assert np.mean(x) > 0 or np.all(x.mask)
