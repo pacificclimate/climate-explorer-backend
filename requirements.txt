@@ -10,6 +10,6 @@ GDAL
 rasterio
 cdo
 # For testing
-pytest
+pytest>=3.0.0
 python-dateutil
 pip
