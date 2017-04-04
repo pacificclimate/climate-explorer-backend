@@ -30,12 +30,16 @@ setup(
         'numpy',
         'netcdf4',
         'python-dateutil',
-        'nchelpers',
         'GDAL',
         'rasterio',
-        'cdo',
         'pytest',
     ],
+    extras_require={
+        'data_prep': [
+            'cdo',
+            'nchelpers',
+        ]
+    },
     scripts=['scripts/devserver.py'],
     package_dir={  # necessary?
         'ce': 'ce',
