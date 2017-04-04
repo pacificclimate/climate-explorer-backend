@@ -43,5 +43,7 @@ install:
 script:
   - py.test -v ce/tests
   - sudo apt-get install cdo
+  - cdo --version
   - pip install -i https://pypi.pacificclimate.org/simple/ .[data_prep]
+  - pip freeze
   - py.test -v dp/tests
