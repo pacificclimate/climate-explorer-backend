@@ -5,7 +5,10 @@ modelmeta
 shapely
 numpy
 netcdf4
+nchelpers
 GDAL
 rasterio
+cdo
 # For testing
+pytest
 python-dateutil

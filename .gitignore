@@ -1,4 +1,6 @@
 venv/
+py2.7/
+py3.5/
 *.*~
 
 # Byte-compiled / optimized / DLL files

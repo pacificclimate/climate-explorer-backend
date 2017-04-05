@@ -31,6 +31,13 @@ before_install:
   - export GDAL_MINOR_VERSION=$(echo $GDALVERSION | sed -e "s/\\.[0-9]\+$//")
   - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' rasterio GDAL==$GDAL_MINOR_VERSION"
 install:
+  - pip install -I pytest>=3.0.0
   - pip install -i https://pypi.pacificclimate.org/simple/ .
 script:
-  - py.test -v
+  - py.test -v ce/tests
+  # We only run the ce tests because installing cdo is just too hard: NetCDF support isn't built into the
+  # debian cdo pacakges. Once that is resolved (i.e., install the NetCDF support before installing cdo),
+  # the following lines can be uncommented to run the data prep tests too.
+#  - sudo apt-get install cdo
+#  - pip install -i https://pypi.pacificclimate.org/simple/ .[data_prep]
+#  - py.test -v dp/tests

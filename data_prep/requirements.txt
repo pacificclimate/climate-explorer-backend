@@ -1,4 +1,0 @@
-python-dateutil
-cdo
-numpy
-netCDF4
