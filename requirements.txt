@@ -5,7 +5,7 @@ modelmeta
 shapely
 numpy
 netcdf4
-# nchelpers
+nchelpers
 GDAL
 rasterio
 cdo
