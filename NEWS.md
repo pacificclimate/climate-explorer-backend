@@ -1,5 +1,12 @@
 # News / Release Notes
 
+## 0.2.0
+
+*11-April-2017*
+
+* Adds 'timescale' addtribute to the multimeta API call
+* Overhauls the data preparation script (i.e. the generation of climatological means) to rely solely on metadata *within* the file (no file paths or file names)
+
 ## 0.1.1
 
 *11-April-2016*

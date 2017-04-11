@@ -9,7 +9,7 @@ def recursive_list(pkg_dir, basedir):
                 yield os.path.join(dirname, filename).lstrip(pkg_dir)
     return [x for x in find()]
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 setup(
     name="ce",
@@ -40,8 +40,12 @@ setup(
             'nchelpers',
         ]
     },
-    scripts=['scripts/devserver.py'],
-    package_dir={  # necessary?
+    scripts=[
+        'scripts/devserver.py',
+        'dp/generate_climos.py',
+        'dp/update_metadata.py',
+    ],
+    package_dir={
         'ce': 'ce',
         'dp': 'dp',
     },
