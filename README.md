@@ -143,6 +143,8 @@ it is worth installing only its dependencies. There's a custom `requirements.txt
 (venv) $ pip install -i https://pypi.pacificclimate.org/simple/ -r dp/requirements.txt
 ```
 
+See bash script `process-climo-means.sh` for an example of using this script.
+
 ### Usage
 
 ```bash
