@@ -31,7 +31,7 @@ def main(args):
 
     logger.info('NetCDF file: {}'.format(args.ncfile))
     with Dataset(args.ncfile, mode='r+') as nc:
-            for attr, value in updates:
+            for attr, value in updates.items():
                 if value == None:
                     logger.info("Deleting attribute '{}'".format(attr))
                     if hasattr(nc, attr):
