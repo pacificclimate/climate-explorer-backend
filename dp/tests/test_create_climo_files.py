@@ -62,6 +62,7 @@ def basename_components(filepath):
     # climo_files parameters: (code, t_start, t_end, options)
     (('gcm', t_start(1965), t_end(1970), {}), 1),
     (('gcm', t_start(1965), t_end(1970), {'split_vars': True}), 1),
+    (('gcm_360', t_start(1965), t_end(1970), {}), 1),  # test date processing
     (('downscaled_tasmax', t_start(1961), t_end(1990), {}), 1),
     (('downscaled_pr', t_start(1961), t_end(1990), {}), 1),
     (('hydromodel_gcm', t_start(1984), t_end(1995), {}), 1),
