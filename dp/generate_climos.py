@@ -261,7 +261,8 @@ def generate_climo_time_var(t_start, t_end, types={'monthly', 'seasonal', 'annua
     # Annual time value
     if 'annual' in types:
         times.append(datetime(year, 7, 2))
-        climo_bounds.append([t_start, t_end + relativedelta(days=1)])
+        climo_bounds.append([datetime(t_start.year, 1, 1),
+                             datetime(t_end.year+1, 1, 1)])
 
     return times, climo_bounds
 
