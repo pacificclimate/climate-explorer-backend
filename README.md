@@ -134,7 +134,7 @@ $ source venv/bin/activate
 (venv) $
 ```
 
-The data prep component (currently just the script `dp/generate_climos.py`) does _not_ depend the CE backend (`ce`).
+The data prep component does _not_ depend the CE backend (`ce`).
 Given the effort and time required to install the CE backend, when only the data prep component is required
 it is worth installing only its dependencies. There's a custom `requirements.txt` in `dp` for just this purpose.
 
@@ -145,7 +145,8 @@ it is worth installing only its dependencies. There's a custom `requirements.txt
 
 See bash script `process-climo-means.sh` for an example of using this script.
 
-### Usage
+### `generate_climos` script
+#### Usage
 
 ```bash
 # Dry run
@@ -160,7 +161,7 @@ python generate_climos.py -s -o outdir files...
 
 Usage is further detailed in the script help information `python generate_climos.py -h`
 
-### Indexing
+#### Indexing
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
 
@@ -179,3 +180,55 @@ index.netcdf.files.sqlite(f.list, "/tmp/mddb.sqlite3")
 ```
 
 Finally, you'll have to add all of the indexed files to an "ensemble", i.e. a group of files to be served in a given application. There currently exists another script in the modelmeta package that searches a database for all of the existing data_file_variables and adds them to a newly created ensemble. This works for the simple case, but you may want to do something more customized.
+
+### `update_metadata` script
+
+#### Specifying updates to make
+
+`update_metadata` updates the global attributes in a NetCDF file according to instructions specified 
+in a separate file. Three update operations are available, detailed below: 
+delete attribute, set attribute value, rename attribute
+
+Specify each update on a separate line in the file. 
+Each line should begin in the first column (no leading whitespace).
+
+##### Delete attribute:
+
+```yaml
+name:
+```
+
+##### Set attribute value (create if does not exist):
+
+```yaml
+name: value
+```
+
+Note: This script is clever about the data type of the value specified. 
+(It uses [YAML](https://en.wikipedia.org/wiki/YAML) to parse these lines, which provides the cleverness.)
+
+* If you provide a value that looks like an integer, it is interpreted as an integer.
+* If you provide a value that looks like a float, it is interpreted as a float.
+* Otherwise it is treated as a string.
+  If you need to force a numeric-looking value to be a string, enclose it in single or double quotes (e.g., `'123'`).
+
+More details on the [Wikipedia YAML page](https://en.wikipedia.org/wiki/YAML#Advanced_components).
+
+##### Rename attribute:
+
+```yaml
+newname: <-oldname
+```
+
+Note: The special sequence `<-` after the colon indicates renaming. 
+If you must set an attribute with a (string) value that begins with
+`<-`, enclose the whole thing in single or double quotes (e.g., `'<- an unusual value'`).
+
+
+
+#### Usage
+
+```bash
+# update metadata in ncfile according to instructions in updates
+python update_metadata.py -u updates ncfile
+```
