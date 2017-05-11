@@ -2,3 +2,4 @@
 python-dateutil
 cdo
 nchelpers
+PyYAML

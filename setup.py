@@ -38,6 +38,7 @@ setup(
         'data_prep': [
             'cdo',
             'nchelpers',
+            'PyYAML',
         ]
     },
     scripts=[
