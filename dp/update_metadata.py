@@ -5,7 +5,7 @@ YAML file should contain a simple list of attribute name: value pairs.
 Special cases:
     name:           # delete attribute name if it exists
     name: value     # set attribute name to value
-    new: *@old      # rename attribute old to new (copy old to new, delete old)
+    new: <-old      # rename attribute old to new (copy old to new, delete old)
 """
 
 import logging
@@ -13,6 +13,8 @@ import logging
 from argparse import ArgumentParser
 from netCDF4 import Dataset
 import yaml
+
+rename_prefix = '<-'  # Or some other unlikely sequence of chars
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
 handler = logging.StreamHandler()
@@ -29,14 +31,14 @@ def main(args):
 
     logger.info('NetCDF file: {}'.format(args.ncfile))
     with Dataset(args.ncfile, mode='r+') as nc:
-            for attr, value in updates:
+            for attr, value in updates.items():
                 if value == None:
                     logger.info("Deleting attribute '{}'".format(attr))
                     if hasattr(nc, attr):
                         delattr(nc, value)
                 else:
-                    if value.startswith('*@'):  # Or some other unlikely sequence of chars
-                        old_name = value[2:]
+                    if value.startswith(rename_prefix):
+                        old_name = value[len(rename_prefix):]
                         logger.info("Renaming attribute '{}' to '{}'".format(old_name, attr))
                         try:
                             setattr(nc, attr, getattr(nc, old_name))
