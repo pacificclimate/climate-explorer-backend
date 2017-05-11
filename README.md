@@ -85,7 +85,7 @@ git push --follow-tags
   ```
 ## Data file preparation
 
-Input data files can be created from CMIP5 compliant input using the `generate_climos.py` script.
+Input data files can be created from CMIP5 compliant input using the script `dp/generate_climos.py`.
 
 This script:
 
@@ -113,9 +113,44 @@ All output files contain PCIC standard metadata attributes appropriate to climat
 For information on PCIC metadata standards, see
 see https://pcic.uvic.ca/confluence/display/CSG/PCIC+metadata+standard+for+downscaled+data+and+hydrology+modelling+data 
 
+### Installation
+
+Clone the repo onto the target machine.
+
+If installing on a PCIC compute node, you must load the environment modules that data prep depends on
+_before_ installing the Python modules.
+
+```bash
+$ module load netcdf-bin
+$ module load cdo-bin
+```
+
+Python installation should be done in a virtual environment. We recommend a Python3 virtual env, created and activated
+as follows:
+
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate
+(venv) $
+```
+
+The data prep component (currently just the script `dp/generate_climos.py`) does _not_ depend the CE backend (`ce`).
+Given the effort and time required to install the CE backend, when only the data prep component is required
+it is worth installing only its dependencies. There's a custom `requirements.txt` in `dp` for just this purpose.
+
+```bash
+(venv) $ pip install -U pip setuptools wheel
+(venv) $ pip install -i https://pypi.pacificclimate.org/simple/ -r dp/requirements.txt
+```
+
+See bash script `process-climo-means.sh` for an example of using this script.
+
 ### Usage
 
 ```bash
+# Dry run
+python generate_climos.py --dry-run -o outdir files...
+
 # Use defaults:
 python generate_climos.py -o outdir files...
 
