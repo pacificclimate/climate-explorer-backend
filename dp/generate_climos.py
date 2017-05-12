@@ -134,19 +134,34 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
     # Apply per-variable processing
     # - Scale pr variable if it is not in desired units
     #   - TODO: Use UDUNITS here for more robust processing of units? It has a fairly heavy API. But this is uuuugly.
+    pr_attributes = {}  # will contain updates, if any, to pr variable attributes
     if 'pr' in input_file.dependent_varnames:
-        units = input_file.variables['pr'].units
+        pr_variable = input_file.variables['pr']
+        units = pr_variable.units
         if any(u in units for u in ['kg', 'mm']) and any(u in units for u in ['/s', '/ s', 's-1', 's^-1']):
             logger.info("Converting 'pr' variable to units mm/day")
-            # Extract variable
-            pr_only = cdo.select('name=pr', input=climo_means)
-            # Multiply values by 86400 to convert from mm/s to mm/day
-            pr_only = cdo.mulc('86400', input=pr_only)
-            # Replace pr in all-variables file
-            climo_means = cdo.replace(input=[climo_means, pr_only])
             # Update units attribute
-            # TODO: Verify that "d-1" is desired way to express "per day" (alternaive is "day-1")
-            pr_units_attr = re.sub('(/s|/ s|s-1|s\^-1)', ' d-1', units)
+            pr_attributes['units'] = re.sub('(/s|/ s|s-1|s\^-1)', ' d-1', units)
+            # Multiply values by 86400 to convert from mm/s to mm/day
+            seconds_per_day = 86400
+            if hasattr(pr_variable, 'scale_factor') or hasattr(pr_variable, 'add_offset'):
+                # This is a packed file; need only modify packing parameters
+                try:
+                    pr_attributes['scale_factor'] = seconds_per_day * pr_variable.scale_factor
+                except AttributeError:
+                    pr_attributes['scale_factor'] = seconds_per_day * 1.0  # default value 1.0 for missing scale factor
+                try:
+                    pr_attributes['add_offset'] = seconds_per_day * pr_variable.add_offset
+                except AttributeError:
+                    pr_attributes['add_offset'] = 0.0  # default value 0.0 for missing offset
+            else:
+                # This is not a packed file; modify the values proper
+                # Extract variable
+                pr_only = cdo.select('name=pr', input=climo_means)
+                # Multiply values by 86400 to convert from mm/s to mm/day
+                pr_only = cdo.mulc(str(seconds_per_day), input=pr_only)
+                # Replace pr in all-variables file
+                climo_means = cdo.replace(input=[climo_means, pr_only])
 
     # Update climo file with climo specific metadata attributes.
     # Do it in place via CFDataset to avoid CDO installation hassles: CDO < 1.8.0 does not have setattributes method
@@ -169,11 +184,9 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
         cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
         cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
         if hasattr(input_file, 'tracking_id'):
-            cf.climo_tracking_id=input_file.tracking_id
-        try:
-            cf.variables['pr'].units = pr_units_attr
-        except NameError:
-            pass
+            cf.climo_tracking_id = input_file.tracking_id
+        for attr in pr_attributes:
+            setattr(cf.variables['pr'], attr, pr_attributes[attr])
 
     # Update time metadata in climo file
     update_climo_time_meta(climo_means)
