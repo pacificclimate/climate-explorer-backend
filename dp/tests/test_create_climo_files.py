@@ -126,8 +126,37 @@ def test_climo_metadata(input_and_climo_files, t_start, t_end):
             assert cf.climo_start_time == t_start.isoformat()[:19] + 'Z'
             assert cf.climo_end_time == t_end.isoformat()[:19] + 'Z'
             assert getattr(cf, 'climo_tracking_id', None) == getattr(input_file, 'tracking_id', None)
+
+
+@mark.parametrize('input_and_climo_files', [
+    # input_and_climo_files parameters: (code, t_start, t_end, options)
+    ('downscaled_pr', t_start(1965), t_end(1970), {}),
+    ('downscaled_pr_packed', t_start(1965), t_end(1970), {}),
+], indirect=['input_and_climo_files'])
+def test_pr_units_conversion(input_and_climo_files):
+    """Test that units conversion for 'pr' variable is performed properly, for both packed and unpacked files.
+    Test for unpacked file is pretty elementary: check pr units.
+    Test for packed checks that packing params are modified correctly.
+    """
+    input_file, climo_files = input_and_climo_files
+    assert 'pr' in input_file.dependent_varnames
+    input_pr_var = input_file.variables['pr']
+    assert input_pr_var.units.endswith('s-1')
+    seconds_per_day = 86400
+    for fp in climo_files:
+        with CFDataset(fp) as cf:
             if 'pr' in cf.dependent_varnames:
-                assert cf.variables['pr'].units.endswith('d-1')
+                output_pr_var = cf.variables['pr']
+                assert output_pr_var.units.endswith('d-1')
+                if hasattr(input_pr_var, 'scale_factor') or hasattr(input_pr_var, 'add_offset'):
+                    try:
+                        assert output_pr_var.scale_factor == seconds_per_day * input_pr_var.scale_factor
+                    except AttributeError:
+                        assert output_pr_var.scale_factor == seconds_per_day * 1.0
+                    try:
+                        assert output_pr_var.add_offset == seconds_per_day * input_pr_var.add_offset
+                    except AttributeError:
+                        assert output_pr_var.add_offset == 0.0
 
 
 @mark.parametrize('input_and_climo_files', [
