@@ -202,14 +202,18 @@ You only need to know a couple of things about YAML and how we employ it to use 
   * The second (indented) level specifies the attribute and the change to be made to it.
     See below for details.
 
-##### Delete attribute:
+##### Delete attribute
+
+Delete the attribute named `name`.
 
 ```yaml
 global-or-variable-name:
     name:
 ```
 
-##### Set attribute value (create if does not exist):
+##### Set attribute value
+
+Set the value of the attribute `name` to `value`. If the attribute does not yet exist, it is created.
 
 ```yaml
 global-or-variable-name:
@@ -225,7 +229,9 @@ Note: This script is clever (courtesy of YAML cleverness) about the data type of
 
 More details on the [Wikipedia YAML page](https://en.wikipedia.org/wiki/YAML#Advanced_components).
 
-##### Rename attribute:
+##### Rename attribute
+
+Rename the attribute named `oldname` to `newname`. Value is unchanged.
 
 ```yaml
 global-or-variable-name:
