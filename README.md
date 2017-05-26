@@ -60,14 +60,33 @@ sudo docker run --rm -it -v ${PWD}:/app --name backend-test pcic/climate-explore
 sudo docker run --rm -it --name backend-test pcic/climate-explorer-backend bash -c "apt-get update; apt-get install -yq git; git fetch; git checkout <commit-ish>; pip install pytest; py.test -v ce/tests"
 ```
 
-### Setup using Docker *IN PROGRESS*:
+### Setup using Docker:
+Build the image:
+```bash
+git clone https://github.com/pacificclimate/climate-explorer-backend
+cd climate-explorer-backend
+docker build -t climate-explorer-backend-image .
+```
 
-While this will run a functional container, you must also link in all appropriate data to the correct location defined in the metadata database. Use multiple `-v /data/location:/data/location` options to mount them in the container. If using the test data is sufficient, use `-e "MDDB_DSN=sqlite:////app/ce/tests/data/test.sqlite" when running the container
+It's convenient to create a seperate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database. 
 
 ```bash
-docker build -t climate-explorer-backend .
-docker run --rm -it -p 8000:8000 -e "MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname" -v $(pwd):/app --name backend climate-explorer-backend
+docker run --name ce_data -v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/:ro ubuntu 16.04
 ```
+
+Finally run the climate explorer backend image as a new container. 
+
+```bash
+docker run -it -p whateverexternalport:8000 
+               -e "MDDB_DSN=postgresql://dbuser:dbpassword@host/databasename" 
+               --volumes-from ce_data 
+               --name climate-explorer-backend
+               climate-explorer-backend-image
+```
+
+If you aren't using a read-only data container, replace `--volumes-from ce_data` with one or more `-v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/` arguments.
+
+If using the test data is sufficient, use `-e "MDDB_DSN=sqlite:////app/ce/tests/data/test.sqlite"` when running the container.
 
 ## Releasing
 
