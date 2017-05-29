@@ -1,11 +1,8 @@
 """Update NetCDF metadata from a YAML file.
+
 WARNING: THIS SCRIPT MODIFIES THE ORIGINAL FILE.
 
-YAML file should contain a simple list of attribute name: value pairs.
-Special cases:
-    name:           # delete attribute name if it exists
-    name: value     # set attribute name to value
-    new: <-old      # rename attribute old to new (copy old to new, delete old)
+See README for details of update specification file (YAML format).
 """
 
 import logging
@@ -13,6 +10,7 @@ import logging
 from argparse import ArgumentParser
 from netCDF4 import Dataset
 import yaml
+import six
 
 rename_prefix = '<-'  # Or some other unlikely sequence of chars
 
@@ -31,23 +29,31 @@ def main(args):
 
     logger.info('NetCDF file: {}'.format(args.ncfile))
     with Dataset(args.ncfile, mode='r+') as nc:
-            for attr, value in updates.items():
+        for target_name in updates:
+            if target_name == 'global':
+                target = nc
+                logger.info("Global attributes:")
+            else:
+                target = nc.variables[target_name]
+                logger.info("Attributes of variable '{}':".format(target_name))
+
+            for attr, value in updates[target_name].items():
                 if value == None:
-                    logger.info("Deleting attribute '{}'".format(attr))
-                    if hasattr(nc, attr):
-                        delattr(nc, value)
+                    logger.info("\tDeleting attribute '{}'".format(attr))
+                    if hasattr(target, attr):
+                        delattr(target, value)
                 else:
-                    if value.startswith(rename_prefix):
+                    if isinstance(value, six.string_types) and value.startswith(rename_prefix):
                         old_name = value[len(rename_prefix):]
-                        logger.info("Renaming attribute '{}' to '{}'".format(old_name, attr))
+                        logger.info("\tRenaming attribute '{}' to '{}'".format(old_name, attr))
                         try:
-                            setattr(nc, attr, getattr(nc, old_name))
-                            delattr(nc, old_name)
+                            setattr(target, attr, getattr(target, old_name))
+                            delattr(target, old_name)
                         except AttributeError:
                             pass
                     else:
-                        logger.info("Setting attribute '{}'".format(attr))
-                        setattr(nc, attr, value)
+                        logger.info("\tSetting attribute '{}'".format(attr))
+                        setattr(target, attr, value)
 
 
 if __name__ == '__main__':
