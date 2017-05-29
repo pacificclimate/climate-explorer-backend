@@ -259,9 +259,15 @@ def generate_climo_time_var(t_start, t_end, types={'monthly', 'seasonal', 'annua
                                  datetime(t_end.year, month, 1) + relativedelta(months=2)])
 
     # Annual time value
+    # Standard climatological periods, provided by nchelpers and implicit here, begin Jan 1 and end Dec 31
+    # This is a mismatch to hydrological years, which begin/end Oct 1 / Sep 30. Discussions with Markus Schnorbus
+    # confirm that for 30-year means, the difference in annual and
+    # season averages is negligible and therefore we do not have to allow for alternate begin and end dates.
+    # """
     if 'annual' in types:
         times.append(datetime(year, 7, 2))
-        climo_bounds.append([t_start, t_end + relativedelta(days=1)])
+        climo_bounds.append([datetime(t_start.year, 1, 1),
+                             datetime(t_end.year+1, 1, 1)])
 
     return times, climo_bounds
 
