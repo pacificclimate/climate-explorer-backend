@@ -32,6 +32,7 @@ setup(
         'python-dateutil',
         'GDAL',
         'rasterio',
+        'pint',
         'pytest',
     ],
     extras_require={

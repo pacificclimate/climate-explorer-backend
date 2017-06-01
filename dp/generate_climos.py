@@ -12,6 +12,8 @@ from cdo import Cdo
 from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 
+from dp.units_helpers import Unit
+
 from nchelpers import CFDataset, standard_climo_periods
 from nchelpers.date_utils import d2s
 
@@ -137,11 +139,11 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
     pr_attributes = {}  # will contain updates, if any, to pr variable attributes
     if 'pr' in input_file.dependent_varnames:
         pr_variable = input_file.variables['pr']
-        units = pr_variable.units
-        if any(u in units for u in ['kg', 'mm']) and any(u in units for u in ['/s', '/ s', 's-1', 's^-1']):
+        pr_units = Unit.from_udunits_str(pr_variable.units)
+        if pr_units in [Unit('kg / m**2 / s'), Unit('mm / s')]:
             logger.info("Converting 'pr' variable to units mm/day")
             # Update units attribute
-            pr_attributes['units'] = re.sub('(/s|/ s|s-1|s\^-1)', ' d-1', units)
+            pr_attributes['units'] = (pr_units * Unit('s / day')).to_udunits_str()
             # Multiply values by 86400 to convert from mm/s to mm/day
             seconds_per_day = 86400
             if hasattr(pr_variable, 'scale_factor') or hasattr(pr_variable, 'add_offset'):

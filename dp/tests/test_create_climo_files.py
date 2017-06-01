@@ -38,6 +38,8 @@ import numpy as np
 
 from nchelpers import CFDataset
 
+from dp.units_helpers import Unit
+
 
 def t_start(year):
     """Returns the start date of a climatological processing period beginning at start of year"""
@@ -147,7 +149,7 @@ def test_pr_units_conversion(input_and_climo_files):
         with CFDataset(fp) as cf:
             if 'pr' in cf.dependent_varnames:
                 output_pr_var = cf.variables['pr']
-                assert output_pr_var.units.endswith('d-1')
+                assert Unit.from_udunits_str(output_pr_var.units) in [Unit('kg/m**2/day'), Unit('mm/day')]
                 if hasattr(input_pr_var, 'scale_factor') or hasattr(input_pr_var, 'add_offset'):
                     try:
                         assert output_pr_var.scale_factor == seconds_per_day * input_pr_var.scale_factor
