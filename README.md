@@ -60,14 +60,33 @@ sudo docker run --rm -it -v ${PWD}:/app --name backend-test pcic/climate-explore
 sudo docker run --rm -it --name backend-test pcic/climate-explorer-backend bash -c "apt-get update; apt-get install -yq git; git fetch; git checkout <commit-ish>; pip install pytest; py.test -v ce/tests"
 ```
 
-### Setup using Docker *IN PROGRESS*:
+### Setup using Docker:
+Build the image:
+```bash
+git clone https://github.com/pacificclimate/climate-explorer-backend
+cd climate-explorer-backend
+docker build -t climate-explorer-backend-image .
+```
 
-While this will run a functional container, you must also link in all appropriate data to the correct location defined in the metadata database. Use multiple `-v /data/location:/data/location` options to mount them in the container. If using the test data is sufficient, use `-e "MDDB_DSN=sqlite:////app/ce/tests/data/test.sqlite" when running the container
+It's convenient to create a seperate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database. 
 
 ```bash
-docker build -t climate-explorer-backend .
-docker run --rm -it -p 8000:8000 -e "MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname" -v $(pwd):/app --name backend climate-explorer-backend
+docker run --name ce_data -v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/:ro ubuntu 16.04
 ```
+
+Finally run the climate explorer backend image as a new container. 
+
+```bash
+docker run -it -p whateverexternalport:8000 
+               -e "MDDB_DSN=postgresql://dbuser:dbpassword@host/databasename" 
+               --volumes-from ce_data 
+               --name climate-explorer-backend
+               climate-explorer-backend-image
+```
+
+If you aren't using a read-only data container, replace `--volumes-from ce_data` with one or more `-v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/` arguments.
+
+If using the test data is sufficient, use `-e "MDDB_DSN=sqlite:////app/ce/tests/data/test.sqlite"` when running the container.
 
 ## Releasing
 
@@ -134,7 +153,7 @@ $ source venv/bin/activate
 (venv) $
 ```
 
-The data prep component (currently just the script `dp/generate_climos.py`) does _not_ depend the CE backend (`ce`).
+The data prep component does _not_ depend the CE backend (`ce`).
 Given the effort and time required to install the CE backend, when only the data prep component is required
 it is worth installing only its dependencies. There's a custom `requirements.txt` in `dp` for just this purpose.
 
@@ -145,7 +164,8 @@ it is worth installing only its dependencies. There's a custom `requirements.txt
 
 See bash script `process-climo-means.sh` for an example of using this script.
 
-### Usage
+### `generate_climos` script
+#### Usage
 
 ```bash
 # Dry run
@@ -160,7 +180,7 @@ python generate_climos.py -s -o outdir files...
 
 Usage is further detailed in the script help information `python generate_climos.py -h`
 
-### Indexing
+#### Indexing
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
 
@@ -179,3 +199,92 @@ index.netcdf.files.sqlite(f.list, "/tmp/mddb.sqlite3")
 ```
 
 Finally, you'll have to add all of the indexed files to an "ensemble", i.e. a group of files to be served in a given application. There currently exists another script in the modelmeta package that searches a database for all of the existing data_file_variables and adds them to a newly created ensemble. This works for the simple case, but you may want to do something more customized.
+
+### `update_metadata` script
+
+#### Specifying updates to make
+
+`update_metadata` can update the global attributes and/or the attributes of variables in a NetCDF file. 
+Three update operations are available (detailed below): delete attribute, set attribute value, rename attribute.
+
+Updates to be made are specified in a separate updates file.
+It uses a simple, human-readable data format called [YAML](https://en.wikipedia.org/wiki/YAML).
+You only need to know a couple of things about YAML and how we employ it to use this script:
+
+* Updates are specified with `key: value` syntax. A space must separate the colon from the value.
+* Indentation matters (see next item). Indentation must be consistent within a block.
+* There are two levels of indentation. 
+  * The first (unindented) level specifies what group of attributes is to be updated. 
+    * The key `global` specifies global attributes. 
+    * Any other key is assumed to be the name of a variable whose attributes are to be updated.
+    * The *value* for a first-level key is the indented block below it.
+  * The second (indented) level specifies the attribute and the change to be made to it.
+    See below for details.
+
+##### Delete attribute
+
+Delete the attribute named `name`.
+
+```yaml
+global-or-variable-name:
+    name:
+```
+
+##### Set attribute value
+
+Set the value of the attribute `name` to `value`. If the attribute does not yet exist, it is created.
+
+```yaml
+global-or-variable-name:
+    name: value
+```
+
+Note: This script is clever (courtesy of YAML cleverness) about the data type of the value specified. 
+
+* If you provide a value that looks like an integer, it is interpreted as an integer.
+* If you provide a value that looks like a float, it is interpreted as a float.
+* Otherwise it is treated as a string.
+  If you need to force a numeric-looking value to be a string, enclose it in single or double quotes (e.g., `'123'`).
+
+More details on the [Wikipedia YAML page](https://en.wikipedia.org/wiki/YAML#Advanced_components).
+
+##### Rename attribute
+
+Rename the attribute named `oldname` to `newname`. Value is unchanged.
+
+```yaml
+global-or-variable-name:
+    newname: <-oldname
+```
+
+Note: The special sequence `<-` after the colon indicates renaming. 
+This means that you can't set an attribute with a value that begins with `<-`. Sorry.
+
+##### Example updates file:
+
+```yaml
+global:
+    foo: 
+    bar: 42
+    baz: <-qux
+
+temperature:
+    units: degrees_C
+```
+
+This file causes a NetCDF file to be updated in the following way:
+
+Global attributes: 
+* delete global attribute `foo`
+* set global attribute `bar` to (integer) `42`
+* rename global attribute `qux` to `baz`
+
+Attributes of variable named `temperature`:
+* set attribute `units` to (string) `degrees_C`
+
+#### Usage
+
+```bash
+# update metadata in ncfile according to instructions in updates
+python update_metadata.py -u updates ncfile
+```
