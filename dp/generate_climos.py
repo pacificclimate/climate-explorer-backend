@@ -122,20 +122,8 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
 
     # Post-process climatological means
     if convert_longitudes:
-        # Transform longitude range from [0, 360) to [-180, 180)
-        # CDO offers no simple way to do this computation, therefore we do it directly.
-        # This code modifies the file with filepath climo_means in place.
-        with CFDataset(climo_means, mode='r+') as cf:
-            convert_these = [cf.lon_var]
-            if hasattr(cf.lon_var, 'bounds'):
-                lon_bnds_var = cf.variables[cf.lon_var.bounds]
-                convert_these.append(lon_bnds_var)
-            for lon_var in convert_these:
-                for i, lon in np.ndenumerate(lon_var):
-                    if lon >= 180:
-                        lon_var[i] = lon - 360
+        convert_longitude_range(climo_means)
 
-    # Apply per-variable processing
     climo_means = convert_pr_var_units(input_file, climo_means)
 
     # Update climo file with climo specific metadata attributes.
@@ -250,6 +238,24 @@ def generate_climo_time_var(t_start, t_end, types={'monthly', 'seasonal', 'annua
         climo_bounds.append([t_start, t_end + relativedelta(days=1)])
 
     return times, climo_bounds
+
+
+def convert_longitude_range(climo_means):
+    """Transform longitude range from [0, 360) to [-180, 180).
+
+    CDO offers no simple way to do this computation, therefore we do it directly.
+
+    WARNING: This code modifies the file with filepath climo_means IN PLACE.
+    """
+    with CFDataset(climo_means, mode='r+') as cf:
+        convert_these = [cf.lon_var]
+        if hasattr(cf.lon_var, 'bounds'):
+            lon_bnds_var = cf.variables[cf.lon_var.bounds]
+            convert_these.append(lon_bnds_var)
+        for lon_var in convert_these:
+            for i, lon in np.ndenumerate(lon_var):
+                if lon >= 180:
+                    lon_var[i] = lon - 360
 
 
 def convert_pr_var_units(input_file, climo_means):
