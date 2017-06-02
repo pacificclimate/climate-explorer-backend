@@ -243,7 +243,7 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
             assert (t.year, t.month, t.day) == (climo_year, 7, 2)
             cb = next(climo_bnds)
             assert cb[0] == d2n(t_start)
-            assert cb[1] == d2n(t_end + relativedelta(days=1))
+            assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
 
 
 @mark.parametrize('input_and_climo_files, convert_longitudes', [
