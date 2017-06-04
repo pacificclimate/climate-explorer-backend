@@ -1,5 +1,6 @@
 import math
 from time import time
+import re
 
 import pytest
 
@@ -22,6 +23,19 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     url = '/api/' + endpoint
     response = test_client.get(url, query_string=query_params)
     assert response.status_code == 200
+
+@pytest.mark.parametrize(('endpoint', 'missing_params'), [
+    ('/api/metadata', ['model_id']),
+    ('/api/data', ('model', 'emission', 'time', 'area', 'variable'))
+])
+def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
+    response = test_client.get(endpoint)
+    assert response.status_code == 400
+    content = response.data.decode(response.charset)
+    assert re.search("Missing query params?:", content)
+    for param in missing_params:
+        assert param in content
+
 
 def test_models(populateddb):
     sesh = populateddb.session
