@@ -31,7 +31,8 @@ logger.setLevel(logging.DEBUG)  # For testing, overridden by -l when run as a sc
 cdo = Cdo()
 
 
-def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=False, split_vars=False):
+def create_climo_files(outdir, input_file, t_start, t_end,
+                       convert_longitudes=False, split_vars=False, split_intervals=False):
     """Generate climatological files from an input file and a selected time range.
 
     Parameters:
@@ -54,7 +55,9 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
     To process an input file we must perform the following operations:
 
     - Select the temporal subset defined by t_start, t_end
-    - Form climatological means over each dependent variable
+    - Form climatological means over each dependent variable over all available averaging intervals
+    - if not split_periods:
+        - concat files (averaging intervals)
     - Post-process climatological results:
         - if convert_longitudes, transform longitude range from [0, 360) to [-180, 180)
     - Apply any special per-variable post-processing:
@@ -118,44 +121,28 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
                              .format(ops_by_resolution.keys(), time_resolution))
 
     logger.info('Forming climatological means')
-    climo_means = cdo.copy(input=' '.join(climo_outputs(input_file.time_resolution)))
+    climo_means_files = climo_outputs(input_file.time_resolution)
+
+    # Optionally concatenate means for each interval (month, season, year) into one file
+    if not split_intervals:
+        logger.info('Concatenating mean intervals')
+        climo_means_files = [cdo.copy(input=' '.join(climo_means_files))]
 
     # Post-process climatological means
     if convert_longitudes:
-        convert_longitude_range(climo_means)
+        for climo_means_file in climo_means_files:
+            convert_longitude_range(climo_means_file)
 
-    climo_means = convert_pr_var_units(input_file, climo_means)
+    climo_means_files = [convert_pr_var_units(input_file, climo_mean_file) for climo_mean_file in climo_means_files]
 
-    # Update climo file with climo specific metadata attributes.
-    # Do it in place via CFDataset to avoid CDO installation hassles: CDO < 1.8.0 does not have setattributes method
-    # and there's no easy Ubuntu install for CDO >= 1.8.0 yet
-    # Also avoids copying the file just to update its attributes.
-    with CFDataset(climo_means, mode='r+') as cf:
-        # For an explanation of frequency param, see PCIC metadata standard
-        resolution_to_frequency = {
-            'daily': 'msaClim',
-            'monthly': 'saClim',
-            'yearly': 'aClim'
-        }
-        try:
-            cf.frequency = resolution_to_frequency[input_file.time_resolution]
-        except KeyError:
-            raise ValueError("Expected input file to have time resolution in {}, found '{}'"
-                             .format(resolution_to_frequency.keys(), input_file.time_resolution))
-        # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
-        # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
-        cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
-        cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
-        if hasattr(input_file, 'tracking_id'):
-            cf.climo_tracking_id = input_file.tracking_id
-
-    # Update time metadata in climo file
-    update_climo_time_meta(climo_means)
+    # Update metadata in climo files
+    for climo_means_file in climo_means_files:
+        update_climo_metadata(input_file, t_start, t_end, climo_means_file)
 
     # Create final output file(s): split climo means file by dependent variables if required
     output_file_paths = []
 
-    def create_output_file(cdo_op, output_file_path):
+    def create_output_file(climo_means_file, cdo_op, output_file_path):
         """Create the output file by applying function cdo_op, and update its time metadata.
         Catch any exception and log it; don't re-raise the exception.
 
@@ -167,22 +154,27 @@ def create_climo_files(outdir, input_file, t_start, t_end, convert_longitudes=Fa
             logger.info('Output file: {}'.format(output_file_path))
             if not os.path.exists(os.path.dirname(output_file_path)):
                 os.makedirs(os.path.dirname(output_file_path))
-            cdo_op(input=climo_means, output=output_file_path)
+            cdo_op(input=climo_means_file, output=output_file_path)
         except Exception as e:
             logger.warn('Failed to create climatology file. {}: {}'.format(e.__class__.__name__, e))
         else:
             output_file_paths.append(output_file_path)
 
-    if split_vars and len(input_file.dependent_varnames) > 1:
-        # Split climo means file into separate files, one per variable
-        logger.info('Splitting into single-variable files')
-        for variable in input_file.dependent_varnames:
-            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable=variable)
-            create_output_file(lambda **io: cdo.select('name={}'.format(variable), **io), output_file_path)
-    else:
-        # Don't split; copy the temporary file to the final output filename
-        output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end)
-        create_output_file(lambda **io: cdo.copy(**io), output_file_path)
+    for climo_means_file in climo_means_files:
+        if split_vars and len(input_file.dependent_varnames) > 1:
+            # Split climo means file into separate files, one per variable
+            logger.info('Splitting into single-variable files')
+            for variable in input_file.dependent_varnames:
+                output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable=variable)
+                create_output_file(climo_means_file,
+                                   lambda **io: cdo.select('name={}'.format(variable), **io),
+                                   output_file_path)
+        else:
+            # Don't split; copy the temporary file to the final output filename
+            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end)
+            create_output_file(climo_means_file,
+                               lambda **io: cdo.copy(**io),
+                               output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
     # TODO: Does the above TODO make any sense? Each variable has had up to 3 different aggregations applied
@@ -306,20 +298,41 @@ def convert_pr_var_units(input_file, climo_means):
     return climo_means
 
 
-def update_climo_time_meta(filepath):
+def update_climo_metadata(input_file, t_start, t_end, filepath):
     """Updates an existing netCDF file to reflect the fact that it contains climatological means.
-    Namely, update the time variable with climatological times computed according to CF Metadata Convetions,
+    Specifically:
+    - update the frequency attribute
+    - some other stuff
+    - update the time variable with climatological times computed according to CF Metadata Convetions,
     and create a climatology bounds variable with appropriate values.
 
     :param filepath: (str) filepath to a climatological means output file which needs to have its
         time variable
 
-    IMPORTANT: THIS MAKES CHANGES TO FILES IN PLACE
+    IMPORTANT: THIS CHANGES NETCDF FILE IN PLACE
 
     Section 7.4: http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
     """
     
     with CFDataset(filepath, mode='r+') as cf:
+        # For an explanation of frequency param, see PCIC metadata standard
+        resolution_to_frequency = {
+            'daily': 'msaClim',
+            'monthly': 'saClim',
+            'yearly': 'aClim'
+        }
+        try:
+            cf.frequency = resolution_to_frequency[input_file.time_resolution]
+        except KeyError:
+            raise ValueError("Expected input file to have time resolution in {}, found '{}'"
+                             .format(resolution_to_frequency.keys(), input_file.time_resolution))
+        # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
+        # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
+        cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
+        cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
+        if hasattr(input_file, 'tracking_id'):
+            cf.climo_tracking_id = input_file.tracking_id
+
         # Generate new time/climo_bounds data
         frequency_to_time_types = {
             'msaClim': {'monthly', 'seasonal', 'annual'},
@@ -403,10 +416,14 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
-    parser.add_argument('-g', '--convert-longitudes', dest='convert_longitudes', action='store_true')
-    parser.add_argument('-s', '--split-vars', dest='split_vars', action='store_true')
+    parser.add_argument('-g', '--convert-longitudes', dest='convert_longitudes', action='store_true',
+                        help='Transform longitude range from [0, 360) to [-180, 180)')
+    parser.add_argument('-v', '--split-vars', dest='split_vars', action='store_true',
+                        help='Generate a separate file for each dependent variable in the file')
+    parser.add_argument('-i', '--split-intervals', dest='split_intervals', action='store_true',
+                        help='Generate a separate file for each climatological period')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False)
+    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False, split_intervals=True)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
     main(args)
