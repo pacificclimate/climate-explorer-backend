@@ -125,56 +125,47 @@ def create_climo_files(outdir, input_file, t_start, t_end,
 
     # Optionally concatenate means for each interval (month, season, year) into one file
     if not split_intervals:
-        logger.info('Concatenating mean intervals')
+        logger.info('Concatenating mean interval files')
         climo_means_files = [cdo.copy(input=' '.join(climo_means_files))]
 
     # Post-process climatological means
     if convert_longitudes:
+        logger.info('Converting longitudes')
         for climo_means_file in climo_means_files:
             convert_longitude_range(climo_means_file)
 
     climo_means_files = [convert_pr_var_units(input_file, climo_mean_file) for climo_mean_file in climo_means_files]
 
     # Update metadata in climo files
+    logger.debug('Updating climo metadata')
     for climo_means_file in climo_means_files:
         update_climo_metadata(input_file, t_start, t_end, climo_means_file)
 
-    # Create final output file(s): split climo means file by dependent variables if required
+    # Split climo files by dependent variables if required
+    # TODO: Factor into separate function
+    if split_vars and len(input_file.dependent_varnames) > 1:
+        split_climo_means_files = []
+        logger.info('Splitting into single-variable files')
+        for climo_means_file in climo_means_files:
+            for variable in input_file.dependent_varnames:
+                split_climo_means_files.append(cdo.select('name={}'.format(variable), input=climo_means_file))
+        climo_means_files = split_climo_means_files
+
+    # Copy the temporary files to their final output filepaths
     output_file_paths = []
-
-    def create_output_file(climo_means_file, cdo_op, output_file_path):
-        """Create the output file by applying function cdo_op, and update its time metadata.
-        Catch any exception and log it; don't re-raise the exception.
-
-        :param cdo_op: (function) applies the desired CDO operation. Invoked only with kw args; CDO operation-specific
-            args should be curried by cdo_op. Input and output file args are supplied as kw args here
-        :param output_file_path: (str) specifies file path for output file; it will be created by this function.
-        """
+    for climo_means_file in climo_means_files:
+        with CFDataset(climo_means_file) as cf:
+            output_file_path = os.path.join(outdir, cf.cmor_filename)
         try:
             logger.info('Output file: {}'.format(output_file_path))
             if not os.path.exists(os.path.dirname(output_file_path)):
                 os.makedirs(os.path.dirname(output_file_path))
-            cdo_op(input=climo_means_file, output=output_file_path)
+            cdo.copy(input=climo_means_file, output=output_file_path)
         except Exception as e:
-            logger.warn('Failed to create climatology file. {}: {}'.format(e.__class__.__name__, e))
+            logger.warning('Failed to create climatology file. {}: {}'.format(e.__class__.__name__, e))
         else:
             output_file_paths.append(output_file_path)
 
-    for climo_means_file in climo_means_files:
-        if split_vars and len(input_file.dependent_varnames) > 1:
-            # Split climo means file into separate files, one per variable
-            logger.info('Splitting into single-variable files')
-            for variable in input_file.dependent_varnames:
-                output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end, variable=variable)
-                create_output_file(climo_means_file,
-                                   lambda **io: cdo.select('name={}'.format(variable), **io),
-                                   output_file_path)
-        else:
-            # Don't split; copy the temporary file to the final output filename
-            output_file_path = climo_output_filepath(outdir, input_file, t_start, t_end)
-            create_output_file(climo_means_file,
-                               lambda **io: cdo.copy(**io),
-                               output_file_path)
 
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
     # TODO: Does the above TODO make any sense? Each variable has had up to 3 different aggregations applied
@@ -298,57 +289,58 @@ def convert_pr_var_units(input_file, climo_means):
     return climo_means
 
 
-def update_climo_metadata(input_file, t_start, t_end, filepath):
+def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
     """Updates an existing netCDF file to reflect the fact that it contains climatological means.
     Specifically:
+    - add start and end time attributes
+    - update tracking_id attribute
     - update the frequency attribute
-    - some other stuff
     - update the time variable with climatological times computed according to CF Metadata Convetions,
     and create a climatology bounds variable with appropriate values.
 
-    :param filepath: (str) filepath to a climatological means output file which needs to have its
+    :param climo_filepath: (str) filepath to a climatological means output file which needs to have its
         time variable
 
     IMPORTANT: THIS CHANGES NETCDF FILE IN PLACE
 
     Section 7.4: http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
     """
-    
-    with CFDataset(filepath, mode='r+') as cf:
-        # For an explanation of frequency param, see PCIC metadata standard
-        resolution_to_frequency = {
-            'daily': 'msaClim',
-            'monthly': 'saClim',
-            'yearly': 'aClim'
-        }
-        try:
-            cf.frequency = resolution_to_frequency[input_file.time_resolution]
-        except KeyError:
-            raise ValueError("Expected input file to have time resolution in {}, found '{}'"
-                             .format(resolution_to_frequency.keys(), input_file.time_resolution))
+    with CFDataset(climo_filepath, mode='r+') as cf:
+        # Add start and end time attributes
         # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
         # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
         cf.climo_start_time = t_start.isoformat()[:19] + 'Z'
         cf.climo_end_time = t_end.isoformat()[:19] + 'Z'
+
+        # Update tracking_id attribute
         if hasattr(input_file, 'tracking_id'):
             cf.climo_tracking_id = input_file.tracking_id
 
-        # Generate new time/climo_bounds data
-        frequency_to_time_types = {
-            'msaClim': {'monthly', 'seasonal', 'annual'},
-            'saClim': {'seasonal', 'annual'},
-            'aClim': {'annual'},
-        }
+        # Deduce the set of averaging intervals from the number of times in the file.
+        # WARNING: This is fragile, and depends on the assumption that a climo output file contains only the following
+        # possible contents: multi-decadal averages of monthly, seasonal, and annual averages, possibly concatenated
+        # in that order (starting with monthly, seasonal, or annual as the original file contents allow).
+        # This computation only works because each case results in a unique number of time values!
         try:
-            time_types = frequency_to_time_types[cf.frequency]
+            interval_set = {
+                12: {'monthly'},
+                4: {'seasonal'},
+                1: {'annual'},
+                5: {'seasonal', 'annual'},
+                17: {'monthly', 'seasonal', 'annual'},
+            }[cf.time_var.size]
         except KeyError:
-            raise ValueError("Climatology file must have a frequency value in {}; found '{}'"
-                             .format(frequency_to_time_types.keys(), cf.frequency))
+            raise ValueError()
 
+        # Update frequency attribute to reflect that this is a climo file.
+        prefix = ''.join(abbr for interval, abbr in (('monthly', 'm'), ('seasonal', 's'), ('annual', 'a'), ) if interval in interval_set)
+        cf.frequency = prefix + 'Clim'
+
+        # Generate info for updating time variable and creating climo bounds variable
         times, climo_bounds = generate_climo_time_var(
             dateutil.parser.parse(cf.climo_start_time[:19]),  # create tz naive dates by stripping off the tz indicator
             dateutil.parser.parse(cf.climo_end_time[:19]),
-            time_types
+            interval_set
         )
 
         # Update time var with CF standard climatological times
@@ -365,11 +357,6 @@ def update_climo_metadata(input_file, t_start, t_end, filepath):
         climo_bnds_var.calendar = cf.time_var.calendar
         climo_bnds_var.units = cf.time_var.units
         climo_bnds_var[:] = date2num(climo_bounds, cf.time_var.units, cf.time_var.calendar)
-
-
-def climo_output_filepath(output_dir, input_file, t_start, t_end, **kwargs):
-    '''Join the output directory to the output filename for this file'''
-    return os.path.realpath(os.path.join(output_dir, input_file.climo_output_filename(t_start, t_end, **kwargs)))
 
 
 def main(args):
@@ -391,9 +378,6 @@ def main(args):
                         logger.info('{}: {}: {}'.format(attr, e.__class__.__name__, e))
                 for attr in 'dependent_varnames time_resolution is_multi_year_mean'.split():
                     logger.info('{}: {}'.format(attr, getattr(input_file, attr)))
-                logger.info('output_filepath: {}'.format(
-                    climo_output_filepath(args.outdir, input_file, datetime.now(), datetime.now(), variable='var')
-                ))
         sys.exit(0)
 
     for filepath in args.filepaths:

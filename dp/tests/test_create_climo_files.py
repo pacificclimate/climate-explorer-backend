@@ -42,6 +42,8 @@ from dp.units_helpers import Unit
 from dp.generate_climos import create_climo_files
 
 
+# Helper functions
+
 def t_start(year):
     """Returns the start date of a climatological processing period beginning at start of year"""
     return datetime(year, 1, 1)
@@ -61,20 +63,37 @@ def basename_components(filepath):
     return ['_'.join(pieces[:f])] + pieces[f:]
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options, num_files', [
-    ('gcm', t_start(1965), t_end(1970), {}, 1),
-    ('gcm', t_start(1965), t_end(1970), {'split_vars': True}, 1),
-    ('gcm_360_day_cal', t_start(1965), t_end(1970), {}, 1),  # test date processing
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}, 1),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}, 1),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}, 1),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}, 6),
+# Tests
+
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('gcm_360_day_cal', t_start(1965), t_end(1970)),  # test date processing
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_existence(outdir, tiny_dataset, t_start, t_end, options, num_files):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_existence(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the expected number of files was created and that the filenames returned by
     create_climo_files are those actually created.
     """
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    num_vars = len(tiny_dataset.dependent_varnames)
+    num_files = 1
+    num_intervals = 3  # TODO: determine this from the dataset
+    if split_vars:
+        num_files *= num_vars
+    if split_intervals:
+        num_files *= num_intervals
     assert len(climo_files) == num_files
     assert len(os.listdir(outdir)) == num_files
     assert set(climo_files) == set(os.path.join(outdir, f) for f in os.listdir(outdir))
@@ -101,8 +120,11 @@ def test_filenames(outdir, tiny_dataset, t_start, t_end, options):
     else:
         varnames = set(tiny_dataset.dependent_varnames)
     assert varnames == set(basename_components(fp)[0] for fp in climo_files)
+    print('\n')
     for fp in climo_files:
+        print('###', basename_components(fp))
         with CFDataset(fp) as cf:
+            print('###', cf.frequency)
             assert all(cf.frequency in basename_components(fp) for fp in climo_files)
 
 
