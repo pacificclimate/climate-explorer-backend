@@ -320,34 +320,50 @@ def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, split_
                 assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('gcm', t_start(1965), t_end(1970), {'convert_longitudes': False}),
-    ('gcm', t_start(1965), t_end(1970), {'convert_longitudes': True}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': False}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': True}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': False}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': True}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_convert_longitudes(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+@mark.parametrize('convert_longitudes', [
+    False,
+    True,
+])
+def test_convert_longitudes(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals, convert_longitudes):
     """Test that longitude conversion is performed correctly."""
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
-    input_lon_var = tiny_dataset.lon_var
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals,
+                                     convert_longitudes=convert_longitudes)
+    input_lon_var = tiny_dataset.lon_var[:]
+    print('### input file:', tiny_dataset.filepath())
+    print('###', input_lon_var)
+    print('###', input_lon_var[0])
     for fp in climo_files:
+        print('### output file:', fp)
         with CFDataset(fp) as output_file:
-            output_lon_var = output_file.lon_var
+            output_lon_var = output_file.lon_var[:]
+            print('###', output_lon_var)
+            print('###', output_lon_var[0])
             check_these = [(input_lon_var, output_lon_var)]
             if hasattr(input_lon_var, 'bounds'):
                 check_these.append((tiny_dataset.variables[input_lon_var.bounds],
                                     output_file.variables[output_lon_var.bounds]))
             for input_lon_var, output_lon_var in check_these:
-                if options.get('convert_longitudes', False):
-                    assert all(-180 <= lon < 180 for _, lon in np.ndenumerate(output_lon_var))
+                if convert_longitudes:
+                    assert all(-180 <= lon < 180 for _, lon in enumerate(output_lon_var))
                     assert all(output_lon_var[i] == input_lon if input_lon < 180 else input_lon - 360
-                               for i, input_lon in np.ndenumerate(input_lon_var))
+                               for i, input_lon in enumerate(input_lon_var))
                 else:
-                    assert all(-180 <= lon < 360 for _, lon in np.ndenumerate(output_lon_var))
-                    assert all(output_lon_var[i] == input_lon for i, input_lon in np.ndenumerate(input_lon_var))
+                    assert all(-180 <= lon < 360 for _, lon in enumerate(output_lon_var))
+                    assert all(output_lon_var[i] == input_lon for i, input_lon in enumerate(input_lon_var))
 
     

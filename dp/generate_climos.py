@@ -128,12 +128,13 @@ def create_climo_files(outdir, input_file, t_start, t_end,
         logger.info('Concatenating mean interval files')
         climo_means_files = [cdo.copy(input=' '.join(climo_means_files))]
 
-    # Post-process climatological means
+    # Optionally convert longitudes in each file
     if convert_longitudes:
         logger.info('Converting longitudes')
         for climo_means_file in climo_means_files:
             convert_longitude_range(climo_means_file)
 
+    # Convert units on any pr variable in each file
     climo_means_files = [convert_pr_var_units(input_file, climo_mean_file) for climo_mean_file in climo_means_files]
 
     # Update metadata in climo files
