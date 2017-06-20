@@ -248,25 +248,35 @@ def test_dependent_variables(outdir, tiny_dataset, t_start, t_end, split_vars, s
     assert dependent_varnames_in_cfs == set(tiny_dataset.dependent_varnames)
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the climo output files contain the expected time values and climo bounds. """
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
-
-    expected_num_time_values = {
-        'daily': 17,
-        'monthly': 5,
-        'yearly': 1,
-    }[tiny_dataset.time_resolution]
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
 
     for fp in climo_files:
         with CFDataset(fp) as cf:
+            expected_num_time_values = {
+                'mClim': 12,
+                'sClim': 4,
+                'aClim': 1,
+                'saClim': 5,
+                'msaClim': 17,
+            }[cf.frequency]
+
             assert cf.time_var
             assert cf.time_var.climatology == 'climatology_bnds'
             climo_bnds_var = cf.variables[cf.time_var.climatology]
@@ -283,7 +293,7 @@ def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, option
                 return date2num(date, cf.time_var.units, cf.time_var.calendar)
 
             # Test monthly mean timesteps and climo bounds
-            if expected_num_time_values == 17:
+            if cf.frequency in {'mClim', 'msaClim'}:
                 for month in range(1, 13):
                     t = next(time_steps)
                     assert (t.year, t.month, t.day) == (climo_year, month, 15)
@@ -293,7 +303,7 @@ def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, option
                     assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=1))
 
             # Test seasonal mean timesteps and climo bounds
-            if expected_num_time_values >= 5:
+            if cf.frequency in {'sClim', 'msaClim'}:
                 for month in [1, 4, 7, 10]:  # center months of seasons
                     t = next(time_steps)
                     assert (t.year, t.month, t.day) == (climo_year, month, 16)
@@ -302,11 +312,12 @@ def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, option
                     assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=2))
 
             # Test annual mean timestep and climo bounds
-            t = next(time_steps)
-            assert (t.year, t.month, t.day) == (climo_year, 7, 2)
-            cb = next(climo_bnds)
-            assert cb[0] == d2n(t_start)
-            assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
+            if cf.frequency in {'aClim', 'msaClim'}:
+                t = next(time_steps)
+                assert (t.year, t.month, t.day) == (climo_year, 7, 2)
+                cb = next(climo_bnds)
+                assert cb[0] == d2n(t_start)
+                assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
 
 
 @mark.parametrize('tiny_dataset, t_start, t_end, options', [
