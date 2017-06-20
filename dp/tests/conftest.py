@@ -35,6 +35,11 @@ def tiny_downscaled_pr_packed():
 def tiny_hydromodel_gcm():
     return CFDataset(resource_filename('dp', 'tests/data/tiny_hydromodel_gcm.nc'))
 
+@fixture
+def tiny_dataset(request):
+    filename = resource_filename('dp', 'tests/data/tiny_{}.nc'.format(request.param))
+    return CFDataset(filename)
+
 
 @fixture(scope='session')
 def get_input_file(tiny_gcm, tiny_gcm_360_day_cal, tiny_downscaled_tasmax, tiny_downscaled_pr, tiny_downscaled_pr_packed, tiny_hydromodel_gcm):
