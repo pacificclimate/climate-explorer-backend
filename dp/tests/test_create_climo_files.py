@@ -219,21 +219,29 @@ def test_pr_units_conversion(outdir, tiny_dataset, t_start, t_end, split_vars, s
                         assert output_pr_var.add_offset == 0.0
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_dependent_variables(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_dependent_variables(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the output files contain the expected dependent variables"""
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
     dependent_varnames_in_cfs = set()
     for fp in climo_files:
         with CFDataset(fp) as cf:
             dependent_varnames_in_cfs.update(cf.dependent_varnames)
-            if len(climo_files) > 1:
+            if split_vars:
                 # There should be one dependent variable from the input file
                 assert len(cf.dependent_varnames) == 1
     # All the input dependent variables should be covered by all the output files
