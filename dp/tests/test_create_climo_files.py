@@ -180,20 +180,28 @@ def test_climo_metadata(outdir, tiny_dataset, t_start, t_end, split_vars, split_
         }[tiny_dataset.time_resolution]
 
 
-
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    ('downscaled_pr', t_start(1965), t_end(1970), {}),
-    ('downscaled_pr_packed', t_start(1965), t_end(1970), {}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('downscaled_pr', t_start(1965), t_end(1970)),
+    ('downscaled_pr_packed', t_start(1965), t_end(1970)),
 ], indirect=['tiny_dataset'])
-def test_pr_units_conversion(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_pr_units_conversion(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that units conversion for 'pr' variable is performed properly, for both packed and unpacked files.
     Test for unpacked file is pretty elementary: check pr units.
     Test for packed checks that packing params are modified correctly.
     """
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
     assert 'pr' in tiny_dataset.dependent_varnames
     input_pr_var = tiny_dataset.variables['pr']
-    assert input_pr_var.units.endswith('s-1')
+    assert Unit.from_udunits_str(input_pr_var.units) in [Unit('kg/m**2/s'), Unit('mm/s')]
     seconds_per_day = 86400
     for fp in climo_files:
         with CFDataset(fp) as cf:
