@@ -59,7 +59,7 @@ def basename_components(filepath):
     # Slightly tricky because variable names can contain underscores, which separate components.
     # We find the location f of the frequency component in the split and use it to assemble the components properly.
     pieces = os.path.basename(filepath).split('_')
-    f = next(i for i, piece in enumerate(pieces) if piece in 'msaClim saClim aClim'.split())
+    f = next(i for i, piece in enumerate(pieces) if piece in 'msaClim saClim aClim sClim mClim'.split())
     return ['_'.join(pieces[:f])] + pieces[f:]
 
 
@@ -99,33 +99,43 @@ def test_existence(outdir, tiny_dataset, t_start, t_end, split_vars, split_inter
     assert set(climo_files) == set(os.path.join(outdir, f) for f in os.listdir(outdir))
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('gcm', t_start(1965), t_end(1970), {'split_vars': True}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_filenames(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_filenames(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the filenames are as expected. Tests only the following easy-to-test filename components:
     - variable name
     - frequency
     Testing all the components of the filenames would be a lot of work and would duplicate unit tests for
     the filename generator in nchelpers.
     """
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
-    if len(climo_files) == 1:
-        varnames = {'+'.join(sorted(tiny_dataset.dependent_varnames))}
-    else:
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    if split_vars:
         varnames = set(tiny_dataset.dependent_varnames)
+    else:
+        varnames = {'+'.join(sorted(tiny_dataset.dependent_varnames))}
     assert varnames == set(basename_components(fp)[0] for fp in climo_files)
-    print('\n')
     for fp in climo_files:
-        print('###', basename_components(fp))
+        frequency = basename_components(fp)[1]
         with CFDataset(fp) as cf:
-            print('###', cf.frequency)
-            assert all(cf.frequency in basename_components(fp) for fp in climo_files)
+            assert cf.frequency == frequency
+        if split_intervals:
+            assert frequency in 'mClim sClim aClim'.split()
+        else:
+            assert frequency in 'aClim saClim msaClim'.split()
 
 
 @mark.parametrize('tiny_dataset, t_start, t_end, options', [
