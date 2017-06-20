@@ -71,7 +71,6 @@ def basename_components(filepath):
     ('downscaled_tasmax', t_start(1961), t_end(1990)),
     ('downscaled_pr', t_start(1961), t_end(1990)),
     ('hydromodel_gcm', t_start(1984), t_end(1995)),
-    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
 @mark.parametrize('split_vars', [
     False,
@@ -103,7 +102,6 @@ def test_existence(outdir, tiny_dataset, t_start, t_end, split_vars, split_inter
     ('gcm', t_start(1965), t_end(1970)),
     ('downscaled_tasmax', t_start(1961), t_end(1990)),
     ('downscaled_pr', t_start(1961), t_end(1990)),
-    ('hydromodel_gcm', t_start(1984), t_end(1995)),
     ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
 @mark.parametrize('split_vars', [
