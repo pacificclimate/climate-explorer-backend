@@ -10,20 +10,6 @@ The key indirected fixtures are:
     tiny_dataset
         param: (str) selects the input file to be processed by create_climo_files
         returns: (nchelpers.CFDataset) input file to be processed by create_climo_files
-    
-    climo_files
-        request.param: (tuple): (code, t_start, t_end, options)
-            code: (str) code for selecting input file; selected input file is passed as first param to create_climo_files
-            t_start: (datetime.datetime) start date of climo period
-            t_end: (datetime.datetime) end date of climo period
-            options: (dict) keyword parameters (options) of create_climo_files
-        returns: result of invoking create_climo_files: list of output filepaths
-    
-    input_and_climo_files
-        request.param: as for climo_files
-        returns: (tiny_dataset, climo_files) as above
-    
-Values for climo period options are only specified when they are different from the default.
 """
 # TODO: Add more test input files:
 # - hydromodel from observed data
@@ -34,7 +20,6 @@ from datetime import datetime
 from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 from pytest import mark
-import numpy as np
 
 from nchelpers import CFDataset
 
@@ -344,15 +329,9 @@ def test_convert_longitudes(outdir, tiny_dataset, t_start, t_end, split_vars, sp
                                      split_vars=split_vars, split_intervals=split_intervals,
                                      convert_longitudes=convert_longitudes)
     input_lon_var = tiny_dataset.lon_var[:]
-    print('### input file:', tiny_dataset.filepath())
-    print('###', input_lon_var)
-    print('###', input_lon_var[0])
     for fp in climo_files:
-        print('### output file:', fp)
         with CFDataset(fp) as output_file:
             output_lon_var = output_file.lon_var[:]
-            print('###', output_lon_var)
-            print('###', output_lon_var[0])
             check_these = [(input_lon_var, output_lon_var)]
             if hasattr(input_lon_var, 'bounds'):
                 check_these.append((tiny_dataset.variables[input_lon_var.bounds],
@@ -365,5 +344,3 @@ def test_convert_longitudes(outdir, tiny_dataset, t_start, t_end, split_vars, sp
                 else:
                     assert all(-180 <= lon < 360 for _, lon in enumerate(output_lon_var))
                     assert all(output_lon_var[i] == input_lon for i, input_lon in enumerate(input_lon_var))
-
-    

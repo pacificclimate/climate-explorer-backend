@@ -1,7 +1,7 @@
-import os, os.path
+import os
+import os.path
 import logging
 import sys
-import re
 
 from argparse import ArgumentParser
 from datetime import datetime
@@ -12,7 +12,7 @@ from cdo import Cdo
 from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 
-from nchelpers import CFDataset, standard_climo_periods
+from nchelpers import CFDataset
 from nchelpers.date_utils import d2s
 
 from dp.units_helpers import Unit
@@ -39,15 +39,23 @@ def create_climo_files(outdir, input_file, t_start, t_end,
         outdir (str): path to base directory in which to store output climo file(s)
         input_file (nchelpers.CFDataset): the input data file
         convert_longitudes (bool): If True, convert longitudes from [0, 360) to [-180, 180).
-        split_vars (bool): if True, produce one file per dependent variable in input file;
-            otherwise produce a single output file containing all variables
+        split_vars (bool): If True, produce one file per dependent variable in input file;
+            otherwise produce a single output file containing all variables.
+            Note: Can split both variables and intervals.
+        split_intervals (bool): If True, produce one file per averaging interval (month, season, year);
+            otherwise produce a single output file with all averating intervals concatenated.
+            Note: Can split both variables and intervals.
         t_start (datetime.datetime): start date of climo period to process
         t_end (datetime.datetime): end date of climo period to process
 
     The input file is not modified.
 
-    Output is either one file containing all variables, or one output file for each dependent variable in the
-    input file. This behaviour is selected by the --split-vars flag.
+    Output is either one of the following:
+    - one output file containing all variables and all intervals
+    - one output file for each dependent variable in the input file, and all intervals
+    - one output file for each interval, containing all variables
+    - one output file for each dependent variable and each interval
+    This behaviour is selected by the --split-vars and --split-intervals flags.
 
     We use CDO to where it is convenient; in particular, to form the climatological means.
     Other operations are performed directly by this code, in-place on intermediate or final output files.
@@ -56,7 +64,7 @@ def create_climo_files(outdir, input_file, t_start, t_end,
 
     - Select the temporal subset defined by t_start, t_end
     - Form climatological means over each dependent variable over all available averaging intervals
-    - if not split_periods:
+    - if not split_intervals:
         - concat files (averaging intervals)
     - Post-process climatological results:
         - if convert_longitudes, transform longitude range from [0, 360) to [-180, 180)
@@ -105,10 +113,10 @@ def create_climo_files(outdir, input_file, t_start, t_end,
 
     # Form climatological means over dependent variables
     def climo_outputs(time_resolution):
-        '''Return a list of cdo operators that generate the desired climo outputs.
+        """Return a list of cdo operators that generate the desired climo outputs.
         Result depends on the time resolution of input file data - different operators are applied depending.
         If operators depend also on variable, then modify this function to depend on variable as well.
-        '''
+        """
         ops_by_resolution = {
             'daily': ['ymonmean', 'yseasmean', 'timmean'],
             'monthly': ['yseasmean', 'timmean'],
@@ -167,7 +175,6 @@ def create_climo_files(outdir, input_file, t_start, t_end,
         else:
             output_file_paths.append(output_file_path)
 
-
     # TODO: fix <variable_name>:cell_methods attribute to represent climatological aggregation
     # TODO: Does the above TODO make any sense? Each variable has had up to 3 different aggregations applied
     # to it, and there is no standard cell_method string that expresses more than one.
@@ -211,7 +218,7 @@ def generate_climo_time_var(t_start, t_end, types={'monthly', 'seasonal', 'annua
 
     # Seasonal time values
     if 'seasonal' in types:
-        for month in [1, 4, 7, 10]: # Center months of season
+        for month in [1, 4, 7, 10]:  # Center months of season
             times.append(datetime(year, month, 16))
             climo_bounds.append([datetime(t_start.year, month, 1) + relativedelta(months=-1),
                                  datetime(t_end.year, month, 1) + relativedelta(months=2)])
@@ -292,6 +299,7 @@ def convert_pr_var_units(input_file, climo_means):
 
 def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
     """Updates an existing netCDF file to reflect the fact that it contains climatological means.
+
     Specifically:
     - add start and end time attributes
     - update tracking_id attribute
@@ -299,12 +307,16 @@ def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
     - update the time variable with climatological times computed according to CF Metadata Convetions,
     and create a climatology bounds variable with appropriate values.
 
+    :param input_file: (CFDataset) input file from which the climatological output file was produced
+    :param t_start: (datetime.datetime) start date of climatological output file
+    :param t_end: (datetime.datetime) end date of climatological output file
     :param climo_filepath: (str) filepath to a climatological means output file which needs to have its
-        time variable
+        metadata update
 
-    IMPORTANT: THIS CHANGES NETCDF FILE IN PLACE
+    WARNING: THIS CHANGES FILE `climo_filepath` IN PLACE
 
-    Section 7.4: http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
+    For information on climatological statistics, and specifically on datetimes to apply to such statistics,
+    see Section 7.4 of http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html
     """
     with CFDataset(climo_filepath, mode='r+') as cf:
         # Add start and end time attributes
@@ -334,7 +346,8 @@ def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
             raise ValueError()
 
         # Update frequency attribute to reflect that this is a climo file.
-        prefix = ''.join(abbr for interval, abbr in (('monthly', 'm'), ('seasonal', 's'), ('annual', 'a'), ) if interval in interval_set)
+        prefix = ''.join(abbr for interval, abbr in (('monthly', 'm'), ('seasonal', 's'), ('annual', 'a'), )
+                         if interval in interval_set)
         cf.frequency = prefix + 'Clim'
 
         # Generate info for updating time variable and creating climo bounds variable
@@ -396,7 +409,8 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create climatologies from CMIP5 data')
     parser.add_argument('filepaths', nargs='*', help='Files to process')
-#    parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate. IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
+    # parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate.
+    # IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
     log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
