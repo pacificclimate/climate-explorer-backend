@@ -138,28 +138,49 @@ def test_filenames(outdir, tiny_dataset, t_start, t_end, split_vars, split_inter
             assert frequency in 'aClim saClim msaClim'.split()
 
 
-@mark.parametrize('tiny_dataset, t_start, t_end, options', [
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
 ], indirect=['tiny_dataset'])
-def test_climo_metadata(outdir, tiny_dataset, t_start, t_end, options):
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_climo_metadata(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the correct climo-specific metadata has been added/updated."""
-    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end, **options)
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    frequencies = set()
+
     for fp in climo_files:
         with CFDataset(fp) as cf:
+            frequencies.add(cf.frequency)
             assert cf.is_multi_year_mean
-            assert cf.frequency == {
-                'daily': 'msaClim',
-                'monthly': 'saClim',
-                'yearly': 'aClim'
-            }[tiny_dataset.time_resolution]
             # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
             # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
             assert cf.climo_start_time == t_start.isoformat()[:19] + 'Z'
             assert cf.climo_end_time == t_end.isoformat()[:19] + 'Z'
             assert getattr(cf, 'climo_tracking_id', None) == getattr(tiny_dataset, 'tracking_id', None)
+
+    if split_intervals:
+        assert frequencies == {
+           'daily': {'mClim', 'sClim', 'aClim'},
+           'monthly': {'sClim', 'aClim'},
+           'yearly': {'aClim'},
+        }[tiny_dataset.time_resolution]
+    else:
+        assert frequencies == {
+            'daily': {'msaClim'},
+            'monthly': {'saClim'},
+            'yearly': {'aClim'}
+        }[tiny_dataset.time_resolution]
+
 
 
 @mark.parametrize('tiny_dataset, t_start, t_end, options', [
