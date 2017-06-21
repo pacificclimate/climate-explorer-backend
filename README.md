@@ -164,7 +164,7 @@ it is worth installing only its dependencies. There's a custom `requirements.txt
 
 See bash script `process-climo-means.sh` for an example of using this script.
 
-### `generate_climos` script
+### `generate_climos` script: Generate climatological means
 #### Usage
 
 ```bash
@@ -180,7 +180,49 @@ python generate_climos.py -s -o outdir files...
 
 Usage is further detailed in the script help information `python generate_climos.py -h`
 
-#### Indexing
+### `split_merged_climos.py` script: Split climo means files into per-interval files (month, season, year)
+
+#### Purpose
+
+Early versions of the `generate_climos` script (and its R predecessor) created output files containing
+means for all intervals (month, season, year) concatenated into a single file. This is undesirable
+for a couple of reasons: 
+
+* Pragmatic: `ncWMS2` rejects NetCDF files with non-monotonic dimensions. 
+  Merged files have a non-monotonic time dimension.
+  
+* Formal: The 3 different means, i.e., means over 3 different intervals (month, season, year), 
+  are formally different estimates of random variables with different time dimensions. 
+  We could represent this easily enough in a single NetCDF file, with 3 distinct variables 
+  each with a distinct time dimension, but judged it as introducing too much complication. 
+  Simpler to have a separate file per interval.
+  
+This script takes as input one or more climo means files and splits each into separate files,
+one file per mean interval (month, season, year) in the input file.
+
+The input file is not modified.
+  
+#### Usage
+
+If you have installed the `dp` extra using the setup.py file, then you can invoke the script
+directy from the command line:
+
+```bash
+split_merged_climos.py -o outdir files...
+```
+
+Filenames are automatically generated for the split files.
+These filenames conform to the extended CMOR syntax defined in the
+[PCIC metadata standard ](https://pcic.uvic.ca/confluence/display/CSG/PCIC+metadata+standard+for+downscaled+data+and+hydrology+modelling+data).
+
+If the input file is named according to standard, then the new filenames are the same as the input filename, 
+with the `<frequency>` component (typically `msaClim`) 
+replaced with the values `mClim` (monthly means), `sClim` (seasonal means), `aClim` (annual means).
+
+Output files are placed in the directory specified in the `-o` argument. 
+This directory is created if it does not exist.
+
+### Indexing climo output files
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
 
