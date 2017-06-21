@@ -1,6 +1,7 @@
 import os
 import os.path
 import logging
+import shutil
 import sys
 
 from argparse import ArgumentParser
@@ -160,7 +161,7 @@ def create_climo_files(outdir, input_file, t_start, t_end,
                 split_climo_means_files.append(cdo.select('name={}'.format(variable), input=climo_means_file))
         climo_means_files = split_climo_means_files
 
-    # Copy the temporary files to their final output filepaths
+    # Move/copy the temporary files to their final output filepaths
     output_file_paths = []
     for climo_means_file in climo_means_files:
         with CFDataset(climo_means_file) as cf:
@@ -169,7 +170,7 @@ def create_climo_files(outdir, input_file, t_start, t_end,
             logger.info('Output file: {}'.format(output_file_path))
             if not os.path.exists(os.path.dirname(output_file_path)):
                 os.makedirs(os.path.dirname(output_file_path))
-            cdo.copy(input=climo_means_file, output=output_file_path)
+            shutil.move(climo_means_file, output_file_path)
         except Exception as e:
             logger.warning('Failed to create climatology file. {}: {}'.format(e.__class__.__name__, e))
         else:
