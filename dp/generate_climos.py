@@ -152,14 +152,12 @@ def create_climo_files(outdir, input_file, t_start, t_end,
         update_climo_metadata(input_file, t_start, t_end, climo_means_file)
 
     # Split climo files by dependent variables if required
-    # TODO: Factor into separate function
-    if split_vars and len(input_file.dependent_varnames) > 1:
-        split_climo_means_files = []
-        logger.info('Splitting into single-variable files')
-        for climo_means_file in climo_means_files:
-            for variable in input_file.dependent_varnames:
-                split_climo_means_files.append(cdo.select('name={}'.format(variable), input=climo_means_file))
-        climo_means_files = split_climo_means_files
+    if split_vars:
+        climo_means_files = [
+            fp
+            for climo_means_file in climo_means_files
+            for fp in split_on_variables(climo_means_file, input_file.dependent_varnames)
+        ]
 
     # Move/copy the temporary files to their final output filepaths
     output_file_paths = []
@@ -296,6 +294,14 @@ def convert_pr_var_units(input_file, climo_means):
             setattr(cf.variables['pr'], attr, pr_attributes[attr])
 
     return climo_means
+
+
+def split_on_variables(climo_means_file, var_names):
+    if len(var_names) > 1:
+        return [cdo.select('name={}'.format(var_name), input=climo_means_file)
+                for var_name in var_names]
+    else:
+        return [climo_means_file]
 
 
 def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
