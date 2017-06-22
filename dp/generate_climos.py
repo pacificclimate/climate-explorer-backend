@@ -148,8 +148,8 @@ def create_climo_files(outdir, input_file, t_start, t_end,
 
     # Update metadata in climo files
     logger.debug('Updating climo metadata')
-    for climo_means_file in climo_means_files:
-        update_climo_metadata(input_file, t_start, t_end, climo_means_file)
+    climo_means_files = [update_metadata_and_time_var(input_file, t_start, t_end, climo_means_file)
+                         for climo_means_file in climo_means_files]
 
     # Split climo files by dependent variables if required
     if split_vars:
@@ -304,7 +304,7 @@ def split_on_variables(climo_means_file, var_names):
         return [climo_means_file]
 
 
-def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
+def update_metadata_and_time_var(input_file, t_start, t_end, climo_filepath):
     """Updates an existing netCDF file to reflect the fact that it contains climatological means.
 
     Specifically:
@@ -381,6 +381,7 @@ def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
         climo_bnds_var.units = cf.time_var.units
         climo_bnds_var[:] = date2num(climo_bounds, cf.time_var.units, cf.time_var.calendar)
 
+    return climo_filepath
 
 def main(args):
     if args.dry_run:
