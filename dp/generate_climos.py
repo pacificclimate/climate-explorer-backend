@@ -432,7 +432,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--split-intervals', dest='split_intervals', action='store_true',
                         help='Generate a separate file for each climatological period')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False, split_intervals=True)
+    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False, split_intervals=False)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
     main(args)
