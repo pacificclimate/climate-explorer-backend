@@ -1,5 +1,10 @@
 #!/bin/bash
-# Submit a job to the pbs queue that runs generate_climos on a single NetCDF file.
+# Submit a job to the PBS queue that runs generate_climos on a single NetCDF file.
+#
+# We want to process one NetCDF file at a time for several reasons:
+# - improve scheduling of jobs by making them as short as possible
+# - avoid filling up $TMPDIR with copies of large files for processing; each is deleted per job
+#
 # Arguments:
 # $1: destination base directory for climo output files and log files;
 #     log files are placed in the base directory
