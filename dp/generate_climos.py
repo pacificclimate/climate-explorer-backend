@@ -342,15 +342,17 @@ def update_climo_metadata(input_file, t_start, t_end, climo_filepath):
         # in that order (starting with monthly, seasonal, or annual as the original file contents allow).
         # This computation only works because each case results in a unique number of time values!
         try:
-            interval_set = {
+            num_times_to_interval_set = {
                 12: {'monthly'},
                 4: {'seasonal'},
                 1: {'annual'},
                 5: {'seasonal', 'annual'},
                 17: {'monthly', 'seasonal', 'annual'},
-            }[cf.time_var.size]
+            }
+            interval_set = num_times_to_interval_set[cf.time_var.size]
         except KeyError:
-            raise ValueError()
+            raise ValueError('Expected climo file to contain # time values in {}, but found {}'
+                             .format(num_times_to_interval_set.keys(), cf.time_var.size))
 
         # Update frequency attribute to reflect that this is a climo file.
         prefix = ''.join(abbr for interval, abbr in (('monthly', 'm'), ('seasonal', 's'), ('annual', 'a'), )
