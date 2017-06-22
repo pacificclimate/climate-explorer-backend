@@ -140,8 +140,7 @@ def create_climo_files(outdir, input_file, t_start, t_end,
     # Optionally convert longitudes in each file
     if convert_longitudes:
         logger.info('Converting longitudes')
-        for climo_means_file in climo_means_files:
-            convert_longitude_range(climo_means_file)
+        climo_means_files = [convert_longitude_range(climo_means_file) for climo_means_file in climo_means_files]
 
     # Convert units on any pr variable in each file
     climo_means_files = [convert_pr_var_units(input_file, climo_mean_file) for climo_mean_file in climo_means_files]
@@ -252,6 +251,7 @@ def convert_longitude_range(climo_means):
             for i, lon in np.ndenumerate(lon_var):
                 if lon >= 180:
                     lon_var[i] = lon - 360
+    return climo_means
 
 
 def convert_pr_var_units(input_file, climo_means):
