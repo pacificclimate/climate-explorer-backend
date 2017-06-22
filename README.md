@@ -165,6 +165,17 @@ it is worth installing only its dependencies. There's a custom `requirements.txt
 See bash script `process-climo-means.sh` for an example of using this script.
 
 ### `generate_climos` script
+
+#### Purpose
+
+To generate files containing climatological means from input files of daily, monthly, or yearly data that
+adhere to the PCIC metadata standard (and consequently to CMIP5 and CF standards).
+
+Means are formed over the time dimension (of course); the spatial dimensions are preserved.
+
+Output can optionally be directed into separate files for each variable and/or each averaging interval 
+(month, season, year).
+
 #### Usage
 
 ```bash
@@ -174,13 +185,13 @@ python generate_climos.py --dry-run -o outdir files...
 # Use defaults:
 python generate_climos.py -o outdir files...
 
-# Split output into separate files per dependent variable
-python generate_climos.py -s -o outdir files...
+# Split output into separate files per dependent variable and per averaging interval 
+python generate_climos.py --split-vars --split-intervals -o outdir files...
 ```
 
-Usage is further detailed in the script help information `python generate_climos.py -h`
+Usage is further detailed in the script help information: `python generate_climos.py -h`
 
-#### Indexing
+### Indexing
 
 Indexing is done using R scripts in the [modelmeta](https://github.com/pacificclimate/modelmeta) package.
 
