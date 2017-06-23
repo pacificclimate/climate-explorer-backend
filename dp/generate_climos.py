@@ -33,7 +33,7 @@ cdo = Cdo()
 
 
 def create_climo_files(outdir, input_file, t_start, t_end,
-                       convert_longitudes=False, split_vars=False, split_intervals=False):
+                       convert_longitudes=True, split_vars=True, split_intervals=True):
     """Generate climatological files from an input file and a selected time range.
 
     Parameters:
@@ -425,14 +425,14 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
-    parser.add_argument('-g', '--convert-longitudes', dest='convert_longitudes', action='store_true',
+    parser.add_argument('-g', '--convert-longitudes', type=bool, dest='convert_longitudes',
                         help='Transform longitude range from [0, 360) to [-180, 180)')
-    parser.add_argument('-v', '--split-vars', dest='split_vars', action='store_true',
+    parser.add_argument('-v', '--split-vars', type=bool, dest='split_vars',
                         help='Generate a separate file for each dependent variable in the file')
-    parser.add_argument('-i', '--split-intervals', dest='split_intervals', action='store_true',
+    parser.add_argument('-i', '--split-intervals', type=bool, dest='split_intervals',
                         help='Generate a separate file for each climatological period')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
-    parser.set_defaults(dry_run=False, convert_longitudes=False, split_vars=False, split_intervals=False)
+    parser.set_defaults(dry_run=False, convert_longitudes=True, split_vars=True, split_intervals=True)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
     main(args)
