@@ -7,23 +7,9 @@ that they use to determine their behaviour, i.e. what input file to return or pr
 
 The key indirected fixtures are:
 
-    input_file
+    tiny_dataset
         param: (str) selects the input file to be processed by create_climo_files
         returns: (nchelpers.CFDataset) input file to be processed by create_climo_files
-    
-    climo_files
-        request.param: (tuple): (code, t_start, t_end, options)
-            code: (str) code for selecting input file; selected input file is passed as first param to create_climo_files
-            t_start: (datetime.datetime) start date of climo period
-            t_end: (datetime.datetime) end date of climo period
-            options: (dict) keyword parameters (options) of create_climo_files
-        returns: result of invoking create_climo_files: list of output filepaths
-    
-    input_and_climo_files
-        request.param: as for climo_files
-        returns: (input_file, climo_files) as above
-    
-Values for climo period options are only specified when they are different from the default.
 """
 # TODO: Add more test input files:
 # - hydromodel from observed data
@@ -34,12 +20,14 @@ from datetime import datetime
 from netCDF4 import date2num
 from dateutil.relativedelta import relativedelta
 from pytest import mark
-import numpy as np
 
 from nchelpers import CFDataset
 
 from dp.units_helpers import Unit
+from dp.generate_climos import create_climo_files
 
+
+# Helper functions
 
 def t_start(year):
     """Returns the start date of a climatological processing period beginning at start of year"""
@@ -56,95 +44,149 @@ def basename_components(filepath):
     # Slightly tricky because variable names can contain underscores, which separate components.
     # We find the location f of the frequency component in the split and use it to assemble the components properly.
     pieces = os.path.basename(filepath).split('_')
-    f = next(i for i, piece in enumerate(pieces) if piece in 'msaClim saClim aClim'.split())
+    f = next(i for i, piece in enumerate(pieces) if piece in 'msaClim saClim aClim sClim mClim'.split())
     return ['_'.join(pieces[:f])] + pieces[f:]
 
 
-@mark.parametrize('climo_files, num_files', [
-    # climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {}), 1),
-    (('gcm', t_start(1965), t_end(1970), {'split_vars': True}), 1),
-    (('gcm_360', t_start(1965), t_end(1970), {}), 1),  # test date processing
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), 1),
-    (('downscaled_pr', t_start(1961), t_end(1990), {}), 1),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {}), 1),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), 6),
-], indirect=['climo_files'])
-def test_existence(outdir, climo_files, num_files):
+# Tests
+
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('gcm_360_day_cal', t_start(1965), t_end(1970)),  # test date processing
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_existence(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the expected number of files was created and that the filenames returned by
     create_climo_files are those actually created.
     """
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    num_vars = len(tiny_dataset.dependent_varnames)
+    num_files = 1
+    num_intervals = 3  # TODO: determine this from the dataset
+    if split_vars:
+        num_files *= num_vars
+    if split_intervals:
+        num_files *= num_intervals
     assert len(climo_files) == num_files
     assert len(os.listdir(outdir)) == num_files
     assert set(climo_files) == set(os.path.join(outdir, f) for f in os.listdir(outdir))
 
 
-@mark.parametrize('input_and_climo_files', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('gcm', t_start(1965), t_end(1970), {'split_vars': True}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
-], indirect=['input_and_climo_files'])
-def test_filenames(input_and_climo_files):
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_filenames(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the filenames are as expected. Tests only the following easy-to-test filename components:
     - variable name
     - frequency
     Testing all the components of the filenames would be a lot of work and would duplicate unit tests for
     the filename generator in nchelpers.
     """
-    input_file, climo_files = input_and_climo_files
-    if len(climo_files) == 1:
-        varnames = {'+'.join(sorted(input_file.dependent_varnames))}
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    if split_vars:
+        varnames = set(tiny_dataset.dependent_varnames)
     else:
-        varnames = set(input_file.dependent_varnames)
+        varnames = {'+'.join(sorted(tiny_dataset.dependent_varnames))}
     assert varnames == set(basename_components(fp)[0] for fp in climo_files)
     for fp in climo_files:
+        frequency = basename_components(fp)[1]
         with CFDataset(fp) as cf:
-            assert all(cf.frequency in basename_components(fp) for fp in climo_files)
+            assert cf.frequency == frequency
+        if split_intervals:
+            assert frequency in 'mClim sClim aClim'.split()
+        else:
+            assert frequency in 'aClim saClim msaClim'.split()
 
 
-@mark.parametrize('input_and_climo_files, t_start, t_end', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {}), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
-    (('downscaled_pr', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
-], indirect=['input_and_climo_files'])
-def test_climo_metadata(input_and_climo_files, t_start, t_end):
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_climo_metadata(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the correct climo-specific metadata has been added/updated."""
-    input_file, climo_files = input_and_climo_files
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    frequencies = set()
+
     for fp in climo_files:
         with CFDataset(fp) as cf:
+            frequencies.add(cf.frequency)
             assert cf.is_multi_year_mean
-            assert cf.frequency == {
-                'daily': 'msaClim',
-                'monthly': 'saClim',
-                'yearly': 'aClim'
-            }[input_file.time_resolution]
             # In Python2.7, datetime.datime.isoformat does not take params telling it how much precision to
             # provide in its output; standard requires 'seconds' precision, which means the first 19 characters.
             assert cf.climo_start_time == t_start.isoformat()[:19] + 'Z'
             assert cf.climo_end_time == t_end.isoformat()[:19] + 'Z'
-            assert getattr(cf, 'climo_tracking_id', None) == getattr(input_file, 'tracking_id', None)
+            assert getattr(cf, 'climo_tracking_id', None) == getattr(tiny_dataset, 'tracking_id', None)
+
+    if split_intervals:
+        assert frequencies == {
+           'daily': {'mClim', 'sClim', 'aClim'},
+           'monthly': {'sClim', 'aClim'},
+           'yearly': {'aClim'},
+        }[tiny_dataset.time_resolution]
+    else:
+        assert frequencies == {
+            'daily': {'msaClim'},
+            'monthly': {'saClim'},
+            'yearly': {'aClim'}
+        }[tiny_dataset.time_resolution]
 
 
-@mark.parametrize('input_and_climo_files', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('downscaled_pr', t_start(1965), t_end(1970), {}),
-    ('downscaled_pr_packed', t_start(1965), t_end(1970), {}),
-], indirect=['input_and_climo_files'])
-def test_pr_units_conversion(input_and_climo_files):
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('downscaled_pr', t_start(1965), t_end(1970)),
+    ('downscaled_pr_packed', t_start(1965), t_end(1970)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_pr_units_conversion(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that units conversion for 'pr' variable is performed properly, for both packed and unpacked files.
     Test for unpacked file is pretty elementary: check pr units.
     Test for packed checks that packing params are modified correctly.
     """
-    input_file, climo_files = input_and_climo_files
-    assert 'pr' in input_file.dependent_varnames
-    input_pr_var = input_file.variables['pr']
-    assert input_pr_var.units.endswith('s-1')
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
+    assert 'pr' in tiny_dataset.dependent_varnames
+    input_pr_var = tiny_dataset.variables['pr']
+    assert Unit.from_udunits_str(input_pr_var.units) in [Unit('kg/m**2/s'), Unit('mm/s')]
     seconds_per_day = 86400
     for fp in climo_files:
         with CFDataset(fp) as cf:
@@ -162,48 +204,64 @@ def test_pr_units_conversion(input_and_climo_files):
                         assert output_pr_var.add_offset == 0.0
 
 
-@mark.parametrize('input_and_climo_files', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    ('gcm', t_start(1965), t_end(1970), {}),
-    ('downscaled_tasmax', t_start(1961), t_end(1990), {}),
-    ('downscaled_pr', t_start(1961), t_end(1990), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {}),
-    ('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}),
-], indirect=['input_and_climo_files'])
-def test_dependent_variables(input_and_climo_files):
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
+    ('downscaled_pr', t_start(1961), t_end(1990)),
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_dependent_variables(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the output files contain the expected dependent variables"""
-    input_file, climo_files = input_and_climo_files
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
     dependent_varnames_in_cfs = set()
     for fp in climo_files:
         with CFDataset(fp) as cf:
             dependent_varnames_in_cfs.update(cf.dependent_varnames)
-            if len(climo_files) > 1:
+            if split_vars:
                 # There should be one dependent variable from the input file
                 assert len(cf.dependent_varnames) == 1
     # All the input dependent variables should be covered by all the output files
-    assert dependent_varnames_in_cfs == set(input_file.dependent_varnames)
+    assert dependent_varnames_in_cfs == set(tiny_dataset.dependent_varnames)
 
 
-@mark.parametrize('input_and_climo_files, t_start, t_end', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {}), t_start(1965), t_end(1970)),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {}), t_start(1961), t_end(1990)),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {}), t_start(1984), t_end(1995)),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'split_vars': True}), t_start(1984), t_end(1995)),
-], indirect=['input_and_climo_files'])
-def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+def test_time_and_climo_bounds_vars(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals):
     """Test that the climo output files contain the expected time values and climo bounds. """
-    input_file, climo_files = input_and_climo_files
-
-    expected_num_time_values = {
-        'daily': 17,
-        'monthly': 5,
-        'yearly': 1,
-    }[input_file.time_resolution]
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals)
 
     for fp in climo_files:
         with CFDataset(fp) as cf:
+            expected_num_time_values = {
+                'mClim': 12,
+                'sClim': 4,
+                'aClim': 1,
+                'saClim': 5,
+                'msaClim': 17,
+            }[cf.frequency]
+
             assert cf.time_var
             assert cf.time_var.climatology == 'climatology_bnds'
             climo_bnds_var = cf.variables[cf.time_var.climatology]
@@ -220,7 +278,7 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
                 return date2num(date, cf.time_var.units, cf.time_var.calendar)
 
             # Test monthly mean timesteps and climo bounds
-            if expected_num_time_values == 17:
+            if cf.frequency in {'mClim', 'msaClim'}:
                 for month in range(1, 13):
                     t = next(time_steps)
                     assert (t.year, t.month, t.day) == (climo_year, month, 15)
@@ -230,7 +288,7 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
                     assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=1))
 
             # Test seasonal mean timesteps and climo bounds
-            if expected_num_time_values >= 5:
+            if cf.frequency in {'sClim', 'msaClim'}:
                 for month in [1, 4, 7, 10]:  # center months of seasons
                     t = next(time_steps)
                     assert (t.year, t.month, t.day) == (climo_year, month, 16)
@@ -239,41 +297,50 @@ def test_time_and_climo_bounds_vars(input_and_climo_files, t_start, t_end):
                     assert cb[1] == d2n(datetime(t_end.year, month, 1) + relativedelta(months=2))
 
             # Test annual mean timestep and climo bounds
-            t = next(time_steps)
-            assert (t.year, t.month, t.day) == (climo_year, 7, 2)
-            cb = next(climo_bnds)
-            assert cb[0] == d2n(t_start)
-            assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
+            if cf.frequency in {'aClim', 'msaClim'}:
+                t = next(time_steps)
+                assert (t.year, t.month, t.day) == (climo_year, 7, 2)
+                cb = next(climo_bnds)
+                assert cb[0] == d2n(t_start)
+                assert cb[1] == d2n(datetime(t_end.year+1, 1, 1))
 
 
-@mark.parametrize('input_and_climo_files, convert_longitudes', [
-    # input_and_climo_files parameters: (code, t_start, t_end, options)
-    (('gcm', t_start(1965), t_end(1970), {'convert_longitudes': False}), False),
-    (('gcm', t_start(1965), t_end(1970), {'convert_longitudes': True}), True),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': False}), False),
-    (('downscaled_tasmax', t_start(1961), t_end(1990), {'convert_longitudes': True}), True),
+@mark.parametrize('tiny_dataset, t_start, t_end', [
+    ('gcm', t_start(1965), t_end(1970)),
+    ('downscaled_tasmax', t_start(1961), t_end(1990)),
     # No need to repleat with downscaled_pr
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': False}), False),
-    (('hydromodel_gcm', t_start(1984), t_end(1995), {'convert_longitudes': True}), True),
-], indirect=['input_and_climo_files'])
-def test_convert_longitudes(input_and_climo_files, convert_longitudes):
+    ('hydromodel_gcm', t_start(1984), t_end(1995)),
+], indirect=['tiny_dataset'])
+@mark.parametrize('split_vars', [
+    False,
+    True,
+])
+@mark.parametrize('split_intervals', [
+    False,
+    True,
+])
+@mark.parametrize('convert_longitudes', [
+    False,
+    True,
+])
+def test_convert_longitudes(outdir, tiny_dataset, t_start, t_end, split_vars, split_intervals, convert_longitudes):
     """Test that longitude conversion is performed correctly."""
-    input_file, climo_files = input_and_climo_files
-    input_lon_var = input_file.lon_var
+    climo_files = create_climo_files(outdir, tiny_dataset, t_start, t_end,
+                                     split_vars=split_vars, split_intervals=split_intervals,
+                                     convert_longitudes=convert_longitudes)
+    input_lon_var = tiny_dataset.lon_var[:]
     for fp in climo_files:
         with CFDataset(fp) as output_file:
-            output_lon_var = output_file.lon_var
+            output_lon_var = output_file.lon_var[:]
             check_these = [(input_lon_var, output_lon_var)]
             if hasattr(input_lon_var, 'bounds'):
-                check_these.append((input_file.variables[input_lon_var.bounds],
+                check_these.append((tiny_dataset.variables[input_lon_var.bounds],
                                     output_file.variables[output_lon_var.bounds]))
             for input_lon_var, output_lon_var in check_these:
                 if convert_longitudes:
-                    assert all(-180 <= lon < 180 for _, lon in np.ndenumerate(output_lon_var))
+                    assert all(-180 <= lon < 180 for _, lon in enumerate(output_lon_var))
                     assert all(output_lon_var[i] == input_lon if input_lon < 180 else input_lon - 360
-                               for i, input_lon in np.ndenumerate(input_lon_var))
+                               for i, input_lon in enumerate(input_lon_var))
                 else:
-                    assert all(-180 <= lon < 360 for _, lon in np.ndenumerate(output_lon_var))
-                    assert all(output_lon_var[i] == input_lon for i, input_lon in np.ndenumerate(input_lon_var))
-
-    
+                    assert all(-180 <= lon < 360 for _, lon in enumerate(output_lon_var))
+                    assert all(output_lon_var[i] == input_lon for i, input_lon in enumerate(input_lon_var))
