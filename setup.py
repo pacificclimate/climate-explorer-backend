@@ -46,6 +46,7 @@ setup(
         'scripts/devserver.py',
         'dp/generate_climos.py',
         'dp/update_metadata.py',
+        'dp/split_merged_climos.py',
     ],
     package_dir={
         'ce': 'ce',
