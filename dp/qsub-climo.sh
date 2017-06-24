@@ -41,9 +41,10 @@ baseoutdir=\$TMPDIR/climo/output
 outdir=\$baseoutdir/\$pbs_job_num
 
 # Generate climo means
-python dp/generate_climos.py --split-vars --split-intervals -o \$outdir \$infile
+python dp/generate_climos.py -o \$outdir \$infile
 
 # Copy result file to final destination and remove temporary input file
+# Since output files are small, we're not removing them here.
 rsync -r \$baseoutdir $1
 rm \$infile
 EOF
