@@ -14,6 +14,8 @@
 
 # Create a heredoc containing the required script, and submit it via qsub.
 # All qsub arguments are supplied via PBS directives inside the heredoc.
+filename=$(basename $2)
+
 cat <<EOF | qsub
 #PBS -l nodes=1:ppn=2
 #PBS -l vmem=24000mb
@@ -21,7 +23,7 @@ cat <<EOF | qsub
 #PBS -o $1
 #PBS -e $1
 #PBS -m abe
-#PBS -N generate_climos
+#PBS -N generate_climos:$filename
 #PBS -d /storage/home/rglover/code/climate-explorer-backend
 
 pbs_job_num=\$(expr match "\$PBS_JOBID" '\([0-9]*\)')
@@ -34,7 +36,7 @@ source py3.4/bin/activate
 # Copy NetCDF file to $TMPDIR/climo/input
 indir=\$TMPDIR/climo/input
 mkdir -p \$indir && cp $2 \$indir
-infile=\$indir/$(basename $2)
+infile=\$indir/$filename
 
 # Output directory is automatically created by generate_climos
 baseoutdir=\$TMPDIR/climo/output
