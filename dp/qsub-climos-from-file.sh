@@ -18,7 +18,7 @@ todofile="$1"
 donefile="$2"
 destdir="$3"
 walltime="$4"
-maxjobs=${3:-1}
+maxjobs=${5:-1}
 
 # Create donefile if it does not exist
 if [ ! -e $donefile ]; then touch $donefile; fi
