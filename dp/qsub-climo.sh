@@ -10,16 +10,21 @@
 #     log files are placed in the base directory
 #     climo output files are placed in a subdirectory of the base directory named by the PBS job id
 # $2: NetCDF file path
-# $3: maximum execution time (walltime); if omitted, defaults to 01:00:00 (1 hour)
+# $3: maximum execution time (walltime); if omitted, defaults to 10:00:00 (10 hr)
 
 # Create a heredoc containing the required script, and submit it via qsub.
 # All qsub arguments are supplied via PBS directives inside the heredoc.
+
 filename=$(basename $2)
 
+# Use only 1 processor per node, because none of the CDO operations are pipelined or otherwise parallelizable.
+ppn=1
+vmem=$((ppn * 12000))  # Memory request: 12000mb per processor
+
 cat <<EOF | qsub
-#PBS -l nodes=1:ppn=2
-#PBS -l vmem=24000mb
-#PBS -l walltime=${3:-01:00:00}
+#PBS -l nodes=1:ppn=$ppn
+#PBS -l vmem=${vmem}mb
+#PBS -l walltime=${3:-10:00:00}
 #PBS -o $1
 #PBS -e $1
 #PBS -m abe
