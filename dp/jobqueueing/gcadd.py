@@ -6,18 +6,12 @@ import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from dp.script_helpers import default_logger
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
 # Set up logging
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', "%Y-%m-%d %H:%M:%S")
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-
-logger = logging.getLogger(__name__)
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)  # For testing, overridden by -L when run as a script
-
+logger = default_logger()
 log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
 
 
