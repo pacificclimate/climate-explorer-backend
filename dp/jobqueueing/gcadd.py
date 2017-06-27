@@ -49,7 +49,7 @@ if __name__ == '__main__':
             raise ArgumentTypeError("'{}' is not a valid walltime value")
         return string
 
-    parser = ArgumentParser(description='Create climatologies from CMIP5 data')
+    parser = ArgumentParser(description='Queue a file for processing with generate_climos')
 
     # Global arguments
     group = parser.add_argument_group('Global arguments')
