@@ -48,7 +48,6 @@ if __name__ == '__main__':
 
     for k in 'database loglevel input_filepath output_directory convert_longitudes split_vars split_intervals ppn walltime'.split():
         logger.debug('{}: {}'.format(k, getattr(args, k)))
-    sys.exit()
 
     main(args)
     sys.exit()
