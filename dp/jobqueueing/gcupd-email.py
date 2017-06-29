@@ -1,3 +1,12 @@
+"""
+Script to update the status of a queue entry based on the content of a standard status email sent by PBS.
+
+The email is read from stdin and scanned for information that identifies the job and its status,
+and the queue entry is found and updated accordingly.
+
+WARNING: Currently this script does not enforce any ordering of begin and terminate status changes.
+"""
+
 from argparse import ArgumentParser
 import datetime
 import logging

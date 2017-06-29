@@ -1,3 +1,10 @@
+"""
+Script to dequeue one or more generate_climos queue entries with NEW status, and submit a PBS job for each,
+updating the queue entries accordingly.
+
+Entries are dequeued in order of addition to the database; i.e., it is a FIFO queue.
+"""
+
 from argparse import ArgumentParser
 import datetime
 import logging
