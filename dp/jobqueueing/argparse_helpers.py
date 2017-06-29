@@ -29,6 +29,13 @@ def add_global_arguments(parser):
     return group
 
 
+def add_gcadd_arguments(parser):
+    group = parser.add_argument_group('Add arguments')
+    group.add_argument('-f', '--force', action='store_true',
+                       help='Force addition of a new queue entry even if one for this input filename already exists')
+    return group
+
+
 def add_generate_climos_arguments(parser):
     group = parser.add_argument_group('generate_climos arguments')
     group.add_argument('input_filepath', help='File to queue')

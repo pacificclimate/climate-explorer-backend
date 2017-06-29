@@ -11,6 +11,9 @@ of the gcsub.py script, which performs an actual PBS qsub based on the queue ent
 However, a queue entry after a PBS job has been submitted via some external (to this database) process.
 In that case, the submission date and the PBS job id can be supplied manually through command-line args.
 See script help for details.
+
+To ease adding files from a changing directory, a new entry is created only if there is no entry with the
+same input filepath. This can be overridden with the `-f --force` option.
 """
 
 from argparse import ArgumentParser
@@ -23,7 +26,8 @@ from sqlalchemy.orm import sessionmaker
 
 from dp.script_helpers import default_logger
 from dp.jobqueueing.argparse_helpers import \
-    add_global_arguments, add_generate_climos_arguments, add_pbs_arguments, add_ext_submit_arguments
+    add_global_arguments, add_gcadd_arguments, \
+    add_generate_climos_arguments, add_pbs_arguments, add_ext_submit_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
@@ -31,6 +35,13 @@ logger = default_logger()
 
 
 def add_to_generate_climos_queue(session, args):
+    entry = session.query(GenerateClimosQueueEntry)\
+        .filter(GenerateClimosQueueEntry.input_filepath == args.input_filepath)\
+        .first()
+    if entry and not args.force:
+        logger.info('Skipping file {}: already in queue'.format(args.input_filepath))
+        return
+
     entry_args = dict(
         input_filepath=args.input_filepath,
         output_directory=args.output_directory,
@@ -65,6 +76,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Queue a file for processing with generate_climos')
     add_global_arguments(parser)
+    add_gcadd_arguments(parser)
     add_generate_climos_arguments(parser)
     add_pbs_arguments(parser)
     add_ext_submit_arguments(parser)
