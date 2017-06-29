@@ -122,8 +122,8 @@ def submit_generate_climos_pbs_jobs(session, args):
         else:
             entry.status = 'SUBMITTED'
             entry.submitted_time = datetime.datetime.now()
-            entry.pbs_job_id = pbs_job_id.decode('utf-8')
-            logger.info('Submitted job: {}'.format(pbs_job_id))
+            entry.pbs_job_id = pbs_job_id.decode('utf-8').strip()
+            logger.info('Submitted job: {}'.format(entry.pbs_job_id))
 
     session.commit()
 
