@@ -77,6 +77,8 @@ def add_ext_submit_arguments(parser):
 
 def add_listing_arguments(parser):
     group = parser.add_argument_group('Listing control arguments')
+    group.add_argument('-f', '--full', action='store_true',
+                       help='Display full listing')
     group.add_argument('-i', '--input-filepath', dest='input_filepath',
                        help='Input filepath (partial match)')
     group.add_argument('-j', '--job-id', dest='pbs_job_id', type=str,

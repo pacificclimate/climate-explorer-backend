@@ -4,8 +4,8 @@ Script to list entries in the `generate_climos` queue.
 
 from argparse import ArgumentParser
 import logging
-import datetime
 import sys
+import os.path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -28,24 +28,36 @@ def list_entries(session, args):
     if args.status:
         q = q.filter(GenerateClimosQueueEntry.status == args.status)
     entries = q.all()
-    for entry in entries:
-        print('{}:'.format(entry.input_filepath))
-        for attr in '''
-                output_directory
-                convert_longitude
-                split_vars
-                split_intervals
-                ppn
-                walltime
-                status
-                added_time
-                submitted_time
-                pbs_job_id
-                started_time
-                completed_time
-                completion_message
-                '''.split():
-            print('    {} = {}'.format(attr, getattr(entry, attr)))
+
+    if args.full:
+        for entry in entries:
+            print('{}:'.format(entry.input_filepath))
+            for attr in '''
+                    output_directory
+                    convert_longitude
+                    split_vars
+                    split_intervals
+                    ppn
+                    walltime
+                    status
+                    added_time
+                    submitted_time
+                    pbs_job_id
+                    started_time
+                    completed_time
+                    completion_message
+                    '''.split():
+                print('    {} = {}'.format(attr, getattr(entry, attr)))
+    else:
+        title_fmt = '  {:<16.16} {:<9.9} {:<16.16} {:<4.4} {:<16.16} {:<16.16}'
+        print(title_fmt.format('Added time', 'Status', 'Submitted time', 'JID', 'Started time', 'Completed time'))
+        print(title_fmt.format(*(('-'*100,) * 20)))
+        for entry in entries:
+            print('{}:'.format(os.path.basename(entry.input_filepath)))
+            print('  {e.added_time!s:.16} {e.status:<9} {e.submitted_time!s:<16.16} {e.pbs_job_id!s:.4} '
+                  '{e.started_time!s:<16.16} {e.completed_time!s:<16.16}'
+                  .format(e=entry))
+
 
 
 def main(args):
