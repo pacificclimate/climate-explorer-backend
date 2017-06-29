@@ -59,3 +59,14 @@ def add_ext_submit_arguments(parser):
     group.add_argument('-j', '--job-id', dest='pbs_job_id', type=str,
                        help='PBS job id of submission')
     return group
+
+
+def add_listing_arguments(parser):
+    group = parser.add_argument_group('Listing control arguments')
+    group.add_argument('-i', '--input-filepath', dest='input_filepath',
+                       help='Input filepath (partial match)')
+    group.add_argument('-j', '--job-id', dest='pbs_job_id', type=str,
+                       help='PBS job id of submission')
+    group.add_argument('-s', '--status', help='Status of queue entry',
+                       choices=['NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR'])
+    return group

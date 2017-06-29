@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dp.script_helpers import default_logger
-from dp.jobqueueing.argparse_helpers import add_global_arguments
+from dp.jobqueueing.argparse_helpers import add_global_arguments, add_listing_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
@@ -19,9 +19,15 @@ logger = default_logger()
 
 
 def list_entries(session, args):
-    entries = session.query(GenerateClimosQueueEntry)\
-        .order_by(GenerateClimosQueueEntry.added_time)\
-        .all()
+    q = session.query(GenerateClimosQueueEntry)\
+        .order_by(GenerateClimosQueueEntry.added_time)
+    if args.input_filepath:
+        q = q.filter(GenerateClimosQueueEntry.input_filepath.like('%{}%'.format(args.input_filepath)))
+    if args.pbs_job_id:
+        q = q.filter(GenerateClimosQueueEntry.pbs_job_id.like('%{}%'.format(args.pbs_job_id)))
+    if args.status:
+        q = q.filter(GenerateClimosQueueEntry.status == args.status)
+    entries = q.all()
     for entry in entries:
         print('{}:'.format(entry.input_filepath))
         for attr in '''
@@ -51,8 +57,9 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Queue a file for processing with generate_climos')
+    parser = ArgumentParser(description='List entries in generate_climos queue')
     add_global_arguments(parser)
+    add_listing_arguments(parser)
 
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
