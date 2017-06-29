@@ -52,6 +52,13 @@ def add_pbs_arguments(parser):
     return group
 
 
+def add_submit_arguments(parser):
+    group = parser.add_argument_group('Submit arguments')
+    group.add_argument('-n', '--number', type=int, dest='number', default=1,
+                       help='Number of files to submit')
+    return group
+
+
 def add_ext_submit_arguments(parser):
     group = parser.add_argument_group('External submission arguments')
     group.add_argument('-s', '--submitted', type=dateparser.parse,

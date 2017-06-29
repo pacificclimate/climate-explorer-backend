@@ -17,7 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import asc
 
 from dp.script_helpers import default_logger
-from dp.jobqueueing.argparse_helpers import add_global_arguments
+from dp.jobqueueing.argparse_helpers import add_global_arguments, add_submit_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
@@ -141,11 +141,7 @@ if __name__ == '__main__':
     group = add_global_arguments(parser)
     group.add_argument('--test-job', dest='test_job', action='store_true',
                        help='Submit a test job that performs no work')
-
-    group = parser.add_argument_group('Submission arguments')
-    group.add_argument('-n', '--number', type=int, dest='number', default=1,
-                       help='Number of files to submit')
-
+    add_submit_arguments(parser)
 
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
