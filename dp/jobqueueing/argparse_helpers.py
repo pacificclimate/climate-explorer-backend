@@ -23,8 +23,7 @@ log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
 def add_global_arguments(parser):
     group = parser.add_argument_group('Global arguments')
     group.add_argument('-d', '--database', help='Filepath to queue management database',
-                       # FIXME: Set up a prod database on /storage
-                       default='/home/rglover/code/climate-explorer-backend/dp/jobqueueing/jobqueueing.sqlite')
+                       default='/storage/data/projects/comp_support/climate_exporer_data_prep/climatological_means/jobqueue-prod.sqlite')
     group.add_argument('-L', '--loglevel', help='Logging level',
                        choices=log_level_choices, default='INFO')
     return group
