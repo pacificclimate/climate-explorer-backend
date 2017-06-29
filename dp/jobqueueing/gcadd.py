@@ -7,7 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dp.script_helpers import default_logger
-from dp.jobqueueing.argparse_helpers import add_global_arguments, add_generate_climos_arguments, add_pbs_arguments
+from dp.jobqueueing.argparse_helpers import \
+    add_global_arguments, add_generate_climos_arguments, add_pbs_arguments, add_ext_submit_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
@@ -15,7 +16,7 @@ logger = default_logger()
 
 
 def add_to_generate_climos_queue(session, args):
-    session.add(GenerateClimosQueueEntry(
+    entry_args = dict(
         input_filepath=args.input_filepath,
         output_directory=args.output_directory,
         convert_longitude=args.convert_longitudes,
@@ -24,8 +25,17 @@ def add_to_generate_climos_queue(session, args):
         ppn=args.ppn,
         walltime=args.walltime,
         added_time=datetime.datetime.now(),
-        status='NEW',
-    ))
+    )
+    if args.submitted:
+        entry_args.update(
+            status='SUBMITTED',
+            submitted_time=args.submitted,
+            pbs_job_id=args.pbs_job_id,
+        )
+    else:
+        entry_args.update(status='NEW')
+
+    session.add(GenerateClimosQueueEntry(**entry_args))
     session.commit()
 
 
@@ -42,11 +52,12 @@ if __name__ == '__main__':
     add_global_arguments(parser)
     add_generate_climos_arguments(parser)
     add_pbs_arguments(parser)
+    add_ext_submit_arguments(parser)
 
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
 
-    for k in 'database loglevel input_filepath output_directory convert_longitudes split_vars split_intervals ppn walltime'.split():
+    for k in 'database loglevel input_filepath output_directory convert_longitudes split_vars split_intervals ppn walltime submitted'.split():
         logger.debug('{}: {}'.format(k, getattr(args, k)))
 
     main(args)

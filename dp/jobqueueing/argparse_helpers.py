@@ -4,6 +4,8 @@ Helpers for setting up argument parsing for jobqueueing
 from argparse import ArgumentTypeError
 import re
 
+from dateutil import parser as dateparser
+
 
 def strtobool(string):
     return string.lower() in {'true', 't', 'yes', '1'}
@@ -44,9 +46,17 @@ def add_generate_climos_arguments(parser):
 
 def add_pbs_arguments(parser):
     group = parser.add_argument_group('PBS arguments')
-
     group.add_argument('-p', '--ppn', type=int, dest='ppn', default=1,
                        help='Processes per node')
     group.add_argument('-w', '--walltime', type=str, dest='walltime', default='10:00:00',
                        help='Maximum wall time')
+    return group
+
+
+def add_ext_submit_arguments(parser):
+    group = parser.add_argument_group('External submission arguments')
+    group.add_argument('-s', '--submitted', type=dateparser.parse,
+                       help='Date/time that job was submitted to PBS without use of gcsub')
+    group.add_argument('-j', '--job-id', dest='pbs_job_id', type=str,
+                       help='PBS job id of submission')
     return group
