@@ -29,7 +29,7 @@ def reset_generate_climos_queue_entry(session, args):
         return 1
 
     def single_step_to(status, entry):
-        """Reset to `status` from next later status"""
+        """Single-step reset to `status` from next later status."""
         logger.debug('Stepping from status {} to {}'.format(entry.status, status))
         if status == 'NEW':
             assert entry.status == 'SUBMITTED'
@@ -57,6 +57,8 @@ def reset_generate_climos_queue_entry(session, args):
     if to_i <= from_i:
         logger.error('Cannot reset status from {} to {}'.format(entry.status, args.status))
         return 1
+    # Iterate through statuses in reverse order from predecessor of `entry.status` to `arg.status`.
+    # Example: for an entry in SUCCESS status, iterate from RUNNING to NEW.
     for i, status in enumerate(rev_statuses):
         if from_i < i <= to_i:
             try:
