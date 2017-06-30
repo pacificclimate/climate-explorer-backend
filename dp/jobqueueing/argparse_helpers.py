@@ -6,18 +6,13 @@ import re
 
 from dateutil import parser as dateparser
 
-
-def strtobool(string):
-    return string.lower() in {'true', 't', 'yes', '1'}
+from dp.argparse_helpers import log_level_choices, strtobool
 
 
 def walltime(string):
     if not re.match(r'(\d{1,2}:)?(\d{2}:)*\d{2}', string):
         raise ArgumentTypeError("'{}' is not a valid walltime value")
     return string
-
-
-log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
 
 
 def add_global_arguments(parser):
