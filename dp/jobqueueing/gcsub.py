@@ -35,7 +35,7 @@ def make_qsub_test_script(queue_entry):
 #PBS -N generate_climos:{input_filename}
 #PBS -d /storage/home/rglover/code/climate-explorer-backend
 
-pbs_job_num=$(expr match "$PBS_JOBID" '([0-9]*)')
+pbs_job_num=$(expr match "$PBS_JOBID" '\([0-9]*\)')
 
 # Set up the execution environment
 module load netcdf-bin
@@ -74,7 +74,7 @@ def make_qsub_script(queue_entry):
 #PBS -N generate_climos:{input_filename}
 #PBS -d /storage/home/rglover/code/climate-explorer-backend
 
-pbs_job_num=$(expr match "$PBS_JOBID" '([0-9]*)')
+pbs_job_num=$(expr match "$PBS_JOBID" '\([0-9]*\)')
 
 # Set up the execution environment
 module load netcdf-bin
