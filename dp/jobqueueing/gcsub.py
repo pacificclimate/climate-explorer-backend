@@ -29,8 +29,8 @@ def make_qsub_test_script(queue_entry):
 #PBS -l nodes=1:ppn={qe.ppn}
 #PBS -l vmem={vmem}mb
 #PBS -l walltime={qe.walltime}
-#PBS -o {qe.output_directory}
-#PBS -e {qe.output_directory}
+#PBS -o {qe.output_directory}/logs
+#PBS -e {qe.output_directory}/logs
 #PBS -m abe
 #PBS -N generate_climos:{input_filename}
 #PBS -d /storage/home/rglover/code/climate-explorer-backend
@@ -68,8 +68,8 @@ def make_qsub_script(queue_entry):
 #PBS -l nodes=1:ppn={qe.ppn}
 #PBS -l vmem={vmem}mb
 #PBS -l walltime={qe.walltime}
-#PBS -o {qe.output_directory}
-#PBS -e {qe.output_directory}
+#PBS -o {qe.output_directory}/logs
+#PBS -e {qe.output_directory}/logs
 #PBS -m abe
 #PBS -N generate_climos:{input_filename}
 #PBS -d /storage/home/rglover/code/climate-explorer-backend

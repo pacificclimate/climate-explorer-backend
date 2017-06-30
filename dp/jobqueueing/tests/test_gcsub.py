@@ -23,8 +23,8 @@ def test_make_qsub_script(make_script):
     assert '#PBS -l nodes=1:ppn=1' in script
     assert '#PBS -l vmem=12000mb' in script
     assert '#PBS -l walltime=01:23:45'
-    assert '#PBS -o /output/directory' in script
-    assert '#PBS -e /output/directory' in script
+    assert '#PBS -o /output/directory/logs' in script
+    assert '#PBS -e /output/directory/logs' in script
     assert '#PBS -N generate_climos:file.nc' in script
     assert 'cp /input/directory/file.nc' in script
     assert 'infile=$indir/file.nc' in script
