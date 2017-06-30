@@ -1,0 +1,5 @@
+# Input for update_metadata script
+# Fix downscaling output files generated with faulty metadata up to Jun 30, 2017
+global:
+  project_id: CMIP5
+  driving_realization: <-driving_model_realization
