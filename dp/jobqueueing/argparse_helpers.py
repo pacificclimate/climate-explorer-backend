@@ -86,9 +86,9 @@ def add_listing_arguments(parser):
     return group
 
 
-def add_update_arguments(parser):
-    group = parser.add_argument_group('Update arguments')
-    group.add_argument('input_filepath', help='Input filepath (partial match)')
+def add_reset_arguments(parser):
+    group = parser.add_argument_group('Reset arguments')
+    group.add_argument('input_filepath', help='Input filepath (full match)')
     group.add_argument('-s', '--status', help='Status of queue entry',
                        choices=status_choices, default='NEW')
     return group

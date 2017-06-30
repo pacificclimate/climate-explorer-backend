@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dp.script_helpers import default_logger
-from dp.jobqueueing.argparse_helpers import add_global_arguments, add_update_arguments
+from dp.jobqueueing.argparse_helpers import add_global_arguments, add_reset_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 from dp.jobqueueing.argparse_helpers import status_choices
 
@@ -83,7 +83,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Update generate_climos queue using PBS status email')
     add_global_arguments(parser)
-    add_update_arguments(parser)
+    add_reset_arguments(parser)
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
 
