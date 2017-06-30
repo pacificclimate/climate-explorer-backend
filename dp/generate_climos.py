@@ -16,6 +16,7 @@ from dateutil.relativedelta import relativedelta
 from nchelpers import CFDataset
 from nchelpers.date_utils import d2s
 
+from dp.argparse_helpers import strtobool, log_level_choices
 from dp.units_helpers import Unit
 
 
@@ -421,15 +422,14 @@ if __name__ == '__main__':
     parser.add_argument('filepaths', nargs='*', help='Files to process')
     # parser.add_argument('-c', '--climo', nargs= '+',  help='Climatological periods to generate.
     # IN PROGRESS. Defaults to all available in the input file. Ex: -c 6190 7100 8100 2020 2050 2080')
-    log_level_choices = 'NOTSET DEBUG INFO WARNING ERROR CRITICAL'.split()
     parser.add_argument('-l', '--loglevel', help='Logging level',
                         choices=log_level_choices, default='INFO')
     parser.add_argument('-n', '--dry-run', dest='dry_run', action='store_true')
-    parser.add_argument('-g', '--convert-longitudes', type=bool, dest='convert_longitudes',
+    parser.add_argument('-g', '--convert-longitudes', type=strtobool, dest='convert_longitudes',
                         help='Transform longitude range from [0, 360) to [-180, 180)')
-    parser.add_argument('-v', '--split-vars', type=bool, dest='split_vars',
+    parser.add_argument('-v', '--split-vars', type=strtobool, dest='split_vars',
                         help='Generate a separate file for each dependent variable in the file')
-    parser.add_argument('-i', '--split-intervals', type=bool, dest='split_intervals',
+    parser.add_argument('-i', '--split-intervals', type=strtobool, dest='split_intervals',
                         help='Generate a separate file for each climatological period')
     parser.add_argument('-o', '--outdir', required=True, help='Output folder')
     parser.set_defaults(dry_run=False, convert_longitudes=True, split_vars=True, split_intervals=True)
