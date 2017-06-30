@@ -9,6 +9,9 @@ from dateutil import parser as dateparser
 from dp.argparse_helpers import log_level_choices, strtobool
 
 
+status_choices = ['NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR']
+
+
 def walltime(string):
     if not re.match(r'(\d{1,2}:)?(\d{2}:)*\d{2}', string):
         raise ArgumentTypeError("'{}' is not a valid walltime value")
@@ -79,5 +82,13 @@ def add_listing_arguments(parser):
     group.add_argument('-j', '--job-id', dest='pbs_job_id', type=str,
                        help='PBS job id of submission')
     group.add_argument('-s', '--status', help='Status of queue entry',
-                       choices=['NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR'])
+                       choices=status_choices)
+    return group
+
+
+def add_update_arguments(parser):
+    group = parser.add_argument_group('Update arguments')
+    group.add_argument('input_filepath', help='Input filepath (partial match)')
+    group.add_argument('-s', '--status', help='Status of queue entry',
+                       choices=status_choices, default='NEW')
     return group
