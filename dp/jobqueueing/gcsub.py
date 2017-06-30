@@ -73,29 +73,40 @@ def make_qsub_script(queue_entry):
 #PBS -m abe
 #PBS -N generate_climos:{input_filename}
 #PBS -d /storage/home/rglover/code/climate-explorer-backend
+set -o verbose
 
 pbs_job_num=$(expr match "$PBS_JOBID" '\([0-9]*\)')
+echo pbs_job_num = $pbs_job_num
 
 # Set up the execution environment
 module load netcdf-bin
 module load cdo-bin
+module list
 source py3.4/bin/activate
+which python
 
 # Copy NetCDF file to $TMPDIR/climo/input
 indir=$TMPDIR/climo/input
+echo indir = $indir
 mkdir -p $indir && cp {qe.input_filepath} $indir
+ls $indir
 infile=$indir/{input_filename}
+echo infile = $infile
 
 # Output directory is automatically created by generate_climos
 baseoutdir=$TMPDIR/climo/output
+echo baseoutdir = $baseoutdir
 outdir=$baseoutdir/$pbs_job_num
+echo outdir = $outdir
 
 # Generate climo means
 python dp/generate_climos.py -g {qe.convert_longitude} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
+ls $outdir
 
 # Copy result file to final destination and remove temporary input file
 # Since output files are small, we're not removing them here.
 rsync -r $baseoutdir {qe.output_directory}
+ls $baseoutdir
 rm $infile
             '''.format(qe=queue_entry,
                        input_filename=os.path.basename(queue_entry.input_filepath),
