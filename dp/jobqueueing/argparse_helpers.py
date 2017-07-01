@@ -34,25 +34,25 @@ def add_gcadd_arguments(parser):
     return group
 
 
-def add_generate_climos_arguments(parser):
+def add_generate_climos_arguments(parser, o_required=True, flag_default=True):
     group = parser.add_argument_group('generate_climos arguments')
     group.add_argument('input_filepath', help='File to queue')
-    group.add_argument('-o', '--output-directory', required=True, dest='output_directory',
+    group.add_argument('-o', '--output-directory', required=o_required, dest='output_directory',
                        help='Path to directory where output files will be placed')
-    group.add_argument('-g', '--convert-longitudes', type=strtobool, dest='convert_longitudes', default=True,
+    group.add_argument('-g', '--convert-longitudes', type=strtobool, dest='convert_longitudes', default=flag_default,
                        help='Transform longitude range from [0, 360) to [-180, 180)')
-    group.add_argument('-v', '--split-vars', type=strtobool, dest='split_vars', default=True,
+    group.add_argument('-v', '--split-vars', type=strtobool, dest='split_vars', default=flag_default,
                        help='Generate a separate file for each dependent variable in the file')
-    group.add_argument('-i', '--split-intervals', type=strtobool, dest='split_intervals', default=True,
+    group.add_argument('-i', '--split-intervals', type=strtobool, dest='split_intervals', default=flag_default,
                        help='Generate a separate file for each climatological period')
     return group
 
 
-def add_pbs_arguments(parser):
+def add_pbs_arguments(parser, ppn_default=1, walltime_default='10:00:00'):
     group = parser.add_argument_group('PBS arguments')
-    group.add_argument('-p', '--ppn', type=int, dest='ppn', default=1,
+    group.add_argument('-p', '--ppn', type=int, dest='ppn', default=ppn_default,
                        help='Processes per node')
-    group.add_argument('-w', '--walltime', type=str, dest='walltime', default='10:00:00',
+    group.add_argument('-w', '--walltime', type=str, dest='walltime', default=walltime_default,
                        help='Maximum wall time')
     return group
 
