@@ -1,6 +1,6 @@
 """
-Script to update queue entries with generate_climos params and PBS params (but not status).
-Updated entry must be in status NEW.
+Script to alter generate_climos params and PBS params of queue entries.
+Altered entry must be in status NEW.
 """
 
 from argparse import ArgumentParser
