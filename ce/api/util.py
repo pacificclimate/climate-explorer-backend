@@ -79,6 +79,8 @@ def get_array(nc, fname, time, area, variable):
     else:
         mask = False
 
+    # FIXME: This could possibly compare a projected polygon mask and an
+    # unprojected raw array
     return ma.masked_array(a, mask)
 
 def mean_datetime(datetimes):
