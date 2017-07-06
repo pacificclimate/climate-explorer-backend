@@ -2,7 +2,10 @@ language: python
 dist: trusty
 sudo: false
 python:
+  - 2.7
   - 3.4
+  - 3.5
+  - 3.6
 addons:
   apt:
     packages:
@@ -12,7 +15,7 @@ env:
   global:
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
-    - GDALVERSION="2.0.2"
+    - GDALVERSION="1.11.2"
     - CPLUS_INCLUDE_PATH=$GDALINST/include
     - C_INCLUDE_PATH=$GDALINST/include
     - CFLAGS=-I$GDALINST/include
