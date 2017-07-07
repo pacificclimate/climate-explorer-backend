@@ -45,7 +45,7 @@ def metadata(sesh, model_id):
                         'tasmax': 'Maximum daily temperature',
                         'tasmin': 'Minimum daily temperature',
                     },
-                    'time_resolution': 'monthly',
+                    'timescale': 'monthly',
                     'times':
                     {
                         0: '1985-01-15T00:00:00Z',

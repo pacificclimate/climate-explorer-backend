@@ -37,8 +37,12 @@ def multimeta(sesh, ensemble_name='ce', model=''):
               model_id: "BCCAQ+ANUSPLIN300+MRI-CGCM3",
               model_name: "",
               experiment: "historical+rcp45",
-              variables: "pr",
-              ensemble_member: "r1i1p1"
+              variables:
+                  {
+                  "pr": "Precipitation"
+                  }
+              ensemble_member: "r1i1p1",
+              timescale: "monthly"
               },
           unique_id2:
               ...
