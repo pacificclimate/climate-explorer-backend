@@ -1,25 +1,26 @@
 """
 Customized alembic environment manager.
+Adapted from https://gist.github.com/twolfson/4bc5813b022178bd7034
 
 This manager enables command-line specification of the database to migrate.
-This simplifies testing and use in various environments, e.g., local dev machine vs. compute node
-(with test and prod databases on compute node).
+This simplifies testing and use in various environments, e.g., local dev
+machine vs. compute node (with test and prod databases on compute node).
 
-The database to migrate is specified using the command-line argument `-x`, as follows::
+The database to migrate is specified using the command-line argument `-x`,
+as follows::
 
     alembic -x db=<db-name> upgrade ...
 
-This syntax is now required; i.e., `-x db=<db-name>` cannot be omitted from the command.
+This syntax is now required; i.e., `-x db=<db-name>` cannot be omitted from
+the command.
 
-The `<db-name>` section must appear in `alembic.ini`, with a `sqlalchemy.url =` line.
+The `<db-name>` section must appear in `alembic.ini`, with a
+`sqlalchemy.url =` line.
 For example, to use `alembic -x db=test upgrade ...`::
 
     [test]
     sqlalchemy.url = sqlite:////path/to/database/test.sqlite
-
-Adapted from https://gist.github.com/twolfson/4bc5813b022178bd7034
 """
-from __future__ import with_statement
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -79,7 +80,8 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    # Load db config on top of alembic config. This enables CLI spec of database to migrate.
+    # Load db config on top of alembic config. This enables CLI spec of
+    # database to migrate.
     alembic_config = config.get_section(config.config_ini_section)
     db_config = config.get_section(db_name)
     for key in db_config:
