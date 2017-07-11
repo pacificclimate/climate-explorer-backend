@@ -34,32 +34,73 @@ from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 logger = default_logger()
 
 
-def add_to_generate_climos_queue(session, args):
-    entry = session.query(GenerateClimosQueueEntry)\
-        .filter(GenerateClimosQueueEntry.input_filepath == args.input_filepath)\
+def add_to_generate_climos_queue(
+        session,
+        input_filepath=None,
+        output_directory=None,
+        convert_longitudes=None,
+        split_vars=None,
+        split_intervals=None,
+        ppn=None,
+        walltime=None,
+        submitted=None,
+        pbs_job_id=None,
+        force=None
+):
+    """
+    Add an entry to a `generate_climos` queue.
+
+    :param session: database session
+    :param input_filepath (str): filepath of file to be queued
+    :param output_directory (str): directory for output from generate_climos
+        (-o/--output param)
+    :param convert_longitudes (bool): generate_climos parameter
+    :param split_vars (bool): generate_climos parameter
+    :param split_intervals (bool): generate_climos parameter
+    :param ppn (str): PBS job parameter (processors per node)
+    :param walltime (str): PBS job parmeter (maximum elapsed run time)
+    :param submitted (str, parseable as a date/time):
+        For normal queueing of files to be later submitted using this toolset,
+        value is None.
+        For jobs submitted to PBS outside this toolset,
+        value is the date/time that the job was submitted.
+        If not None, `pbs_job_id` must also be non-None
+    :param pbs_job_id (str):
+        For normal queueing of files to be later submitted using this toolset,
+        value is None.
+        For jobs submitted to PBS outside this toolset,
+        value is PBS job id of submitted job.
+        If not None, `submitted` must also be non-None
+    :param force (bool):
+    :return: None
+    """
+    entry = (
+        session.query(GenerateClimosQueueEntry)
+        .filter(GenerateClimosQueueEntry.input_filepath == input_filepath)
         .first()
-    if entry and not args.force:
-        logger.info('Skipping file {}: already in queue'.format(args.input_filepath))
+    )
+    if entry and not force:
+        logger.info('Skipping file {}: already in queue'
+                    .format(input_filepath))
         return
 
     entry_args = dict(
-        input_filepath=args.input_filepath,
-        output_directory=args.output_directory,
-        convert_longitude=args.convert_longitudes,
-        split_vars=args.split_vars,
-        split_intervals=args.split_intervals,
-        ppn=args.ppn,
-        walltime=args.walltime,
+        input_filepath=input_filepath,
+        output_directory=output_directory,
+        convert_longitude=convert_longitudes,
+        split_vars=split_vars,
+        split_intervals=split_intervals,
+        ppn=ppn,
+        walltime=walltime,
         added_time=datetime.datetime.now(),
+        status='NEW',
     )
-    if args.submitted:
+    if submitted and pbs_job_id:
         entry_args.update(
             status='SUBMITTED',
-            submitted_time=args.submitted,
-            pbs_job_id=args.pbs_job_id,
+            submitted_time=submitted,
+            pbs_job_id=pbs_job_id,
         )
-    else:
-        entry_args.update(status='NEW')
 
     session.add(GenerateClimosQueueEntry(**entry_args))
     session.commit()
@@ -70,7 +111,22 @@ def main(args):
     engine = create_engine(dsn)
     session = sessionmaker(bind=engine)()
 
-    add_to_generate_climos_queue(session, args)
+    add_to_generate_climos_queue(
+        session,
+        **{key: getattr(args, key)
+           for key in '''
+            input_filepath
+            output_directory
+            convert_longitudes
+            split_vars
+            split_intervals
+            ppn
+            walltime
+            submitted
+            pbs_job_id
+            force
+            '''.split()}
+    )
 
 
 if __name__ == '__main__':
