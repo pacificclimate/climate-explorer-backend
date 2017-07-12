@@ -1,19 +1,23 @@
 """
-Script to add an entry to a `generate_climos` queue, which is to say to add a record to a `GenerateClimosQueueEntry`
-in a database.
+Script to add an entry to a `generate_climos` queue, which is to say to add a
+record to a `GenerateClimosQueueEntry` in a database.
 
-Such a record denotes a file queued for processing with `generate_climos` via PBS `qsub`. The record includes
-`generate_climos` arguments and arguments for `qsub`.
+Such a record denotes a file queued for processing with `generate_climos`
+via PBS `qsub`. The record includes `generate_climos` arguments and arguments
+for `qsub`.
 
-Normally, a queue entry is designated 'NEW' (not yet submitted), and will be changed to 'SUBMITTED' by use
-of the gcsub.py script, which performs an actual PBS qsub based on the queue entry (modifying it accordingly).
+Normally, a queue entry is designated 'NEW' (not yet submitted), and will be
+changed to 'SUBMITTED' by use of the gcsub.py script, which performs an actual
+PBS `qsub` based on the queue entry (modifying it accordingly).
 
-However, a queue entry after a PBS job has been submitted via some external (to this database) process.
-In that case, the submission date and the PBS job id can be supplied manually through command-line args.
+However, a queue entry after a PBS job has been submitted via some external
+(to this database) process. In that case, the submission date and the PBS job
+id can be supplied manually through command-line args.
 See script help for details.
 
-To ease adding files from a changing directory, a new entry is created only if there is no entry with the
-same input filepath. This can be overridden with the `-f --force` option.
+To ease adding files from a changing directory, a new entry is created only
+if there is no entry with the same input filepath. This can be overridden
+with the `-f --force` option.
 """
 
 from argparse import ArgumentParser
@@ -130,7 +134,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Queue a file for processing with generate_climos')
+    parser = ArgumentParser(
+        description='Queue a file for processing with generate_climos')
     add_global_arguments(parser)
     add_gcadd_arguments(parser)
     add_generate_climos_arguments(parser)
@@ -140,7 +145,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
 
-    for k in 'database loglevel input_filepath output_directory convert_longitudes split_vars split_intervals ppn walltime submitted'.split():
+    for k in '''
+            database
+            loglevel
+            input_filepath
+            output_directory
+            convert_longitudes
+            split_vars
+            split_intervals
+            ppn
+            walltime
+            submitted
+            '''.split():
         logger.debug('{}: {}'.format(k, getattr(args, k)))
 
     main(args)
