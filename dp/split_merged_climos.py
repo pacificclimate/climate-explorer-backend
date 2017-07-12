@@ -1,3 +1,15 @@
+#!python
+"""
+Split files containing climatological means that have been merged (concatenated
+along the time axis).
+
+Such files are hard to process and formally incorrect (since they treat several
+formally distinct variables as a single variable; ditto their respective time
+axes).
+
+Current standard within CSG is to deal only with split files, that is, files
+that contain only means over a single interval, e.g., monthly.
+"""
 from argparse import ArgumentParser
 import logging
 import os.path

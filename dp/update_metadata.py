@@ -1,3 +1,4 @@
+#!python
 """Update NetCDF metadata from a YAML file.
 
 WARNING: THIS SCRIPT MODIFIES THE ORIGINAL FILE.
