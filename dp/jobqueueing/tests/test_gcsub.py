@@ -11,7 +11,7 @@ def test_make_qsub_script(make_script):
     entry = GenerateClimosQueueEntry(
         input_filepath='/input/directory/file.nc',
         output_directory='/output/directory',
-        convert_longitude=False,
+        convert_longitudes=False,
         split_vars=True,
         split_intervals=True,
         ppn=1,

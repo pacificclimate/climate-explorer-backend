@@ -15,14 +15,22 @@ class GenerateClimosQueueEntry(Base):
     This class represents an entry in the generate_climos queue.
     """
     __tablename__ = 'generate_climos_queue'
-    id = Column('generate_climos_queue_id', Integer, primary_key=True, nullable=False)
+    id = Column('generate_climos_queue_id', Integer, primary_key=True,
+                nullable=False)
 
     # File to process
     input_filepath = Column(String(1024), nullable=False, index=True)
 
     # generate_climos parameters
     output_directory = Column(String(1024), nullable=False)
-    convert_longitude = Column(Boolean, default=True, nullable=False)
+    # This attribute was originally defined with:
+    #   convert_longitude = Column(Boolean, default=True, nullable=False)
+    # resulting in column named 'convert_longitude'.
+    # Should rename the column, but SQLite makes it hard.
+    # Alembic can do it with extra effort, but it's not worth it at this time.
+    # We just re-map it here.
+    convert_longitudes = Column('convert_longitude', Boolean, default=True,
+                                nullable=False)
     split_vars = Column(Boolean, default=True, nullable=False)
     split_intervals = Column(Boolean, default=True, nullable=False)
 

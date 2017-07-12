@@ -53,7 +53,7 @@ baseoutdir=$TMPDIR/climo/output
 outdir=$baseoutdir/$pbs_job_num
 
 # Generate climo means
-echo python dp/generate_climos.py -g {qe.convert_longitude} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
+echo python dp/generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
 
 # Copy result file to final destination and remove temporary input file
 # Since output files are small, we're not removing them here.
@@ -102,7 +102,7 @@ outdir=$baseoutdir/$pbs_job_num
 echo outdir = $outdir
 
 # Generate climo means
-python dp/generate_climos.py -g {qe.convert_longitude} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
+python dp/generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
 ls $outdir
 
 # Copy result file to final destination and remove temporary input file

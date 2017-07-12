@@ -51,21 +51,13 @@ def update_generate_climos_queue_entries_with_params(
         .all()
     )
 
-    def args_to_entry(attr):
-        """Oh for *#@%* sake. Oughta migrate the database but SQLite doesn't
-        rename columns easily.
-        Alembic can do it with extra effort but this is faster."""
-        if attr == 'convert_longitudes':
-            return 'convert_longitude'
-        return attr
-
     for entry in entries:
         if input_filepath in entry.input_filepath:
             for attr in updatable_params:
                 update_value = kwargs.get(attr, None)
                 if update_value is not None:
                     logger.debug('Updating {} to {}'.format(attr, update_value))
-                    setattr(entry, args_to_entry(attr), update_value)
+                    setattr(entry, attr, update_value)
 
     session.commit()
     return 0

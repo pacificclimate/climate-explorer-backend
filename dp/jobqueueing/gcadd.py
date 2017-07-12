@@ -91,7 +91,7 @@ def add_to_generate_climos_queue(
     entry_args = dict(
         input_filepath=input_filepath,
         output_directory=output_directory,
-        convert_longitude=convert_longitudes,
+        convert_longitudes=convert_longitudes,
         split_vars=split_vars,
         split_intervals=split_intervals,
         ppn=ppn,

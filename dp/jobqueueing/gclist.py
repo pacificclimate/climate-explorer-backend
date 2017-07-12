@@ -53,7 +53,7 @@ def list_entries(
             print('{}:'.format(entry.input_filepath))
             for attr in '''
                     output_directory
-                    convert_longitude
+                    convert_longitudes
                     split_vars
                     split_intervals
                     ppn
