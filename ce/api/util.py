@@ -74,7 +74,7 @@ def get_array(nc, fname, time, area, variable):
     else:
         a = a[:,:,:]
 
-    return a
+    return ma.masked_array(a)
 
 def mean_datetime(datetimes):
     timestamps = [
