@@ -125,7 +125,7 @@ def polygonToMask(nc, fname, poly, variable):
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False)
+        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True)
 
     # Weirdly rasterio's mask operation sets, but doesn't respect the
     # Fill_Value, scale_factor, or add_offset
