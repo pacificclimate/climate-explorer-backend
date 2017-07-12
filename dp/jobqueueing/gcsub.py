@@ -1,8 +1,9 @@
 """
-Script to dequeue one or more generate_climos queue entries with NEW status, and submit a PBS job for each,
-updating the queue entries accordingly.
+Script to dequeue one or more generate_climos queue entries with NEW status,
+and submit a PBS job for each, updating the queue entries accordingly.
 
-Entries are dequeued in order of addition to the database; i.e., it is a FIFO queue.
+Entries are dequeued in order of addition to the database (column added_time);
+i.e., it is a FIFO queue.
 """
 
 from argparse import ArgumentParser
@@ -59,7 +60,8 @@ echo python dp/generate_climos.py -g {qe.convert_longitude} -v {qe.split_vars} -
 echo rsync -r $baseoutdir {qe.output_directory}
 echo rm $infile
             '''.format(qe=queue_entry,
-                       input_filename=os.path.basename(queue_entry.input_filepath),
+                       input_filename=os.path.basename(
+                           queue_entry.input_filepath),
                        vmem=queue_entry.ppn * 12000)
 
 
@@ -109,20 +111,35 @@ rsync -r $baseoutdir {qe.output_directory}
 ls $baseoutdir
 rm $infile
             '''.format(qe=queue_entry,
-                       input_filename=os.path.basename(queue_entry.input_filepath),
+                       input_filename=os.path.basename(
+                           queue_entry.input_filepath),
                        vmem=queue_entry.ppn * 12000)
 
 
-def submit_generate_climos_pbs_jobs(session, args):
-    entries = session.query(GenerateClimosQueueEntry)\
-        .filter(GenerateClimosQueueEntry.status == 'NEW')\
-        .order_by(asc(GenerateClimosQueueEntry.added_time))\
-        .limit(args.number)\
+def submit_generate_climos_pbs_jobs(session, number, test_job):
+    """
+    Take `number` queue entries with status NEW from the front of the
+    queue and submit them as PBS jobs, updating the queue entries
+    accordingly.
+
+    :param session: database session
+    :param number (int): number of entries to dequeue and submit
+    :param test_job (bool): If True, submit a no-work test job that
+        simply echoes commands that would be executed in a real job.
+        Otherwise, submit a real job.
+    :return: None
+    """
+    entries = (
+        session.query(GenerateClimosQueueEntry)
+        .filter(GenerateClimosQueueEntry.status == 'NEW')
+        .order_by(asc(GenerateClimosQueueEntry.added_time))
+        .limit(number)
         .all()
+    )
 
     for entry in entries:
         qsub = Popen(['qsub'], stdin=PIPE, stdout=PIPE)
-        if args.test_job:
+        if test_job:
             input = make_qsub_test_script(entry).encode('utf-8')
         else:
             input = make_qsub_script(entry).encode('utf-8')
@@ -144,11 +161,13 @@ def main(args):
     engine = create_engine(dsn)
     session = sessionmaker(bind=engine)()
 
-    submit_generate_climos_pbs_jobs(session, args)
+    submit_generate_climos_pbs_jobs(session, args.number, args.test_job)
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Submit file(s) from generate_climos queue to PBS jobs queue')
+    parser = ArgumentParser(
+        description='Submit file(s) from generate_climos queue '
+                    'to PBS jobs queue')
     group = add_global_arguments(parser)
     group.add_argument('--test-job', dest='test_job', action='store_true',
                        help='Submit a test job that performs no work')
