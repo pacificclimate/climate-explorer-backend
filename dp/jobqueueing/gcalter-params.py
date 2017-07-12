@@ -1,6 +1,10 @@
 """
 Script to alter generate_climos params and PBS params of queue entries.
+
 Altered entry must be in status NEW.
+
+WARNING: All entries with a partial match to the postional arg (input_filepath)
+will be updated.
 """
 
 from argparse import ArgumentParser
@@ -17,24 +21,48 @@ from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 logger = default_logger()
 
+updatable_params = '''
+    output_directory
+    convert_longitudes
+    split_vars
+    split_intervals
+    ppn
+    walltime
+'''.split()
 
-def update_generate_climos_queue_entries_with_params(session, args):
-    entries = session.query(GenerateClimosQueueEntry)\
-        .filter(GenerateClimosQueueEntry.status == 'NEW')\
+
+def update_generate_climos_queue_entries_with_params(
+        session,
+        input_filepath,
+        **kwargs
+):
+    """
+
+    :param session: datatbase session
+    :param input_filepath (str): select all entires with input_filepath
+        partially matching this string
+    :param **kwargs (dict): Queue entry parameter values to update to.
+        Parameters with a None value are not updated.
+    :return (int): exit status
+    """
+    entries = (
+        session.query(GenerateClimosQueueEntry)
+        .filter(GenerateClimosQueueEntry.status == 'NEW')
         .all()
+    )
 
     def args_to_entry(attr):
-        """Oh for *#@%* sake. Oughta migrate the database but SQLite doesn't rename columns easily.
+        """Oh for *#@%* sake. Oughta migrate the database but SQLite doesn't
+        rename columns easily.
         Alembic can do it with extra effort but this is faster."""
         if attr == 'convert_longitudes':
             return 'convert_longitude'
         return attr
 
-    updatable_attributes = 'output_directory convert_longitudes split_vars split_intervals ppn walltime'.split()
     for entry in entries:
-        if args.input_filepath in entry.input_filepath:
-            for attr in updatable_attributes:
-                update_value = getattr(args, attr, None)
+        if input_filepath in entry.input_filepath:
+            for attr in updatable_params:
+                update_value = kwargs.get(attr, None)
                 if update_value is not None:
                     logger.debug('Updating {} to {}'.format(attr, update_value))
                     setattr(entry, args_to_entry(attr), update_value)
@@ -48,11 +76,16 @@ def main(args):
     engine = create_engine(dsn)
     session = sessionmaker(bind=engine)()
 
-    update_generate_climos_queue_entries_with_params(session, args)
+    update_generate_climos_queue_entries_with_params(
+        session,
+        args.input_filepath,
+        **{name: getattr(args, name, None) for name in updatable_params}
+    )
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='''Update entries with generate_climos params and PBS params (but not status).
+    parser = ArgumentParser(description='''
+    Update entries with generate_climos params and PBS params (but not status).
     Updated entry must be in status NEW.
     WARNING: ANY entry that partially matches the input filename is updated.''')
     add_global_arguments(parser)
@@ -61,9 +94,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logger.setLevel(getattr(logging, args.loglevel))
 
-    for k in 'database loglevel ' \
-             'input_filepath output_directory convert_longitudes split_vars split_intervals ' \
-             'ppn walltime'.split():
+    for k in '''
+        database
+        loglevel
+        input_filepath
+        output_directory
+        convert_longitudes
+        split_vars
+        split_intervals
+        ppn
+        walltime
+        '''.split():
         logger.debug('{}: {}'.format(k, getattr(args, k)))
 
     exit_status = main(args)
