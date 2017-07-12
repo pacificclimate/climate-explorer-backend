@@ -129,9 +129,10 @@ def polygonToMask(nc, fname, poly, variable):
 
     # Weirdly rasterio's mask operation sets, but doesn't respect the
     # Fill_Value, scale_factor, or add_offset
+    var = nc.variables[variable]
     the_array.mask = the_array==the_array.fill_value
-    scale_factor = nc.variables[variable].scale_factor
-    add_offset = nc.variables[variable].add_offset
+    scale_factor = var.scale_factor if hasattr(var, 'scale_factor') else 1.0
+    add_offset = var.add_offset if hasattr(var, 'add_offset') else 0.0
 
     the_array = the_array * scale_factor + add_offset
     return the_array
