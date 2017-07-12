@@ -8,8 +8,9 @@ from netCDF4 import Dataset
 import numpy as np
 from shapely.wkt import loads
 from shapely.affinity import translate
+from shapely.geometry import mapping # convert a Shapely Geom to GeoJSON
 import rasterio
-from rasterio.features import rasterize
+from rasterio.mask import mask as rio_mask
 
 ### From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -124,5 +125,13 @@ def polygonToMask(nc, fname, poly, variable):
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
-    return mask == 0
+        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False)
+
+    # Weirdly rasterio's mask operation sets, but doesn't respect the
+    # Fill_Value, scale_factor, or add_offset
+    the_array.mask = the_array==the_array.fill_value
+    scale_factor = nc.variables[variable].scale_factor
+    add_offset = nc.variables[variable].add_offset
+
+    the_array = the_array * scale_factor + add_offset
+    return the_array

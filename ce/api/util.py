@@ -63,6 +63,10 @@ def get_array(nc, fname, time, area, variable):
 
     a = nc.variables[variable]
 
+    if area:
+        # Mask out data that isn't inside the input polygon
+        a = wktToMask(nc, fname, area, variable)
+
     # FIXME: Assumes 3d data... doesn't support levels
     if time or time == 0:
         assert 'time' in nc.variables[variable].dimensions
@@ -70,18 +74,7 @@ def get_array(nc, fname, time, area, variable):
     else:
         a = a[:,:,:]
 
-    if area:
-        # Mask out data that isn't inside the input polygon
-        mask = wktToMask(nc, fname, area, variable)
-
-        # Extend the mask into the time dimension (if it exists)
-        mask = np.repeat(mask, a.size / mask.size).reshape(a.shape)
-    else:
-        mask = False
-
-    # FIXME: This could possibly compare a projected polygon mask and an
-    # unprojected raw array
-    return ma.masked_array(a, mask)
+    return a
 
 def mean_datetime(datetimes):
     timestamps = [
