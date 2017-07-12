@@ -1,3 +1,4 @@
+#!python
 """
 Script to update the status of a queue entry based on the content of a
 standard status email sent by PBS. Contents of the status email is read

@@ -1,3 +1,4 @@
+#!python
 """
 Script to alter generate_climos params and PBS params of queue entries.
 

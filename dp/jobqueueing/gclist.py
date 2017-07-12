@@ -1,3 +1,4 @@
+#!python
 """
 Script to list entries in the `generate_climos` queue.
 """

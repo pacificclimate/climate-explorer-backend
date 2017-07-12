@@ -1,3 +1,4 @@
+#!python
 """
 Script to reset the status of a queue entry.
 

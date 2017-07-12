@@ -1,3 +1,4 @@
+#!python
 """
 Script to update the status of entries in generate climos queue using `qstat`.
 

@@ -1,3 +1,4 @@
+#!python
 """
 Script to add an entry to a `generate_climos` queue, which is to say to add a
 record to a `GenerateClimosQueueEntry` in a database.
