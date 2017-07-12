@@ -7,6 +7,8 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base(metadata=MetaData())
 metadata = Base.metadata
 
+gcq_statuses = ['NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR']
+
 
 class GenerateClimosQueueEntry(Base):
     """
@@ -29,8 +31,7 @@ class GenerateClimosQueueEntry(Base):
     walltime = Column(String(12), default='10:00:00', nullable=False)
 
     # Status tracking
-    status = Column(Enum('NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR'),
-              nullable=False, default='NEW')
+    status = Column(Enum(*gcq_statuses), nullable=False, default='NEW')
     added_time = Column(DateTime, nullable=False)
     submitted_time = Column(DateTime)
     pbs_job_id = Column(String(64), index=True)

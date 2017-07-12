@@ -6,9 +6,8 @@ import re
 
 from dateutil import parser as dateparser
 
+from dp.jobqueueing.jobqueueing_db import gcq_statuses
 from dp.argparse_helpers import log_level_choices, strtobool
-
-status_choices = ['NEW', 'SUBMITTED', 'RUNNING', 'SUCCESS', 'ERROR']
 
 
 def walltime(string):
@@ -107,7 +106,7 @@ def add_listing_arguments(parser):
         help='PBS job id of submission')
     group.add_argument(
         '-s', '--status', help='Status of queue entry',
-        choices=status_choices)
+        choices=gcq_statuses)
     return group
 
 
@@ -117,5 +116,5 @@ def add_reset_arguments(parser):
         'input_filepath', help='Input filepath (full match)')
     group.add_argument(
         '-s', '--status', help='Status of queue entry',
-        choices=status_choices, default='NEW')
+        choices=gcq_statuses, default='NEW')
     return group
