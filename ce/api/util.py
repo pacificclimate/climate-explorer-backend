@@ -7,7 +7,7 @@ import numpy.ma as ma
 from netCDF4 import Dataset
 import modelmeta as mm
 
-from ce.api.geo import wktToMask
+from ce.api.geo import wkt_to_masked_array
 
 def get_files_from_run_variable(run, variable):
     return [file_ for file_ in run.files if variable in
@@ -53,6 +53,7 @@ def open_nc(fname):
     finally:
         nc.close()
 
+
 def get_array(nc, fname, time, area, variable):
 
     if variable not in nc.variables:
@@ -63,10 +64,6 @@ def get_array(nc, fname, time, area, variable):
 
     a = nc.variables[variable]
 
-    if area:
-        # Mask out data that isn't inside the input polygon
-        a = wktToMask(nc, fname, area, variable)
-
     # FIXME: Assumes 3d data... doesn't support levels
     if time or time == 0:
         assert 'time' in nc.variables[variable].dimensions
@@ -74,7 +71,13 @@ def get_array(nc, fname, time, area, variable):
     else:
         a = a[:,:,:]
 
-    return ma.masked_array(a)
+    if area:
+        # Mask out data that isn't inside the input polygon
+        a = wkt_to_masked_array(nc, fname, area, variable)
+    else:
+        a = ma.masked_array(a)
+
+    return a
 
 def mean_datetime(datetimes):
     timestamps = [

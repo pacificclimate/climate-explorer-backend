@@ -108,11 +108,12 @@ class memoize_mask(object):
             self.misses = 0
 
 @memoize_mask
-def wktToMask(nc, fname, wkt, variable):
+def wkt_to_masked_array(nc, fname, wkt, variable):
     poly = loads(wkt)
-    return polygonToMask(nc, fname, poly, variable)
+    return polygon_to_masked_array(nc, fname, poly, variable)
 
-def polygonToMask(nc, fname, poly, variable):
+
+def polygon_to_masked_array(nc, fname, poly, variable):
 
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
