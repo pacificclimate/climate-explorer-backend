@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from ce.api.geo import wktToMask, polygonToMask
+from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
 from shapely.wkt import loads
 from shapely.geos import ReadingError
 
@@ -12,7 +12,7 @@ test_polygons = [
 ]
 
 def test_cache(netcdf_file):
-    f = wktToMask
+    f = wkt_to_masked_array
     var = 'tasmax'
     netcdf_file, fname = netcdf_file
     f.cache_clear()
@@ -34,7 +34,7 @@ def test_clip_speed(ncobject, polygon):
     except ReadingError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
-    polygonToMask(ncobject, fname, poly, 'tasmax')
+    polygon_to_masked_array(ncobject, fname, poly, 'tasmax')
     t = time.time() - t0
     # Ensure that we can clip our largest polygons in under 100ms
     assert t < .1

@@ -8,8 +8,9 @@ from netCDF4 import Dataset
 import numpy as np
 from shapely.wkt import loads
 from shapely.affinity import translate
+from shapely.geometry import mapping # convert a Shapely Geom to GeoJSON
 import rasterio
-from rasterio.features import rasterize
+from rasterio.mask import mask as rio_mask
 
 ### From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -107,11 +108,12 @@ class memoize_mask(object):
             self.misses = 0
 
 @memoize_mask
-def wktToMask(nc, fname, wkt, variable):
+def wkt_to_masked_array(nc, fname, wkt, variable):
     poly = loads(wkt)
-    return polygonToMask(nc, fname, poly, variable)
+    return polygon_to_masked_array(nc, fname, poly, variable)
 
-def polygonToMask(nc, fname, poly, variable):
+
+def polygon_to_masked_array(nc, fname, poly, variable):
 
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
@@ -124,5 +126,14 @@ def polygonToMask(nc, fname, poly, variable):
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        mask = rasterize((poly,), out_shape=raster.shape, transform=raster.affine, all_touched=True)
-    return mask == 0
+        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True)
+
+    # Weirdly rasterio's mask operation sets, but doesn't respect the
+    # Fill_Value, scale_factor, or add_offset
+    var = nc.variables[variable]
+    the_array.mask = the_array==the_array.fill_value
+    scale_factor = getattr(var, 'scale_factor', 1.0)
+    add_offset = getattr(var, 'add_offset', 0.0)
+
+    the_array = the_array * scale_factor + add_offset
+    return the_array
