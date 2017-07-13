@@ -19,12 +19,16 @@ def walltime(string):
 
 def add_global_arguments(parser):
     group = parser.add_argument_group('Global arguments')
+    GCQ_DATABASE = os.environ.get('GCQ_DATABASE', None)
     group.add_argument(
         '-d', '--database',
-        help='Filepath to queue management database',
-        # TODO: Default from env var GCQ_DATABASE
-        default='/storage/data/projects/comp_support/climate_exporer_data_prep/'
-                'climatological_means/jobqueue-prod.sqlite')
+        required=not bool(GCQ_DATABASE),
+        default=GCQ_DATABASE,
+        help='Filepath to queue management database.'
+             'Defaults to value of environment variable GCQ_DATABASE. '
+             'You must either define the env var or set the value of this '
+             'option in the command line.',
+    )
     group.add_argument(
         '-L', '--loglevel', help='Logging level',
                        choices=log_level_choices, default='INFO')
@@ -42,10 +46,11 @@ def add_gcadd_arguments(parser):
 
 def add_execution_environment_arguments(parser, required=True):
     group = parser.add_argument_group('Execution environment arguments')
+    GCQ_PY_VENV = os.environ.get('GCQ_PY_VENV', None)
     group.add_argument(
-        '-P', '--py-venv',
-        required=required, dest='py_venv',
-        default=os.environ.get('GCQ_PY_VENV', None),
+        '-P', '--py-venv', dest='py_venv',
+        required=required and not bool(GCQ_PY_VENV),
+        default=GCQ_PY_VENV,
         help='Path to Python virtual env containing scripts. ' +
              ('Defaults to value of environment variable GCQ_PY_VENV. '
              'You must either define the env var or set the value of this '
