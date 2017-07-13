@@ -1,6 +1,7 @@
 """
 Helpers for setting up argument parsing for jobqueueing
 """
+import os
 from argparse import ArgumentTypeError
 import re
 
@@ -21,6 +22,7 @@ def add_global_arguments(parser):
     group.add_argument(
         '-d', '--database',
         help='Filepath to queue management database',
+        # TODO: Default from env var GCQ_DATABASE
         default='/storage/data/projects/comp_support/climate_exporer_data_prep/'
                 'climatological_means/jobqueue-prod.sqlite')
     group.add_argument(
@@ -35,6 +37,20 @@ def add_gcadd_arguments(parser):
         '-f', '--force', action='store_true',
         help='Force addition of a new queue entry even if one for this '
              'input filename already exists')
+    return group
+
+
+def add_execution_environment_arguments(parser, required=True):
+    group = parser.add_argument_group('Execution environment arguments')
+    group.add_argument(
+        '-P', '--py-venv',
+        required=required, dest='py_venv',
+        default=os.environ.get('GCQ_PY_VENV', None),
+        help='Path to Python virtual env containing scripts. ' +
+             ('Defaults to value of environment variable GCQ_PY_VENV. '
+             'You must either define the env var or set the value of this '
+             'option in the command line.' if required else '')
+    )
     return group
 
 

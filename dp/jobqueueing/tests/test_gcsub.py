@@ -10,6 +10,7 @@ from dp.jobqueueing.gcsub import make_qsub_script, make_qsub_test_script
 def test_make_qsub_script(make_script):
     entry = GenerateClimosQueueEntry(
         input_filepath='/input/directory/file.nc',
+        py_venv='/path/to/venv',
         output_directory='/output/directory',
         convert_longitudes=False,
         split_vars=True,
@@ -26,7 +27,8 @@ def test_make_qsub_script(make_script):
     assert '#PBS -o /output/directory/logs' in script
     assert '#PBS -e /output/directory/logs' in script
     assert '#PBS -N generate_climos:file.nc' in script
+    assert 'source /path/to/venv/bin/activate' in script
     assert 'cp /input/directory/file.nc' in script
     assert 'infile=$indir/file.nc' in script
-    assert 'dp/generate_climos.py -g False -v True -i True -o $outdir $infile' in script
+    assert 'generate_climos.py -g False -v True -i True -o $outdir $infile' in script
     assert 'rsync -r $baseoutdir /output/directory' in script

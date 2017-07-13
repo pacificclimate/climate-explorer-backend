@@ -32,6 +32,7 @@ from sqlalchemy.orm import sessionmaker
 from dp.script_helpers import default_logger
 from dp.jobqueueing.argparse_helpers import \
     add_global_arguments, add_gcadd_arguments, \
+    add_execution_environment_arguments, \
     add_generate_climos_arguments, add_pbs_arguments, add_ext_submit_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
@@ -42,6 +43,7 @@ logger = default_logger()
 def add_to_generate_climos_queue(
         session,
         input_filepath=None,
+        py_venv=None,
         output_directory=None,
         convert_longitudes=None,
         split_vars=None,
@@ -57,6 +59,8 @@ def add_to_generate_climos_queue(
 
     :param session: database session
     :param input_filepath (str): filepath of file to be queued
+    :param py_venv (str): path to root of Python virtual environment in which
+        generate_climos and its dependencies are installed
     :param output_directory (str): directory for output from generate_climos
         (-o/--output param)
     :param convert_longitudes (bool): generate_climos parameter
@@ -91,6 +95,7 @@ def add_to_generate_climos_queue(
 
     entry_args = dict(
         input_filepath=input_filepath,
+        py_venv=py_venv,
         output_directory=output_directory,
         convert_longitudes=convert_longitudes,
         split_vars=split_vars,
@@ -121,6 +126,7 @@ def main(args):
         **{key: getattr(args, key)
            for key in '''
             input_filepath
+            py_venv
             output_directory
             convert_longitudes
             split_vars
@@ -139,6 +145,7 @@ if __name__ == '__main__':
         description='Queue a file for processing with generate_climos')
     add_global_arguments(parser)
     add_gcadd_arguments(parser)
+    add_execution_environment_arguments(parser)
     add_generate_climos_arguments(parser)
     add_pbs_arguments(parser)
     add_ext_submit_arguments(parser)
@@ -150,6 +157,7 @@ if __name__ == '__main__':
             database
             loglevel
             input_filepath
+            py_venv
             output_directory
             convert_longitudes
             split_vars

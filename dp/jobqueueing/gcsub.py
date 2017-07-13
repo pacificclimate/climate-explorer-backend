@@ -35,26 +35,30 @@ def make_qsub_test_script(queue_entry):
 #PBS -e {qe.output_directory}/logs
 #PBS -m abe
 #PBS -N generate_climos:{input_filename}
-#PBS -d /storage/home/rglover/code/climate-explorer-backend
 
 pbs_job_num=$(expr match "$PBS_JOBID" '\([0-9]*\)')
 
 # Set up the execution environment
 module load netcdf-bin
 module load cdo-bin
-source py3.4/bin/activate
+module list
+source {qe.py_venv}/bin/activate
+which python
 
 # Copy NetCDF file to $TMPDIR/climo/input
 indir=$TMPDIR/climo/input
 echo mkdir -p $indir && cp {qe.input_filepath} $indir
 infile=$indir/{input_filename}
+echo infile = $infile
 
 # Output directory is automatically created by generate_climos
 baseoutdir=$TMPDIR/climo/output
+echo baseoutdir = $baseoutdir
 outdir=$baseoutdir/$pbs_job_num
+echo outdir = $outdir
 
 # Generate climo means
-echo python dp/generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
+echo generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
 
 # Copy result file to final destination and remove temporary input file
 # Since output files are small, we're not removing them here.
@@ -75,7 +79,6 @@ def make_qsub_script(queue_entry):
 #PBS -e {qe.output_directory}/logs
 #PBS -m abe
 #PBS -N generate_climos:{input_filename}
-#PBS -d /storage/home/rglover/code/climate-explorer-backend
 set -o verbose
 
 pbs_job_num=$(expr match "$PBS_JOBID" '\([0-9]*\)')
@@ -85,7 +88,7 @@ echo pbs_job_num = $pbs_job_num
 module load netcdf-bin
 module load cdo-bin
 module list
-source py3.4/bin/activate
+source {qe.py_venv}/bin/activate
 which python
 
 # Copy NetCDF file to $TMPDIR/climo/input
@@ -103,7 +106,7 @@ outdir=$baseoutdir/$pbs_job_num
 echo outdir = $outdir
 
 # Generate climo means
-python dp/generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
+generate_climos.py -g {qe.convert_longitudes} -v {qe.split_vars} -i {qe.split_intervals} -o $outdir $infile
 ls $outdir
 
 # Copy result file to final destination and remove temporary input file

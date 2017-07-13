@@ -53,6 +53,7 @@ def list_entries(
         for entry in entries:
             print('{}:'.format(entry.input_filepath))
             for attr in '''
+                    py_venv
                     output_directory
                     convert_longitudes
                     split_vars

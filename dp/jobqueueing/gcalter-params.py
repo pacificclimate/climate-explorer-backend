@@ -16,13 +16,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dp.script_helpers import default_logger
-from dp.jobqueueing.argparse_helpers import add_global_arguments, add_generate_climos_arguments, add_pbs_arguments
+from dp.jobqueueing.argparse_helpers import add_global_arguments, \
+    add_execution_environment_arguments, \
+    add_generate_climos_arguments, \
+    add_pbs_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
 
 
 logger = default_logger()
 
 updatable_params = '''
+    py_venv
     output_directory
     convert_longitudes
     split_vars
@@ -42,7 +46,9 @@ def update_generate_climos_queue_entries_with_params(
     :param session: datatbase session
     :param input_filepath (str): select all entires with input_filepath
         partially matching this string
-    :param **kwargs (dict): Queue entry parameter values to update to.
+    :param **kwargs (dict): Parameters to update.
+        Variable `updatable_params` defines the names of these parameters
+        (which are the keys of the dict).
         Parameters with a None value are not updated.
     :return (int): exit status
     """
@@ -82,6 +88,7 @@ if __name__ == '__main__':
     Updated entry must be in status NEW.
     WARNING: ANY entry that partially matches the input filename is updated.''')
     add_global_arguments(parser)
+    add_execution_environment_arguments(parser, required=False)
     add_generate_climos_arguments(parser, o_required=False, flag_default=None)
     add_pbs_arguments(parser, ppn_default=None, walltime_default=None)
     args = parser.parse_args()
@@ -91,6 +98,7 @@ if __name__ == '__main__':
         database
         loglevel
         input_filepath
+        pyvenv
         output_directory
         convert_longitudes
         split_vars
