@@ -21,7 +21,7 @@ from sqlalchemy.orm import sessionmaker
 from dp.script_helpers import default_logger
 from dp.jobqueueing.argparse_helpers import add_global_arguments, add_reset_arguments
 from dp.jobqueueing.jobqueueing_db import GenerateClimosQueueEntry
-from dp.jobqueueing.argparse_helpers import status_choices
+from dp.jobqueueing.jobqueueing_db import gcq_statuses
 
 
 logger = default_logger()
@@ -69,7 +69,7 @@ def reset_generate_climos_queue_entry(session, input_filepath, status):
         else:
             raise ValueError
 
-    rev_statuses = list(reversed(status_choices))
+    rev_statuses = list(reversed(gcq_statuses))
     from_i = rev_statuses.index(entry.status)
     to_i = rev_statuses.index(status)
     if to_i <= from_i:
