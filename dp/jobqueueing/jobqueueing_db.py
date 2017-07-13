@@ -21,6 +21,9 @@ class GenerateClimosQueueEntry(Base):
     # File to process
     input_filepath = Column(String(1024), nullable=False, index=True)
 
+    # Execution environment
+    py_venv = Column(String(1024), nullable=False)
+
     # generate_climos parameters
     output_directory = Column(String(1024), nullable=False)
     # This attribute was originally defined with:
