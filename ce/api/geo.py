@@ -131,8 +131,8 @@ def polygonToMask(nc, fname, poly, variable):
     # Fill_Value, scale_factor, or add_offset
     var = nc.variables[variable]
     the_array.mask = the_array==the_array.fill_value
-    scale_factor = var.scale_factor if hasattr(var, 'scale_factor') else 1.0
-    add_offset = var.add_offset if hasattr(var, 'add_offset') else 0.0
+    scale_factor = getattr(var, 'scale_factor', 1.0)
+    add_offset = getattr(var, 'add_offset', 0.0)
 
     the_array = the_array * scale_factor + add_offset
     return the_array
