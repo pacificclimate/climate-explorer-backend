@@ -56,16 +56,26 @@ def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id)
     assert unique_id in rv
-    for key in ['institution', 'model_id', 'model_name', 'experiment',
-                'variables', 'ensemble_member', 'times', 'timescale']:
-        assert key in rv[unique_id]
+    file_metadata = rv[unique_id]
 
-    times = rv[unique_id]['times']
+    for key in ['institution', 'model_id', 'model_name', 'experiment',
+                'variables', 'ensemble_member', 'times', 'timescale',
+                'multi_year_mean', 'start_date', 'end_date']:
+        assert key in file_metadata
+
+    times = file_metadata['times']
     assert len(times) > 0
 
     # Are the values converible into times?
     for val in times.values():
         assert parse(val)
+
+    if file_metadata['multi_year_mean'] is True:
+        assert parse(file_metadata['start_date'])
+        assert parse(file_metadata['end_date'])
+    else:
+        assert file_metadata['start_date'] is None
+        assert file_metadata['end_date'] is None
 
 def test_metadata_no_times(populateddb):
     sesh = populateddb.session
@@ -132,7 +142,7 @@ def test_stats_bad_id(populateddb):
 @pytest.mark.parametrize(('time_idx'), (0, 1, 11))
 def test_data(populateddb, time_idx):
     rv = data(populateddb.session, 'cgcm3', 'rcp45', time_idx, None, 'tasmax',
-              timescale="other", ensemble_name="ce")
+              timescale="monthly", ensemble_name="ce")
     assert 'run0' in rv
     assert 'data' in rv['run0']
     for val in rv['run0']['data'].values():
@@ -160,7 +170,8 @@ def test_data_bad_time(populateddb):
 
 @pytest.mark.parametrize(('variable'), ('tasmax', 'tasmin'))
 def test_data_single_variable_file(populateddb, variable):
-    rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable)
+    rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable,
+              timescale='monthly')
     assert len(rv) == 1
 
 

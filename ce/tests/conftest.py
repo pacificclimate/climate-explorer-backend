@@ -3,7 +3,9 @@ import tempfile
 from datetime import datetime
 from pkg_resources import resource_filename
 
+from dateutil.relativedelta import relativedelta
 import pytest
+
 import modelmeta
 from modelmeta import *
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -13,6 +15,7 @@ from ce import get_app
 
 
 # From http://stackoverflow.com/questions/25525202/py-test-temporary-folder-for-the-session-scope
+# FIXME: Why is this fixture scoped 'function', not 'session'?
 @pytest.fixture(scope='function')
 def sessiondir(request):
     dir = py.path.local(tempfile.mkdtemp())
@@ -162,10 +165,28 @@ def populateddb(cleandb):
 
     sesh.add_all(sesh.dirty)
 
-    ts = TimeSet(calendar='gregorian', start_date=datetime(1971, 1, 1),
-                 end_date=datetime(2000, 12, 31), multi_year_mean=True,
-                 num_times=12, time_resolution='other',
-                 times = [ Time(time_idx=i, timestep=datetime(1985, 1+i, 15)) for i in range(12) ])
+    ts = TimeSet(
+        calendar='gregorian',
+        start_date=datetime(1971, 1, 1),
+        end_date=datetime(2000, 12, 31),
+        multi_year_mean=True,
+        num_times=12,
+        time_resolution='monthly',
+        times=[
+            Time(time_idx=i, timestep=datetime(1985, 1 + i, 15))
+            for i in range(12)
+        ],
+        climatological_times=[
+            ClimatologicalTime(
+                time_idx=i,
+                time_start=datetime(1971, 1 + i, 1),
+                time_end=datetime(2000, 1 + i, 1)
+                         + relativedelta(months=1)
+                         - relativedelta(days=1),
+            )
+            for i in range(12)
+        ]
+    )
     ts.files = [file0, file2, file3, file4]
     sesh.add_all(sesh.dirty)
 
