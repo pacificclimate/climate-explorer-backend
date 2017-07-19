@@ -1,8 +1,10 @@
 '''module for requesting metadata for one single file through the API
 '''
+from sqlalchemy.orm.exc import NoResultFound
+from dateutil.relativedelta import relativedelta
 
 from modelmeta import DataFile
-from sqlalchemy.orm.exc import NoResultFound
+
 
 def metadata(sesh, model_id):
     '''Delegate for performing a metadata lookup for one single file
@@ -53,33 +55,55 @@ def metadata(sesh, model_id):
                         2: '1985-03-15T00:00:00Z',
                         3: '1985-04-15T00:00:00Z'
                     }
+                    'multi_year_mean': False,
+                    'start_date': None,
+                    'end_date': None,
                 }
             }
 
     Raises:
-        None?
+        ValueError
 
     '''
+    time_format = '%Y-%m-%dT%H:%M:%SZ'
+
     try:
-        file_ = sesh.query(DataFile).filter(DataFile.unique_id == model_id).one()
+        data_file = (
+            sesh.query(DataFile)
+                .filter(DataFile.unique_id == model_id)
+                .one()
+        )
     except NoResultFound:
         return {}
 
     vars_ = {
-            dfv.netcdf_variable_name: a.long_name
-                for a, dfv in [
-                        (dfv.variable_alias, dfv) for dfv in file_.data_file_variables
-                ]
+        dfv.netcdf_variable_name: a.long_name
+        for a, dfv in [
+            (dfv.variable_alias, dfv) for dfv in data_file.data_file_variables
+        ]
     }
 
-    times = {
-        time.time_idx: time.timestep.strftime('%Y-%m-%dT%H:%M:%SZ')
-                for time in file_.timeset.times
-    } if file_.timeset else {}
-    timescale = file_.timeset.time_resolution if file_.timeset else 'other'
+    timeset = data_file.timeset
 
-    run = file_.run
+    times = {}
+    timescale = None
+    multi_year_mean = None
+    start_date = None
+    end_date = None
+
+    if timeset:
+        times = {
+            time.time_idx: time.timestep.strftime(time_format)
+            for time in timeset.times
+        }
+        timescale = timeset.time_resolution
+        multi_year_mean = timeset.multi_year_mean
+        start_date = timeset.start_date.strftime(time_format)
+        end_date = timeset.end_date.strftime(time_format)
+
+    run = data_file.run
     model = run.model
+
     return {
         model_id: {
             'institution': model.organization,
@@ -89,6 +113,9 @@ def metadata(sesh, model_id):
             'variables': vars_,
             'ensemble_member': run.name,
             'times': times,
-            'timescale': timescale
+            'timescale': timescale,
+            'multi_year_mean': multi_year_mean,
+            'start_date': start_date,
+            'end_date': end_date,
         }
     }
