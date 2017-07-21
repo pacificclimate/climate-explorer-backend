@@ -76,96 +76,222 @@ def ncobject(request, ncfile):
 @pytest.fixture
 def populateddb(cleandb):
 
-    now = datetime.now()
+    now = datetime.utcnow()
 
     populateable_db = cleandb
     sesh = populateable_db.session
-    ens0 = Ensemble(name='bccaqv2', version=1.0, changes='', description='')
-    ens1 = Ensemble(name='bc_prism', version=2.0, changes='', description='')
-    ens2 = Ensemble(name='ce', version=2.0, changes='', description='')
+
+    ens_bccaqv2 = Ensemble(name='bccaqv2', version=1.0, changes='', description='')
+    ens_bc_prism = Ensemble(name='bc_prism', version=2.0, changes='', description='')
+    ens_ce = Ensemble(name='ce', version=2.0, changes='', description='')
+    ensembles= [ens_bccaqv2, ens_bc_prism, ens_ce]
 
     rcp45 = Emission(short_name='rcp45')
     rcp85 = Emission(short_name='rcp85')
+    historical = Emission(short_name='historical')
+    emissions = [rcp45, rcp85,historical]
 
     run0 = Run(name='run0', emission=rcp45)
     run1 = Run(name='run1', emission=rcp45)
     run2 = Run(name='r1i1p1', emission=rcp85)
+    run3 = Run(name='r1i1p1', emission=historical)
+    runs = [run0, run1, run2, run3]
 
-    cgcm = Model(short_name='cgcm3', long_name='Canadian Global Climate Model (version 3)',
-                 type='GCM', runs=[run0], organization='CCCMA')
-    csiro = Model(short_name='csiro', type='GCM', runs=[run1], organization='CSIRO')
-    canems2 = Model(short_name='CanESM2',
-                 long_name='CCCma (Canadian Centre for Climate Modelling and Analysis, Victoria, BC, Canada)',
-                 type='GCM', runs=[run2], organization='CCCMA')
+    cgcm3 = Model(
+        short_name='cgcm3',
+        long_name='Canadian Global Climate Model (version 3)',
+        type='GCM',
+        runs=[run0],
+        organization='CCCMA'
+    )
+    csiro = Model(
+        short_name='csiro',
+        type='GCM',
+        runs=[run1],
+        organization='CSIRO'
+    )
+    canems2 = Model(
+        short_name='CanESM2',
+        long_name='CCCma (Canadian Centre for Climate Modelling and Analysis, '
+                  'Victoria, BC, Canada)',
+        type='GCM',
+        runs=[run2],
+        organization='CCCMA'
+    )
+    bnu_esm = Model(
+        short_name='BNU-ESM',
+        long_name='Beijing Normal University Earth System Model',
+        type='GCM',
+        runs=[run3],
+        organization='BNU'
+    )
+    models = [cgcm3, csiro, canems2, bnu_esm]
 
-    file0 = DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
-                     unique_id='file0', first_1mib_md5sum='xxxx',
-                     x_dim_name='lon', y_dim_name='lat', index_time=now,
-                     run=run0)
-    file4 = DataFile(filename=resource_filename('ce', 'tests/data/cgcm-tmin.nc'),
-                     unique_id='file4', first_1mib_md5sum='xxxx',
-                     x_dim_name='lon', y_dim_name='lat', index_time=now,
-                     run=run0)
-    file1 = DataFile(filename='/path/to/some/other/netcdf_file.nc',
-                     unique_id='file1', first_1mib_md5sum='xxxx',
-                     x_dim_name='lon', y_dim_name='lat', index_time=now,
-                     run=run1)
-    file2 = DataFile(filename='/path/to/some/other/netcdf_file.nc',
-                     unique_id='file2', first_1mib_md5sum='xxxx',
-                     x_dim_name='lon', y_dim_name='lat', index_time=now,
-                     run=run1)
-    file3 = DataFile(filename=resource_filename('ce', 'CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc'),
-                     unique_id='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', first_1mib_md5sum='xxxx',
-                     x_dim_name='lon', y_dim_name='lat', index_time=now,
-                     run=run2)
+
+    def make_data_file(unique_id, filename=None, run=None):
+        if not filename:
+            filename = '{}.nc'.format(unique_id)
+        if not filename.startswith('/'):
+            filename = resource_filename('ce', 'tests/data/{}'.format(filename))
+        return DataFile(
+            filename=filename,
+            unique_id=unique_id,
+            first_1mib_md5sum='xxxx',
+            x_dim_name='lon',
+            y_dim_name='lat',
+            index_time=now,
+            run=run
+        )
+
+    file0 = make_data_file(
+        unique_id='file0',
+        filename='cgcm.nc',
+        run=run0
+    )
+    file1 = make_data_file(
+        unique_id='file1',
+        filename='/path/to/some/other/netcdf_file.nc',
+        run=run1
+    )
+    file2 = make_data_file(
+        unique_id='file2',
+        filename='/path/to/some/other/netcdf_file.nc',
+        run=run1
+    )
+    file3 = make_data_file(
+        unique_id='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
+        filename='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
+        run=run2
+    )
+    file4 = make_data_file(
+        unique_id='file4',
+        filename='cgcm-tmin.nc',
+        run=run0
+    )
+
+    df_5_monthly = make_data_file(
+        unique_id='tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    df_5_seasonal = make_data_file(
+        unique_id='tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    df_5_yearly = make_data_file(
+        unique_id='tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    data_files = [file0, file1, file2, file3, file4,
+                  df_5_monthly, df_5_seasonal, df_5_yearly]
 
     tasmin = VariableAlias(long_name='Daily Minimum Temperature',
                          standard_name='air_temperature', units='degC')
     tasmax = VariableAlias(long_name='Daily Maximum Temperature',
                          standard_name='air_temperature', units='degC')
+    variable_aliases = [tasmin, tasmax]
 
-    anuspline_grid = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
+    grid_anuspline = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
                           yc_grid_step=0.0833333, xc_origin=-140.958,
                           yc_origin=41.0417, xc_count=1068, yc_count=510,
                           xc_units='degrees_east', yc_units='degrees_north',
                           evenly_spaced_y=True)
+    grids = [grid_anuspline]
 
-    sesh.add_all([ens0, ens1, ens2, cgcm, csiro, canems2, file0, file1, file2, file3, file4,
-                  tasmin, tasmax, anuspline_grid])
+    sesh.add_all(ensembles)
+    sesh.add_all(models)
+    sesh.add_all(data_files)
+    sesh.add_all(variable_aliases)
+    sesh.add_all(grids)
     sesh.flush()
 
-    tmin = DataFileVariable(netcdf_variable_name='tasmin', range_min=0,
-                            range_max=50, file=file4,
-                            variable_alias=tasmin, grid=anuspline_grid)
-    tmax = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
-                            range_max=50, file=file0,
-                            variable_alias=tasmax, grid=anuspline_grid)
+    tmin = DataFileVariable(
+        netcdf_variable_name='tasmin',
+        range_min=0,
+        range_max=50,
+        file=file4,
+        variable_alias=tasmin,
+        grid=grid_anuspline
+    )
+    tmax = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=file0,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
+    tmin1 = DataFileVariable(
+        netcdf_variable_name='tasmin',
+        range_min=0,
 
-    tmin1 = DataFileVariable(netcdf_variable_name='tasmin', range_min=0,
-                            range_max=50, file=file1,
-                            variable_alias=tasmin, grid=anuspline_grid)
-    tmax1 = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
-                            range_max=50, file=file2,
-                            variable_alias=tasmax, grid=anuspline_grid)
-    tmax2 = DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
-                            range_max=50, file=file3,
-                            variable_alias=tasmax, grid=anuspline_grid)
+        range_max=50,
+        file=file1,
+        variable_alias=tasmin,
+        grid=grid_anuspline
+    )
+    tmax1 = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=file2,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
+    tmax2 = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=file3,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
+    tmax3 = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=df_5_monthly,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
+    tmax4 = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=df_5_seasonal,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
+    tmax5 = DataFileVariable(
+        netcdf_variable_name='tasmax',
+        range_min=0,
+        range_max=50,
+        file=df_5_yearly,
+        variable_alias=tasmax,
+        grid=grid_anuspline
+    )
 
-    sesh.add_all([tmin, tmax, tmin1, tmax1, tmax2])
+    data_file_variables = [tmin, tmax, tmin1, tmax1, tmax2, tmax3, tmax4, tmax5]
+
+    sesh.add_all(data_file_variables)
     sesh.flush()
 
-    ens0.data_file_variables.append(tmin)
-    ens0.data_file_variables.append(tmax)
-    ens1.data_file_variables.append(tmax)
-    ens2.data_file_variables.append(tmin)
-    ens2.data_file_variables.append(tmax)
-    ens2.data_file_variables.append(tmin1)
-    ens2.data_file_variables.append(tmax1)
-    ens2.data_file_variables.append(tmax2)
+    ens_bccaqv2.data_file_variables.append(tmin)
+    ens_bccaqv2.data_file_variables.append(tmax)
+
+    ens_bc_prism.data_file_variables.append(tmax)
+
+    ens_ce.data_file_variables.append(tmin)
+    ens_ce.data_file_variables.append(tmax)
+    ens_ce.data_file_variables.append(tmin1)
+    ens_ce.data_file_variables.append(tmax1)
+    ens_ce.data_file_variables.append(tmax2)
+    ens_ce.data_file_variables.append(tmax3)
+    ens_ce.data_file_variables.append(tmax4)
+    ens_ce.data_file_variables.append(tmax5)
 
     sesh.add_all(sesh.dirty)
 
-    ts = TimeSet(
+    ts_monthly = TimeSet(
         calendar='gregorian',
         start_date=datetime(1971, 1, 1),
         end_date=datetime(2000, 12, 31),
@@ -187,7 +313,53 @@ def populateddb(cleandb):
             for i in range(12)
         ]
     )
-    ts.files = [file0, file2, file3, file4]
+    ts_monthly.files = [file0, file2, file3, file4, df_5_monthly]
+
+    ts_seasonal = TimeSet(
+        calendar='gregorian',
+        start_date=datetime(1971, 1, 1),
+        end_date=datetime(2000, 12, 31),
+        multi_year_mean=True,
+        num_times=4,
+        time_resolution='seasonal',
+        times=[
+            Time(time_idx=i, timestep=datetime(1985, 3*i + 1, 15))
+            for i in range(4)
+        ],
+        climatological_times=[
+            ClimatologicalTime(
+                time_idx=i,
+                time_start=datetime(1971, 3*i + 1, 1)
+                           - relativedelta(months=1),
+                time_end=datetime(2000, 3*i + 1, 1)
+                         + relativedelta(months=2)
+                         - relativedelta(days=1),
+            )
+            for i in range(4)
+        ]
+    )
+    ts_seasonal.files = [df_5_seasonal]
+
+    ts_yearly = TimeSet(
+        calendar='gregorian',
+        start_date=datetime(1971, 1, 1),
+        end_date=datetime(2000, 12, 31),
+        multi_year_mean=True,
+        num_times=1,
+        time_resolution='yearly',
+        times=[
+            Time(time_idx=0, timestep=datetime(1985, 7, 2))
+        ],
+        climatological_times=[
+            ClimatologicalTime(
+                time_idx=0,
+                time_start=datetime(1971, 1, 1),
+                time_end=datetime(2000, 12, 31),
+            )
+        ]
+    )
+    ts_yearly.files = [df_5_yearly]
+
     sesh.add_all(sesh.dirty)
 
     sesh.commit()

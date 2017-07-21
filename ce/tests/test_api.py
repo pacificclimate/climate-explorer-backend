@@ -170,9 +170,33 @@ def test_data_bad_time(populateddb):
 
 @pytest.mark.parametrize(('variable'), ('tasmax', 'tasmin'))
 def test_data_single_variable_file(populateddb, variable):
-    rv = data(populateddb.session, 'cgcm3', 'rcp45', 1, None, variable,
-              timescale='monthly')
+    rv = data(
+        populateddb.session,
+        model='cgcm3',
+        emission='rcp45',
+        time=1,
+        area=None,
+        variable='tasmax',
+        timescale='monthly'
+    )
+
     assert len(rv) == 1
+    print('\n', rv)
+
+
+def test_data_new(populateddb):
+    rv = data(
+        populateddb.session,
+        model='BNU-ESM',
+        emission='historical',
+        time=1,
+        area=None,
+        variable='tasmax',
+        timescale='monthly'
+    )
+    assert len(rv) == 1
+    print('\n', rv)
+
 
 
 def test_data_multiple_times(multitime_db):
