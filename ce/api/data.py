@@ -5,7 +5,7 @@ import numpy as np
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
-from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable, open_nc
+from ce.api.util import get_array, get_units_from_run_object, open_nc
 
 def data(sesh, model, emission, time, area, variable, timescale='other',
          ensemble_name='ce'):
@@ -91,7 +91,8 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
     try:
         time = int(time)
     except ValueError:
-        raise Exception('time parameter "{}" not convertable to an integer.'.format(time))
+        raise Exception('time parameter "{}" not convertable to an integer.'
+                        .format(time))
 
     def get_spatially_averaged_data(data_file, time_idx):
         """
@@ -115,68 +116,14 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
 
         :param timeset (modelmeta.TimeSet): time set
         :param time_idx (int): index of time of interest
-        :return: datetime.datetime
+        :return: (str)
         """
-        print('\nget_time_value(timeset={}, idx={})'.format(timeset.id, time_idx))
         for time in timeset.times:
             if time.time_idx == time_idx:
                 return time.timestep
-        raise Exception('Timeset has no time with index value {}'.format(time_idx))
+        raise Exception('Timeset has no time with index value {}'
+                        .format(time_idx))
 
-    # # This works
-    # # Select DataFiles first
-    # query = (
-    #     sesh.query(DataFile)
-    #
-    #     .join(DataFile.run)
-    #
-    #     .join(Run.model)
-    #     .filter(Model.short_name == model)
-    #
-    #     .join(Run.emission)
-    #     .filter(Emission.short_name == emission)
-    #
-    #     .join(DataFile.timeset)
-    #     .filter(TimeSet.time_resolution == timescale)
-    #
-    #     .filter(DataFile.data_file_variables.any(DataFileVariable.netcdf_variable_name == variable))
-    #     .filter(DataFile.data_file_variables.any(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name)))
-    # )
-    # # print('query:', query)
-    # data_files = query.all()
-    #
-    # # result = {}
-    # # for data_file in data_files:
-    # #     try:
-    # #         run_result = result[data_file.run.name]
-    # #     except KeyError:
-    # #         run_result = result[data_file.run.name] = {
-    # #             'data': {},
-    # #             'units': 'missing',
-    # #         }
-    # #     time_key = (
-    # #         get_time_value(data_file.timeset, time)
-    # #             .strftime( '%Y-%m-%dT%H:%M:%SZ'))
-    # #     value = get_spatially_averaged_data(data_file, time)
-    # #     run_result['data'][time_key] = value
-    # #     run_result['units'] = get_units_from_run_object(data_file.run, variable)
-    #
-    # # Alternatively (works):
-    # result = {
-    #     data_file.run.name: {
-    #         'data': {
-    #             get_time_value(data_file.timeset, time).strftime( '%Y-%m-%dT%H:%M:%SZ'):
-    #                 get_spatially_averaged_data(data_file, time)
-    #         },
-    #         'units': get_units_from_run_object(data_file.run, variable)
-    #     }
-    #     for data_file in data_files
-    # }
-    #
-    # return result
-
-    # This also works, and is somewhat cleaner. SQL generated is nicer, probably more efficient too.
-    # Select DataFileVariables first
     query = (
         sesh.query(DataFileVariable)
         .filter(DataFileVariable.netcdf_variable_name == variable)
@@ -195,34 +142,23 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
 
         .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
     )
-    print('query:', query)
     data_file_variables = query.all()
 
-    # result = {}
-    # for data_file_variable in data_file_variables:
-    #     try:
-    #         run_result = result[data_file_variable.file.run.name]
-    #     except KeyError:
-    #         run_result = result[data_file_variable.file.run.name] = {
-    #             'data': {},
-    #             'units': 'missing',
-    #         }
-    #     time_key = (
-    #         get_time_value(data_file_variable.file.timeset, time)
-    #             .strftime( '%Y-%m-%dT%H:%M:%SZ'))
-    #     value = get_spatially_averaged_data(data_file_variable.file, time)
-    #     run_result['data'][time_key] = value
-    #     run_result['units'] = get_units_from_run_object(data_file_variable.file.run, variable)
-
-    result = {
-        data_file_variable.file.run.name: {
-            'data': {
-                get_time_value(data_file_variable.file.timeset, time).strftime( '%Y-%m-%dT%H:%M:%SZ'):
-                    get_spatially_averaged_data(data_file_variable.file, time)
-            },
-            'units': get_units_from_run_object(data_file_variable.file.run, variable)
-        }
-        for data_file_variable in data_file_variables
-    }
+    result = {}
+    for data_file_variable in data_file_variables:
+        try:
+            run_result = result[data_file_variable.file.run.name]
+        except KeyError:
+            run_result = result[data_file_variable.file.run.name] = {
+                'data': {},
+                'units': 'missing',
+            }
+        time_key = (
+            get_time_value(data_file_variable.file.timeset, time)
+                .strftime('%Y-%m-%dT%H:%M:%SZ'))
+        value = get_spatially_averaged_data(data_file_variable.file, time)
+        run_result['data'][time_key] = value
+        run_result['units'] = \
+            get_units_from_run_object(data_file_variable.file.run, variable)
 
     return result
