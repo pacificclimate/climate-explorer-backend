@@ -391,7 +391,7 @@ def multitime_db(cleandb):
     sesh = dbcopy.session
     ens = Ensemble(name='ce', version=2.0, changes='', description='')
 
-    now = datetime.now()
+    now = datetime.utcnow()
 
     rcp45 = Emission(short_name='rcp45')
     # Create three runs
