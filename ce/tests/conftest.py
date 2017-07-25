@@ -45,7 +45,7 @@ def cleandb(app):
 
 @pytest.fixture(scope='function')
 def netcdf_file(request):
-    fname = resource_filename('ce', 'tests/data/cgcm.nc')
+    fname = resource_filename('ce', 'tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc')
     nc = Dataset(fname)
     def fin():
         print("teardown netcdf_file")
@@ -58,7 +58,7 @@ def netcdf_file(request):
 #     return resource_filename('ce', 'tests/data/anuspline_na.nc')
 
 @pytest.fixture(params=(
-    resource_filename('ce', 'tests/data/cgcm.nc'),
+    resource_filename('ce', 'tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
     resource_filename('ce', 'tests/data/anuspline_na.nc'),
 ))
 def ncfile(request):

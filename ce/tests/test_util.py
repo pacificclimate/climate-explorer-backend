@@ -11,14 +11,16 @@ from netCDF4 import Dataset
 
 from ce.api.util import get_array, mean_datetime
 
+
 @pytest.fixture(params=(
-    ('cgcm.nc', 'tasmax'),
-    ('cgcm-tmin.nc', 'tasmin'),
+    ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc', 'tasmax'),
+    ('tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc', 'tasmin'),
     ('prism_pr_small.nc', 'pr'), # a file with masked values
-), ids=('cgcm3', 'cgcm-tmin', 'prism_pr_small'), scope='function')
+), ids=('bnu-tasmax', 'bnu-tasmin', 'prism_pr_small'), scope='function')
 def ncfilevar(request):
     fname, varname = request.param
     return (resource_filename('ce', 'tests/data/' + fname), varname)
+
 
 @pytest.fixture(scope='function')
 def nctuple(request, ncfilevar):
@@ -29,6 +31,7 @@ def nctuple(request, ncfilevar):
         nc.close()
     request.addfinalizer(fin)
     return nc, fname, varname
+
 
 def test_get_array(request, nctuple, polygon):
     nc, fname, var = nctuple
@@ -41,7 +44,9 @@ def test_get_array(request, nctuple, polygon):
     assert hasattr(x, 'mask')
     assert np.mean(x) > 0 or np.all(x.mask)
 
+
 utc = timezone.utc
+
 
 @pytest.mark.parametrize(('input_', 'output'), (
     (['2001-01-01T00:00:00Z'], '2001-01-01T00:00:00Z'),
