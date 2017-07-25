@@ -91,19 +91,11 @@ def populateddb(cleandb):
     historical = Emission(short_name='historical')
     emissions = [rcp45, rcp85,historical]
 
-    run0 = Run(name='run0', emission=rcp45)
     run1 = Run(name='run1', emission=rcp45)
     run2 = Run(name='r1i1p1', emission=rcp85)
     run3 = Run(name='r1i1p1', emission=historical)
-    runs = [run0, run1, run2, run3]
+    runs = [run1, run2, run3]
 
-    cgcm3 = Model(
-        short_name='cgcm3',
-        long_name='Canadian Global Climate Model (version 3)',
-        type='GCM',
-        runs=[run0],
-        organization='CCCMA'
-    )
     csiro = Model(
         short_name='csiro',
         type='GCM',
@@ -125,7 +117,7 @@ def populateddb(cleandb):
         runs=[run3],
         organization='BNU'
     )
-    models = [cgcm3, csiro, canems2, bnu_esm]
+    models = [csiro, canems2, bnu_esm]
 
 
     def make_data_file(unique_id, filename=None, run=None):
@@ -143,11 +135,12 @@ def populateddb(cleandb):
             run=run
         )
 
-    file0 = make_data_file(
-        unique_id='file0',
-        filename='cgcm.nc',
-        run=run0
-    )
+    # TODO: Create and use standards-compliant test files
+    # (e.g., tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230)
+    # that overlap with the test polygons. Currently these test files do
+    # not, so the results of calls that mask by polygon are not much of a
+    # test except in the no polygon case.
+
     file1 = make_data_file(
         unique_id='file1',
         filename='/path/to/some/other/netcdf_file.nc',
@@ -162,11 +155,6 @@ def populateddb(cleandb):
         unique_id='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
         filename='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
         run=run2
-    )
-    file4 = make_data_file(
-        unique_id='file4',
-        filename='cgcm-tmin.nc',
-        run=run0
     )
 
     df_5_monthly = make_data_file(
@@ -194,7 +182,7 @@ def populateddb(cleandb):
         run=run3
     )
     data_files = [
-        file0, file1, file2, file3, file4,
+        file1, file2, file3,
         df_5_monthly, df_5_seasonal, df_5_yearly,
         df_6_monthly, df_6_seasonal, df_6_yearly,
     ]
@@ -233,8 +221,6 @@ def populateddb(cleandb):
             grid=grid
         )
 
-    tmin = make_data_file_variable(file4, var_name='tasmin')
-    tmax = make_data_file_variable(file0, var_name='tasmax',)
     tmin1 = make_data_file_variable(file1, var_name='tasmin')
     tmax1 = make_data_file_variable(file2, var_name='tasmax')
     tmax2 = make_data_file_variable(file3, var_name='tasmax')
@@ -246,17 +232,18 @@ def populateddb(cleandb):
     tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
 
     data_file_variables = [
-        tmin, tmax, tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
+        tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
         tmax6, tmax7, tmax8
     ]
 
     sesh.add_all(data_file_variables)
     sesh.flush()
 
-    ens_bccaqv2.data_file_variables.append(tmin)
-    ens_bccaqv2.data_file_variables.append(tmax)
+    for dfv in [tmax3, tmax6]:
+        ens_bccaqv2.data_file_variables.append(dfv)
 
-    ens_bc_prism.data_file_variables.append(tmax)
+    for dfv in [tmax6]:
+        ens_bc_prism.data_file_variables.append(dfv)
 
     for dfv in data_file_variables:
         ens_ce.data_file_variables.append(dfv)
@@ -285,7 +272,7 @@ def populateddb(cleandb):
             for i in range(12)
         ]
     )
-    ts_monthly.files = [file0, file2, file3, file4, df_5_monthly, df_6_monthly]
+    ts_monthly.files = [file2, file3, df_5_monthly, df_6_monthly]
 
     ts_seasonal = TimeSet(
         calendar='gregorian',
