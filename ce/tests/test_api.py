@@ -176,7 +176,7 @@ def test_data_single_variable_file(populateddb, variable):
         emission='rcp45',
         time=1,
         area=None,
-        variable='tasmax',
+        variable=variable,
         timescale='monthly'
     )
 
@@ -184,23 +184,48 @@ def test_data_single_variable_file(populateddb, variable):
     print('\n', rv)
 
 
-def test_data_new(populateddb):
+@pytest.mark.parametrize('variable', (
+        'tasmax',
+        'tasmin',
+))
+@pytest.mark.parametrize('timescale, time_idx, expected_ymd', (
+        ('monthly', 8, (1985, 9, 15)),
+        ('seasonal', 2, (1985, 7, 15)),
+        ('yearly', 0, (1985, 7, 2)),
+))
+def test_data_new(populateddb, variable, timescale, time_idx, expected_ymd):
     rv = data(
         populateddb.session,
         model='BNU-ESM',
         emission='historical',
-        time=1,
         area=None,
-        variable='tasmax',
-        timescale='monthly'
+        variable=variable,
+        timescale=timescale,
+        time=time_idx,
     )
-    assert len(rv) == 1
     print('\n', rv)
-
+    assert len(rv) == 1
+    for run_id, run_value in rv.items():
+        assert len(run_value['data']) >= 1
+        for time_str, value in run_value['data'].items():
+            time = parse(time_str)
+            assert (time.year, time.month, time.day) == expected_ymd
+            assert 173 <= value <= 373 # -100 to +100 C, in K
+        # FIXME: Or, fix something: units are wrong! Its K, not C.
+        assert run_value['units'] == 'degC'
 
 
 def test_data_multiple_times(multitime_db):
-    rv = data(multitime_db.session, 'cgcm3', 'rcp45', 0, None, 'tasmax')
+    rv = data(
+        multitime_db.session,
+        # 'cgcm3', 'rcp45', 0, None, 'tasmax'
+        model='cgcm3',
+        emission='rcp45',
+        time=0,
+        area=None,
+        variable='tasmax',
+        timescale='other'
+    )
     assert len(rv) > 1
     for run in rv.values():
         assert len(run['data']) > 1

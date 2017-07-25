@@ -181,8 +181,23 @@ def populateddb(cleandb):
         unique_id='tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
         run=run3
     )
-    data_files = [file0, file1, file2, file3, file4,
-                  df_5_monthly, df_5_seasonal, df_5_yearly]
+    df_6_monthly = make_data_file(
+        unique_id='tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    df_6_seasonal = make_data_file(
+        unique_id='tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    df_6_yearly = make_data_file(
+        unique_id='tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
+    data_files = [
+        file0, file1, file2, file3, file4,
+        df_5_monthly, df_5_seasonal, df_5_yearly,
+        df_6_monthly, df_6_seasonal, df_6_yearly,
+    ]
 
     tasmin = VariableAlias(long_name='Daily Minimum Temperature',
                          standard_name='air_temperature', units='degC')
@@ -203,74 +218,37 @@ def populateddb(cleandb):
     sesh.add_all(variable_aliases)
     sesh.add_all(grids)
     sesh.flush()
+    
+    def make_data_file_variable(file, var_name=None, grid=grid_anuspline):
+        var_name_to_alias = {
+            'tasmin': tasmin,
+            'tasmax': tasmax,
+        }
+        return DataFileVariable(
+            file=file,
+            netcdf_variable_name=var_name,
+            range_min=0,
+            range_max=50,
+            variable_alias=var_name_to_alias[var_name],
+            grid=grid
+        )
 
-    tmin = DataFileVariable(
-        netcdf_variable_name='tasmin',
-        range_min=0,
-        range_max=50,
-        file=file4,
-        variable_alias=tasmin,
-        grid=grid_anuspline
-    )
-    tmax = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=file0,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-    tmin1 = DataFileVariable(
-        netcdf_variable_name='tasmin',
-        range_min=0,
+    tmin = make_data_file_variable(file4, var_name='tasmin')
+    tmax = make_data_file_variable(file0, var_name='tasmax',)
+    tmin1 = make_data_file_variable(file1, var_name='tasmin')
+    tmax1 = make_data_file_variable(file2, var_name='tasmax')
+    tmax2 = make_data_file_variable(file3, var_name='tasmax')
+    tmax3 = make_data_file_variable(df_5_monthly, var_name='tasmax')
+    tmax4 = make_data_file_variable(df_5_seasonal, var_name='tasmax')
+    tmax5 = make_data_file_variable(df_5_yearly, var_name='tasmax')
+    tmax6 = make_data_file_variable(df_6_monthly, var_name='tasmin')
+    tmax7 = make_data_file_variable(df_6_seasonal, var_name='tasmin')
+    tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
 
-        range_max=50,
-        file=file1,
-        variable_alias=tasmin,
-        grid=grid_anuspline
-    )
-    tmax1 = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=file2,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-    tmax2 = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=file3,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-    tmax3 = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=df_5_monthly,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-    tmax4 = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=df_5_seasonal,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-    tmax5 = DataFileVariable(
-        netcdf_variable_name='tasmax',
-        range_min=0,
-        range_max=50,
-        file=df_5_yearly,
-        variable_alias=tasmax,
-        grid=grid_anuspline
-    )
-
-    data_file_variables = [tmin, tmax, tmin1, tmax1, tmax2, tmax3, tmax4, tmax5]
+    data_file_variables = [
+        tmin, tmax, tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
+        tmax6, tmax7, tmax8
+    ]
 
     sesh.add_all(data_file_variables)
     sesh.flush()
@@ -280,14 +258,8 @@ def populateddb(cleandb):
 
     ens_bc_prism.data_file_variables.append(tmax)
 
-    ens_ce.data_file_variables.append(tmin)
-    ens_ce.data_file_variables.append(tmax)
-    ens_ce.data_file_variables.append(tmin1)
-    ens_ce.data_file_variables.append(tmax1)
-    ens_ce.data_file_variables.append(tmax2)
-    ens_ce.data_file_variables.append(tmax3)
-    ens_ce.data_file_variables.append(tmax4)
-    ens_ce.data_file_variables.append(tmax5)
+    for dfv in data_file_variables:
+        ens_ce.data_file_variables.append(dfv)
 
     sesh.add_all(sesh.dirty)
 
@@ -313,7 +285,7 @@ def populateddb(cleandb):
             for i in range(12)
         ]
     )
-    ts_monthly.files = [file0, file2, file3, file4, df_5_monthly]
+    ts_monthly.files = [file0, file2, file3, file4, df_5_monthly, df_6_monthly]
 
     ts_seasonal = TimeSet(
         calendar='gregorian',
@@ -338,7 +310,7 @@ def populateddb(cleandb):
             for i in range(4)
         ]
     )
-    ts_seasonal.files = [df_5_seasonal]
+    ts_seasonal.files = [df_5_seasonal, df_6_seasonal]
 
     ts_yearly = TimeSet(
         calendar='gregorian',
@@ -358,7 +330,7 @@ def populateddb(cleandb):
             )
         ]
     )
-    ts_yearly.files = [df_5_yearly]
+    ts_yearly.files = [df_5_yearly, df_6_yearly]
 
     sesh.add_all(sesh.dirty)
 
