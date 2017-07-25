@@ -137,14 +137,13 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         except KeyError:
             run_result = result[data_file_variable.file.run.name] = {
                 'data': {},
-                'units': 'missing',
+                'units': get_units_from_run_object(
+                    data_file_variable.file.run, variable),
             }
         time_key = (
             get_time_value(data_file_variable.file.timeset, time)
                 .strftime('%Y-%m-%dT%H:%M:%SZ'))
         value = get_spatially_averaged_data(data_file_variable.file, time)
         run_result['data'][time_key] = value
-        run_result['units'] = \
-            get_units_from_run_object(data_file_variable.file.run, variable)
 
     return result
