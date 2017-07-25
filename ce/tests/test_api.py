@@ -224,8 +224,7 @@ def test_data_new(populateddb, variable, timescale, time_idx, expected_ymd):
 def test_data_multiple_times(multitime_db):
     rv = data(
         multitime_db.session,
-        # 'cgcm3', 'rcp45', 0, None, 'tasmax'
-        model='cgcm3',
+        model='BNU-ESM',
         emission='rcp45',
         time=0,
         area=None,
@@ -235,6 +234,7 @@ def test_data_multiple_times(multitime_db):
     assert len(rv) > 1
     for run in rv.values():
         assert len(run['data']) > 1
+
 
 @pytest.mark.parametrize(('unique_id', 'var'), (
     ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),

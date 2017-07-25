@@ -348,24 +348,38 @@ def multitime_db(cleandb):
     '''
     dbcopy = cleandb
     sesh = dbcopy.session
-    ens = Ensemble(name='ce', version=2.0, changes='', description='')
-
     now = datetime.utcnow()
 
+    ens = Ensemble(name='ce', version=2.0, changes='', description='')
+
     rcp45 = Emission(short_name='rcp45')
+
     # Create three runs
     runs = [ Run(name='run{}'.format(i), emission=rcp45) for i in range(3) ]
-    cgcm = Model(short_name='cgcm3', long_name='',
-                 type='GCM', runs=runs, organization='CCCMA')
 
+    bnu_esm = Model(
+        short_name='BNU-ESM',
+        long_name='Beijing Normal University Earth System Model',
+        type='GCM',
+        runs=runs,
+        organization='BNU'
+    )
+
+    # Create three files for each run
     files = [
-        # Create three files for each run
-        [ DataFile(filename=resource_filename('ce', 'tests/data/cgcm.nc'),
-                       unique_id='file{}'.format(j*3+i), first_1mib_md5sum='xxxx',
-                       x_dim_name='lon', y_dim_name='lat', index_time=now,
-                       run=run) for i, run in enumerate(runs) ] for j in range(3)
+        DataFile(
+            filename=resource_filename('ce',
+               'tests/data/'
+               'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
+            unique_id='file{}'.format(j * 3 + i),
+            first_1mib_md5sum='xxxx',
+            x_dim_name='lon',
+            y_dim_name='lat',
+            index_time=now,
+            run=run)
+        for i, run in enumerate(runs)
+        for j in range(3)
     ]
-    files = files[0] + files[1] + files[2]
 
     tasmax = VariableAlias(long_name='Daily Maximum Temperature',
                          standard_name='air_temperature', units='degC')
@@ -376,12 +390,18 @@ def multitime_db(cleandb):
                           xc_units='degrees_east', yc_units='degrees_north',
                           evenly_spaced_y=True)
 
-    dfvs = [ DataFileVariable(netcdf_variable_name='tasmax', range_min=0,
-                            range_max=50, file=file_,
-                            variable_alias=tasmax, grid=anuspline_grid)
-             for file_ in files]
+    dfvs = [
+        DataFileVariable(
+            netcdf_variable_name='tasmax',
+            range_min=0,
+            range_max=50,
+            file=file_,
+            variable_alias=tasmax,
+            grid=anuspline_grid)
+        for file_ in files
+    ]
 
-    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, cgcm, rcp45, ens])
+    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
     sesh.commit()
 
     ens.data_file_variables += dfvs
@@ -410,6 +430,7 @@ def multitime_db(cleandb):
     sesh.commit()
 
     return dbcopy
+
 
 polygons = {
     # Metro Van 10 vertex
