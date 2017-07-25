@@ -43,35 +43,36 @@ def cleandb(app):
     db.create_all()
     return db
 
+
 @pytest.fixture(scope='function')
-def netcdf_file(request):
-    fname = resource_filename('ce', 'tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc')
-    nc = Dataset(fname)
-    def fin():
-        print("teardown netcdf_file")
-        nc.close()
-    request.addfinalizer(fin)
-    return nc, fname
+def netcdf_file():
+    fname = resource_filename('ce',
+        'tests/data/'
+        'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc')
+    with Dataset(fname) as nc:
+        yield nc, fname
+
 
 # @pytest.fixture(scope='function')
 # def big_nc_file(request):
 #     return resource_filename('ce', 'tests/data/anuspline_na.nc')
 
+
 @pytest.fixture(params=(
-    resource_filename('ce', 'tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
+    resource_filename('ce',
+        'tests/data/'
+        'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
     resource_filename('ce', 'tests/data/anuspline_na.nc'),
 ))
 def ncfile(request):
     return request.param
 
+
 @pytest.fixture(scope='function')
-def ncobject(request, ncfile):
-    nc = Dataset(ncfile)
-    def fin():
-        print("teardown netcdf_file")
-        nc.close()
-    request.addfinalizer(fin)
-    return (nc, ncfile)
+def ncobject(ncfile):
+    with Dataset(ncfile) as nc:
+        yield nc, ncfile
+
 
 @pytest.fixture
 def populateddb(cleandb):
@@ -81,15 +82,30 @@ def populateddb(cleandb):
     populateable_db = cleandb
     sesh = populateable_db.session
 
-    ens_bccaqv2 = Ensemble(name='bccaqv2', version=1.0, changes='', description='')
-    ens_bc_prism = Ensemble(name='bc_prism', version=2.0, changes='', description='')
-    ens_ce = Ensemble(name='ce', version=2.0, changes='', description='')
-    ensembles= [ens_bccaqv2, ens_bc_prism, ens_ce]
+    ens_bccaqv2 = Ensemble(
+        name='bccaqv2',
+        version=1.0,
+        changes='',
+        description=''
+    )
+    ens_bc_prism = Ensemble(
+        name='bc_prism',
+        version=2.0,
+        changes='',
+        description=''
+    )
+    ens_ce = Ensemble(
+        name='ce',
+        version=2.0,
+        changes='',
+        description=''
+    )
+    ensembles = [ens_bccaqv2, ens_bc_prism, ens_ce]
 
     rcp45 = Emission(short_name='rcp45')
     rcp85 = Emission(short_name='rcp85')
     historical = Emission(short_name='historical')
-    emissions = [rcp45, rcp85,historical]
+    emissions = [rcp45, rcp85, historical]
 
     run1 = Run(name='run1', emission=rcp45)
     run2 = Run(name='r1i1p1', emission=rcp85)
@@ -118,7 +134,6 @@ def populateddb(cleandb):
         organization='BNU'
     )
     models = [csiro, canems2, bnu_esm]
-
 
     def make_data_file(unique_id, filename=None, run=None):
         if not filename:
@@ -187,10 +202,15 @@ def populateddb(cleandb):
         df_6_monthly, df_6_seasonal, df_6_yearly,
     ]
 
-    tasmin = VariableAlias(long_name='Daily Minimum Temperature',
-                         standard_name='air_temperature', units='degC')
-    tasmax = VariableAlias(long_name='Daily Maximum Temperature',
-                         standard_name='air_temperature', units='degC')
+    tasmin = VariableAlias(
+        long_name='Daily Minimum Temperature',
+        standard_name='air_temperature',
+        units='degC'
+    )
+    tasmax = VariableAlias(
+        long_name='Daily Maximum Temperature',
+        standard_name='air_temperature',
+        units='degC')
     variable_aliases = [tasmin, tasmax]
 
     grid_anuspline = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
@@ -333,9 +353,10 @@ def test_client(app):
 def db(app):
     return SQLAlchemy(app)
 
+
 @pytest.fixture
 def multitime_db(cleandb):
-    '''A fixture which represents multiple runs where there exist
+    """A fixture which represents multiple runs where there exist
        multiple climatological time periods in each run
        This is realistic for a set of model output that we would be
        using, but unfortunately it's overly-complicated to set up as a
@@ -345,7 +366,7 @@ def multitime_db(cleandb):
        We'll have 3 timesets, each of which are only a single date for
        some particular multidecadal period (say, 1980s, 2010s, 2040s).
        Each of a run's 3 files, will point to a different timeset.
-    '''
+    """
     dbcopy = cleandb
     sesh = dbcopy.session
     now = datetime.utcnow()
@@ -355,7 +376,7 @@ def multitime_db(cleandb):
     rcp45 = Emission(short_name='rcp45')
 
     # Create three runs
-    runs = [ Run(name='run{}'.format(i), emission=rcp45) for i in range(3) ]
+    runs = [Run(name='run{}'.format(i), emission=rcp45) for i in range(3)]
 
     bnu_esm = Model(
         short_name='BNU-ESM',
@@ -381,8 +402,10 @@ def multitime_db(cleandb):
         for j in range(3)
     ]
 
-    tasmax = VariableAlias(long_name='Daily Maximum Temperature',
-                         standard_name='air_temperature', units='degC')
+    tasmax = VariableAlias(
+        long_name='Daily Maximum Temperature',
+        standard_name='air_temperature',
+        units='degC')
 
     anuspline_grid = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
                           yc_grid_step=0.0833333, xc_origin=-140.958,
@@ -401,7 +424,8 @@ def multitime_db(cleandb):
         for file_ in files
     ]
 
-    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
+    sesh.add_all(files + dfvs + runs +
+                 [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
     sesh.commit()
 
     ens.data_file_variables += dfvs
@@ -414,10 +438,14 @@ def multitime_db(cleandb):
     ]
 
     timesets = [
-        TimeSet(calendar='gregorian', start_date=datetime(1971, 1, 1),
-                end_date=datetime(2099, 12, 31), multi_year_mean=True,
-                num_times=10, time_resolution='other',
-                times = [t]
+        TimeSet(
+            calendar='gregorian',
+            start_date=datetime(1971, 1, 1),
+            end_date=datetime(2099, 12, 31),
+            multi_year_mean=True,
+            num_times=10,
+            time_resolution='other',
+            times=[t]
         ) for t in times
     ]
 

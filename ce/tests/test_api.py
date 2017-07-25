@@ -121,7 +121,6 @@ def test_multimeta(populateddb, model):
 def test_stats(populateddb, polygon, unique_id, var_name):
     sesh = populateddb.session
     rv = stats(sesh, unique_id, None, polygon, var_name)
-    print('rv', rv)
     statistics = rv[unique_id]
     for attr in ('min', 'max', 'mean', 'median', 'stdev'):
         value = statistics[attr]
@@ -194,7 +193,8 @@ def test_data_bad_time(populateddb):
         ('seasonal', 2, (1985, 7, 15)),
         ('yearly', 0, (1985, 7, 2)),
 ))
-def test_data_new(populateddb, variable, timescale, time_idx, expected_ymd):
+def test_data_single_file(populateddb, variable,
+                          timescale, time_idx, expected_ymd):
     rv = data(
         populateddb.session,
         model='BNU-ESM',
@@ -204,7 +204,6 @@ def test_data_new(populateddb, variable, timescale, time_idx, expected_ymd):
         timescale=timescale,
         time=time_idx,
     )
-    print('\n', rv)
 
     assert len(rv) == 1
     expected_run = 'r1i1p1'

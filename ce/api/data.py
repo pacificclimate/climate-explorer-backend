@@ -72,20 +72,6 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         Exception: If `time` parameter cannot be converted to an integer
 
     '''
-    print('\n')
-    print('data('
-          'model={model}, '
-          'emission={emission}, '
-          'time={time}, '
-          'area={area}, '
-          'variable={variable}, '
-          'timescale={timescale}, '
-          'ensemble_name={ensemble_name}'
-          ')'
-          .format(model=model, emission=emission, time=time, area=area,
-                  variable=variable, timescale=timescale, ensemble_name=ensemble_name)
-          )
-
     # Validate arguments
 
     try:
