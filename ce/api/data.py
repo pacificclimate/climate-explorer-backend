@@ -12,21 +12,24 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
     '''Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and
-    emission scenario and returns a data value for that particular
-    timestep (e.g. January [1], summer [14] or annual [17]) in each
-    file.
+    emission scenario with the indicated variable, time resolution (timescale),
+    and belonging to the indicated ensemble,
+    and returns the data value for the requested timestep
+    (e.g., August [7], summer [2], or year [0])
+    from each matching file.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         model (str): Short name for some climate model (e.g "CGCM3")
         emission (str): Short name for some emission scenario (e.g.
             "historical+rcp85")
-        time (int): Timestep integer (1-17) representing the time of year
+        time (int): Timestep index (0-based) representing the time of year;
+            0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
-        ensemble_name (str): Some named ensemble
+        ensemble_name (str): Name of ensemble
 
     Returns:
         dict:
