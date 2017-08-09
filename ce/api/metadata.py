@@ -56,8 +56,8 @@ def metadata(sesh, model_id):
                         3: '1985-04-15T00:00:00Z'
                     }
                     'multi_year_mean': False,
-                    'start_date': None,
-                    'end_date': None,
+                    'start_date': '1985-01-15T00:00:00Z',
+                    'end_date': '1985-04-15T00:00:00Z',
                 }
             }
 

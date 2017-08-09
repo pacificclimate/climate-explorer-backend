@@ -1,7 +1,10 @@
 '''module for requesting metadata from multiple files based on model or ensemble
 '''
 
-import modelmeta as mm
+from modelmeta import DataFile, Model, Emission, Run
+from modelmeta import DataFileVariable, VariableAlias, TimeSet
+from modelmeta import EnsembleDataFileVariables, Ensemble
+
 
 def multimeta(sesh, ensemble_name='ce', model=''):
     '''Retrieve metadata for all data files in an ensemble
@@ -32,17 +35,19 @@ def multimeta(sesh, ensemble_name='ce', model=''):
           {
           pr_day_BCCAQ-ANUSPLIN300-MRI-CGCM3_historical-rcp45_r1i1p1_19500101-21001231:
               {
-              institute_id: "PCIC",
-              institution: "Pacific Climate Impacts Consortium (PCIC), Victoria, BC, www.pacificclimate.org",
+              institution: "PCIC",
               model_id: "BCCAQ+ANUSPLIN300+MRI-CGCM3",
               model_name: "",
               experiment: "historical+rcp45",
               variables:
                   {
                   "pr": "Precipitation"
-                  }
+                  },
               ensemble_member: "r1i1p1",
-              timescale: "monthly"
+              timescale: "monthly",
+              multi_year_mean: false,
+              start_date: "1950-01-01T00:00:00Z",
+              end_date: "2100-12-31T00:00:00Z"
               },
           unique_id2:
               ...
@@ -50,26 +55,41 @@ def multimeta(sesh, ensemble_name='ce', model=''):
 
     '''
 
-    q = sesh.query(mm.DataFile.unique_id, mm.Model.organization,
-            mm.Model.short_name, mm.Model.long_name, mm.Emission.short_name,
-            mm.Run.name, mm.DataFileVariable.netcdf_variable_name,
-            mm.VariableAlias.long_name, mm.TimeSet.time_resolution)\
-            .join(mm.Run).join(mm.Model).join(mm.Emission)\
-            .join(mm.DataFileVariable).join(mm.EnsembleDataFileVariables)\
-            .join(mm.Ensemble).join(mm.VariableAlias).join(mm.TimeSet)\
-            .filter(mm.Ensemble.name == ensemble_name)
+    q = sesh.query(DataFile.unique_id,
+                   Model.organization,
+                   Model.short_name,
+                   Model.long_name,
+                   Emission.short_name,
+                   Run.name,
+                   DataFileVariable.netcdf_variable_name,
+                   VariableAlias.long_name,
+                   TimeSet.time_resolution,
+                   TimeSet.multi_year_mean,
+                   TimeSet.start_date,
+                   TimeSet.end_date)\
+            .join(Run)\
+            .join(Model)\
+            .join(Emission)\
+            .join(DataFileVariable)\
+            .join(EnsembleDataFileVariables)\
+            .join(Ensemble)\
+            .join(VariableAlias)\
+            .join(TimeSet)\
+            .filter(Ensemble.name == ensemble_name)
 
     if model:
-        q = q.filter(mm.Model.short_name == model)
+        q = q.filter(Model.short_name == model)
 
     rv = {}
     results = q.all()
+
+    time_format = '%Y-%m-%dT%H:%M:%SZ'
 
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
     # circa release 1.1
     for id_, org, model_short, model_long, emission, run, var, long_var, \
-            timescale in results:
+            timescale, multi_year_mean, start_date, end_date in results:
         if id_ not in rv:
             rv[id_] = {
                 'institution': org,
@@ -78,7 +98,10 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                 'experiment': emission,
                 'variables': {var: long_var},
                 'ensemble_member': run,
-                'timescale': timescale
+                'timescale': timescale,
+                'multi_year_mean': multi_year_mean,
+                'start_date': start_date.strftime(time_format),
+                'end_date': end_date.strftime(time_format)
             }
         else:
             rv[id_]['variables'][var] = long_var
