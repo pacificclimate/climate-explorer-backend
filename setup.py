@@ -42,12 +42,19 @@ setup(
             'PyYAML',
         ]
     },
-    scripts=[
-        'scripts/devserver.py',
-        'dp/generate_climos.py',
-        'dp/update_metadata.py',
-        'dp/split_merged_climos.py',
-    ],
+    scripts='''
+        scripts/devserver.py
+        dp/generate_climos.py
+        dp/update_metadata.py
+        dp/split_merged_climos.py
+        dp/jobqueueing/gcadd.py
+        dp/jobqueueing/gcalter-params.py
+        dp/jobqueueing/gclist.py
+        dp/jobqueueing/gcreset.py
+        dp/jobqueueing/gcsub.py
+        dp/jobqueueing/gcupd-email.py
+        dp/jobqueueing/gcupd-qstat.py
+    '''.split(),
     package_dir={
         'ce': 'ce',
         'dp': 'dp',

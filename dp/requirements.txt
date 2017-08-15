@@ -3,3 +3,4 @@ python-dateutil
 cdo
 nchelpers
 PyYAML
+alembic

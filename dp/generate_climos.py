@@ -1,3 +1,11 @@
+#!python
+"""
+Script to generate climatological means from GCM output data.
+
+Means are formed over 3 intervals: month, season, year.
+
+For more info see script help.
+"""
 import os
 import os.path
 import logging
