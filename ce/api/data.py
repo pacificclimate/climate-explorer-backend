@@ -5,28 +5,31 @@ import numpy as np
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
-from ce.api.util import get_array, get_units_from_run_object, get_files_from_run_variable, open_nc
+from ce.api.util import get_array, get_units_from_run_object, open_nc
 
 def data(sesh, model, emission, time, area, variable, timescale='other',
          ensemble_name='ce'):
     '''Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and
-    emission scenario and returns a data value for that particular
-    timestep (e.g. January [1], summer [14] or annual [17]) in each
-    file.
+    emission scenario with the indicated variable, time resolution (timescale),
+    and belonging to the indicated ensemble,
+    and returns the data value for the requested timestep
+    (e.g., August [7], summer [2], or year [0])
+    from each matching file.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         model (str): Short name for some climate model (e.g "CGCM3")
         emission (str): Short name for some emission scenario (e.g.
             "historical+rcp85")
-        time (int): Timestep integer (1-17) representing the time of year
+        time (int): Timestep index (0-based) representing the time of year;
+            0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
-        ensemble_name (str): Some named ensemble
+        ensemble_name (str): Name of ensemble
 
     Returns:
         dict:
@@ -72,40 +75,78 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         Exception: If `time` parameter cannot be converted to an integer
 
     '''
+    # Validate arguments
+
     try:
         time = int(time)
     except ValueError:
-        raise Exception('time parameter "{}" not convertable to an integer.'.format(time))
+        raise Exception('time parameter "{}" not convertable to an integer.'
+                        .format(time))
 
-    results = sesh.query(Run)\
-            .join(Model, Emission, DataFile, DataFileVariable, TimeSet)\
-            .join(EnsembleDataFileVariables, Ensemble)\
-            .filter(DataFileVariable.netcdf_variable_name == variable)\
-            .filter(Emission.short_name == emission)\
-            .filter(Model.short_name == model)\
-            .filter(TimeSet.time_resolution == timescale)\
-            .filter(Ensemble.name == ensemble_name).all()
+    def get_spatially_averaged_data(data_file, time_idx):
+        """
+        From the NetCDF data file pointed at by `data_file`,
+        get the spatial average over the area specified by `area`
+        of the data for variable `variable`
+        at time index `time_idx`.
 
-    if not results:
-        return {}
-
-    def getdata(file_, time_idx):
-        with open_nc(file_.filename) as nc:
-            a = get_array(nc, file_.filename, time_idx, area, variable)
+        :param data_file (modelmeta.DataFile): source data file
+        :param time_idx (int): index of time of interest
+        :return: float
+        """
+        with open_nc(data_file.filename) as nc:
+            a = get_array(nc, data_file.filename, time_idx, area, variable)
         return np.asscalar(np.mean(a))
 
-    def get_timeval(timeset, idx):
-        for time in timeset.times:
-            if time.time_idx == idx:
-                return time.timestep
-        raise Exception('Timeset has no time with index value {}'.format(idx))
+    def get_time_value(timeset, time_idx):
+        """
+        Get the time value associated with time index `time_idx`
+        from the time set `timeset`.
 
-    return {
-        run.name: {
-            'data': {
-                get_timeval(file_.timeset, time).strftime('%Y-%m-%dT%H:%M:%SZ'):
-                        getdata(file_, time) for file_ in get_files_from_run_variable(run, variable)
-            },
-            'units': get_units_from_run_object(run, variable)
-        } for run in results
-    }
+        :param timeset (modelmeta.TimeSet): time set
+        :param time_idx (int): index of time of interest
+        :return: (str)
+        """
+        for time in timeset.times:
+            if time.time_idx == time_idx:
+                return time.timestep
+        raise Exception('Timeset has no time with index value {}'
+                        .format(time_idx))
+
+    query = (
+        sesh.query(DataFileVariable)
+        .filter(DataFileVariable.netcdf_variable_name == variable)
+
+        .join(DataFileVariable.file)
+        .join(DataFile.run)
+
+        .join(Run.model)
+        .filter(Model.short_name == model)
+
+        .join(Run.emission)
+        .filter(Emission.short_name == emission)
+
+        .join(DataFile.timeset)
+        .filter(TimeSet.time_resolution == timescale)
+
+        .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
+    )
+    data_file_variables = query.all()
+
+    result = {}
+    for data_file_variable in data_file_variables:
+        try:
+            run_result = result[data_file_variable.file.run.name]
+        except KeyError:
+            run_result = result[data_file_variable.file.run.name] = {
+                'data': {},
+                'units': get_units_from_run_object(
+                    data_file_variable.file.run, variable),
+            }
+        time_key = (
+            get_time_value(data_file_variable.file.timeset, time)
+                .strftime('%Y-%m-%dT%H:%M:%SZ'))
+        value = get_spatially_averaged_data(data_file_variable.file, time)
+        run_result['data'][time_key] = value
+
+    return result
