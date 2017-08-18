@@ -1,5 +1,0 @@
-# requirements for data prep (dp) component alone
-python-dateutil
-cdo
-nchelpers
-PyYAML
