@@ -32,29 +32,16 @@ setup(
         'python-dateutil',
         'GDAL',
         'rasterio',
-        'pint',
         'pytest',
     ],
-    extras_require={
-        'data_prep': [
-            'cdo',
-            'nchelpers',
-            'PyYAML',
-        ]
-    },
     scripts=[
         'scripts/devserver.py',
-        'dp/generate_climos.py',
-        'dp/update_metadata.py',
-        'dp/split_merged_climos.py',
     ],
     package_dir={
         'ce': 'ce',
-        'dp': 'dp',
     },
     package_data={
         'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static'),
-        'dp': ['tests/data/*.nc']
     },
     zip_safe=False
 )

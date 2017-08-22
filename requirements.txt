@@ -8,8 +8,6 @@ netcdf4
 nchelpers
 GDAL
 rasterio
-cdo
-pint
 # For testing
 pytest
 python-dateutil
