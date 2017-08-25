@@ -258,6 +258,21 @@ def test_timeseries(populateddb, polygon, unique_id, var):
         assert type(val) == float
     assert rv['units'] == 'K'
 
+#verifies that different months or seasons of an annual timeseries
+#have different values
+@pytest.mark.parametrize('unique_id,var', [
+    ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
+    ('tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
+    ('tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
+    ('tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin')])
+def test_timeseries_annual_variation(populateddb, unique_id, var):
+    sesh = populateddb.session
+    poly = """POLYGON((-265 65,-265 74,-276 74,-276 65,-265 65))"""
+    rv = timeseries(sesh, unique_id, poly, var)
+    values = set([])
+    for val in rv['data'].values():
+        assert val not in values
+        values.add(val)
 
 @pytest.mark.parametrize(('unique_id'), (None, '', 'does-not-exist'))
 def test_timeseries_bad_id(populateddb, unique_id):
