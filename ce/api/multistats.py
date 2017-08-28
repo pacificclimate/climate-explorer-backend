@@ -5,7 +5,7 @@ from ce.api.stats import stats
 from ce.api.util import search_for_unique_ids
 
 def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
-               area=None, variable=''):
+               area=None, variable='', timescale=''):
     '''Request and calculate statistics for multiple models or scenarios
 
     There are some cases for which one may want to get a set of
@@ -65,7 +65,7 @@ def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
     '''
 
     ids = search_for_unique_ids(sesh, ensemble_name, model, emission, variable,
-                                time)
+                                time, timescale)
     return {
         id_: stats(sesh, id_, time, area, variable)[id_]
         for id_ in ids
