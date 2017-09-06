@@ -61,6 +61,7 @@ def multistation(sesh, ensemble_name='ce', model=''):
             for i in range(0, 7):
                 meta = {}
                 variables = {}
+                outlet = {}
                 variables["flow"] = "Streamflow at outlet grid cell"
                 meta["model_id"] = model
                 meta["experiment"] = emission
@@ -71,8 +72,10 @@ def multistation(sesh, ensemble_name='ce', model=''):
                 meta["ensemble_member"] = "r1i1p1"
                 meta["institution"] = "PCIC"
                 meta["model_name"] = ""
-                meta["latitude"] = coords[i][0]
-                meta["longitude"] = coords[i][1]
+                outlet["latitude"] = coords[i][0]
+                outlet["longitude"] = coords[i][1]
+                meta["outlets"] = {}
+                meta["outlets"]["p-0"] = outlet
                 
                 filename = 'flow_day_{}_{}_r1i1p1_19500101-21001231_{}'.format(model, emission, watersheds[i])
                 output[filename] = meta
