@@ -20,6 +20,7 @@ from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
+from ce.api.multistation import multistation
 
 methods = {
     'stats': stats,
@@ -30,7 +31,8 @@ methods = {
     'multimeta': multimeta,
     'timeseries': timeseries,
     'lister': lister,
-    'grid': grid
+    'grid': grid,
+    'multistation': multistation
 }
 
 __all__ = list(methods.keys()) + ['call']
