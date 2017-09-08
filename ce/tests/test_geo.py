@@ -4,7 +4,7 @@ import pytest
 
 from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
 from shapely.wkt import loads
-from shapely.geos import ReadingError
+from shapely.errors import ReadingError
 
 test_polygons = [
     'POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))',
