@@ -2,7 +2,7 @@ Flask
 Flask-SQLAlchemy
 Flask-Cors
 modelmeta
-shapely
+shapely>=1.6
 numpy
 netcdf4
 nchelpers
