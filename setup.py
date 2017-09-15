@@ -26,7 +26,7 @@ setup(
         'Flask-Cors',
         'Flask-Cache',
         'modelmeta',
-        'shapely',
+        'shapely>=1.6',
         'numpy',
         'netcdf4',
         'python-dateutil',
