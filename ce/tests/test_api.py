@@ -108,6 +108,9 @@ def test_multimeta(populateddb, model):
     # times are not included in the multimeta API call
     assert 'timescale' in rv[unique_id]
     assert 'times' not in rv[unique_id]
+    # make sure start_date and end_date are present
+    assert 'start_date' in rv[unique_id]
+    assert 'end_date' in rv[unique_id]
 
 
 @pytest.mark.parametrize('unique_id, var_name', [
