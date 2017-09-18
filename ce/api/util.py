@@ -84,13 +84,6 @@ def time_slice_array(a, timeidx, nc, fname, variable):
             raise Exception(
                 "File {} does not have a time dimension".format(fname)
                 )
-        if not isinstance(timeidx, int): #times passed by URL may be strings
-            try:
-                timeidx = int(timeidx)
-            except ValueError:
-                raise Exception(
-                    "{} is not a valid time index".format(timeidx)
-                    )
         a = a[timeidx,:,:]
     return a
 
