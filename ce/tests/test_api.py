@@ -10,6 +10,14 @@ from dateutil.parser import parse
 from ce.api import *
 
 
+def extract_ids(s):
+    pattern = re.compile("_(.Clim)_BNU")
+    m = pattern.search(s)
+    if m:
+        return m.group(1)
+    else:
+        return s
+
 @pytest.mark.parametrize(('endpoint', 'query_params'), [
     ('stats', {'id_': '', 'time': '', 'area': '', 'variable': ''}),
     ('data', {'model': '', 'emission': '', 'time': '0', 'area': '', 'variable': ''}),
@@ -19,7 +27,7 @@ from ce.api import *
     ('multimeta', {'model': ''}),
     ('lister', {'model': ''}),
     ('grid', {'id_': ''})
-])
+], ids=extract_ids)
 def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params):
     url = '/api/' + endpoint
     response = test_client.get(url, query_string=query_params)
@@ -50,7 +58,7 @@ def test_models(populateddb):
      ['tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
       'tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
     ({'model': 'csiro'}, ['file1', 'file2'])
-])
+], ids=extract_ids)
 def test_lister(populateddb, args, expected):
     sesh = populateddb.session
     rv = lister(sesh, **args)
@@ -60,7 +68,7 @@ def test_lister(populateddb, args, expected):
 @pytest.mark.parametrize(('unique_id'), (
         'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
         'tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230'
-))
+), ids=extract_ids)
 def test_metadata(populateddb, unique_id):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id)
@@ -120,7 +128,9 @@ def test_multimeta(populateddb, model):
     ('tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
     ('tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
     ('tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
-])
+    ],
+    ids=extract_ids
+)
 def test_stats(populateddb, polygon, unique_id, var_name):
     sesh = populateddb.session
     rv = stats(sesh, unique_id, None, polygon, var_name)
@@ -144,7 +154,7 @@ def test_stats(populateddb, polygon, unique_id, var_name):
      ['tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
     ({'variable': 'tasmax', 'timescale': 'seasonal'},
      ['tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230'])
-))
+), ids=extract_ids)
 def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session
     rv = multistats(sesh, 'ce', **filters)
@@ -158,7 +168,7 @@ def test_multistats(populateddb, filters, keys):
     ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'no_variable'),
     # File does not exist on the filesystem
     ('file1', 'tasmax')
-))
+), ids=extract_ids)
 def test_stats_bad_params(populateddb, unique_id, var):
     sesh = populateddb.session
 
@@ -242,7 +252,7 @@ def test_data_multiple_times(multitime_db):
 
 @pytest.mark.parametrize(('unique_id', 'var'), (
     ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
-))
+), ids=extract_ids)
 def test_timeseries(populateddb, polygon, unique_id, var):
     sesh = populateddb.session
     rv = timeseries(sesh, unique_id, polygon, var)
@@ -266,7 +276,8 @@ def test_timeseries(populateddb, polygon, unique_id, var):
     ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
     ('tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
     ('tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
-    ('tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin')])
+    ('tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin')],
+    ids=extract_ids)
 def test_timeseries_annual_variation(populateddb, unique_id, var):
     sesh = populateddb.session
     poly = """POLYGON((-265 65,-265 74,-276 74,-276 65,-265 65))"""
@@ -285,7 +296,7 @@ def test_timeseries_bad_id(populateddb, unique_id):
 @pytest.mark.parametrize(('unique_id', 'var'), (
     ('tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmax'),
     ('tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230', 'tasmin'),
-))
+), ids=extract_ids)
 def test_timeseries_speed(populateddb, polygon, unique_id, var):
     sesh = populateddb.session
     t0 = time()
