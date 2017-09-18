@@ -69,9 +69,19 @@ def stats(sesh, id_, time, area, variable):
         results dict will be missing the 'units' and 'time' keys.
 
     Raises:
-        None?
+        Exception: If `time` parameter cannot be converted to an integer
 
     '''
+    # Validate arguments
+    if time:
+        try:
+            time = int(time)
+        except ValueError:
+            raise Exception('time parameter "{}" not convertable to an integer.'
+                            .format(time))
+    else:
+        time = None
+
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
         fname = df.filename

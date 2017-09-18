@@ -64,19 +64,27 @@ def get_array(nc, fname, time, area, variable):
 
     a = nc.variables[variable]
 
-    # FIXME: Assumes 3d data... doesn't support levels
-    if time or time == 0:
-        assert 'time' in nc.variables[variable].dimensions
-        a = a[time,:,:]
-    else:
-        a = a[:,:,:]
-
     if area:
         # Mask out data that isn't inside the input polygon
         a = wkt_to_masked_array(nc, fname, area, variable)
+        a = time_slice_array(a, time, nc, fname, variable)
     else:
+        a = time_slice_array(a, time, nc, fname, variable)
         a = ma.masked_array(a)
 
+    return a
+
+# FIXME: Assumes 3d data... doesn't support levels
+#Reduces a 3-dimensional array to a two-dimensional array by
+#returning the timeidxth slice, IFF time is defined and time
+#is a dimension in the netCDF. Otherwise return array unchanged.
+def time_slice_array(a, timeidx, nc, fname, variable):
+    if timeidx or timeidx == 0:
+        if 'time' not in nc.variables[variable].dimensions:
+            raise Exception(
+                "File {} does not have a time dimension".format(fname)
+                )
+        a = a[timeidx,:,:]
     return a
 
 def mean_datetime(datetimes):
