@@ -96,7 +96,7 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
-                          variable='', time=0):
+                          variable='', time=0, timescale=''):
     query = sesh.query(mm.DataFile.unique_id)\
             .distinct(mm.DataFile.unique_id)\
             .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble,
@@ -110,5 +110,8 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
 
     if emission:
         query = query.filter(mm.Emission.short_name == emission)
+
+    if timescale:
+        query = query.filter(mm.TimeSet.time_resolution == timescale)
 
     return ( r[0] for r in query.all() )
