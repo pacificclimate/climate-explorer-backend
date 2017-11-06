@@ -55,9 +55,9 @@ cache_lock = RLock()
 
 class memoize_mask(object):
     '''
-    Decorator. Caches wktToMask keyed to model_id and the WKT string
+    Decorator. Caches wkt_to_masked_array keyed to filename and the WKT string
     '''
-    def __init__(self, func, maxsize=50):
+    def __init__(self, func, maxsize=100):
         '''
         Args:
             func: the function to wrap
@@ -72,13 +72,9 @@ class memoize_mask(object):
     def __call__(self, *args):
 
         nc, fname, wkt, varname = args
-        # If we have no key, automatic cache miss
-        if (not hasattr(nc, 'model_id')):
-            log.debug('Cache MISS (attribute \'model_id\' not found)')
-            return self.func(*args)
 
-        # Set key to model_id and wkt polygon
-        key = (nc.model_id, wkt)
+        # Set key to file and wkt polygon
+        key = (fname, wkt)
         log.debug('Checking cache for key %s', key)
 
         with cache_lock:
