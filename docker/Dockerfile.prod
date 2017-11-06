@@ -1,0 +1,12 @@
+FROM pcic/geospatial-python
+
+ADD . /app
+WORKDIR /app
+
+RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
+RUN pip3 install gunicorn
+RUN python3 ./setup.py install
+
+EXPOSE 8000
+
+ENTRYPOINT ["gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
