@@ -4,6 +4,7 @@ import math
 from collections import OrderedDict
 from threading import RLock
 
+import datetime
 from netCDF4 import Dataset
 import numpy as np
 from shapely.wkt import loads
@@ -114,6 +115,7 @@ def wkt_to_masked_array(nc, fname, wkt, variable):
 
 
 def polygon_to_masked_array(nc, fname, poly, variable):
+    print ("{}:Polygon To Masked Array".format(datetime.datetime.now()))
 
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
@@ -122,18 +124,22 @@ def polygon_to_masked_array(nc, fname, poly, variable):
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
 
-        if raster.affine == rasterio.Affine.identity():
+#        if raster.affine == rasterio.Affine.identity():
+#            raise Exception("Unable to determine projection parameters for GDAL "
+#                            "dataset {}".format(dst_name))
+        if raster.transform == rasterio.Affine.identity():
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True)
+        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True, filled=False)
+
 
     # Weirdly rasterio's mask operation sets, but doesn't respect the
     # Fill_Value, scale_factor, or add_offset
     var = nc.variables[variable]
-    the_array.mask = the_array==the_array.fill_value
-    scale_factor = getattr(var, 'scale_factor', 1.0)
-    add_offset = getattr(var, 'add_offset', 0.0)
+    #the_array.mask = the_array==the_array.fill_value
+    #scale_factor = getattr(var, 'scale_factor', 1.0)
+    #add_offset = getattr(var, 'add_offset', 0.0)
 
-    the_array = the_array * scale_factor + add_offset
+    #the_array = the_array * scale_factor + add_offset
     return the_array

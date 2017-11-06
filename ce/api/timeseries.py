@@ -1,6 +1,7 @@
 '''module for requesting sinlge-file data through the API
 '''
 
+import datetime
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound
 from collections import OrderedDict
@@ -59,16 +60,22 @@ def timeseries(sesh, id_, area, variable):
     # Get all time indexes for this file
     ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
     ti.sort(key=lambda x: x[1])
-
+    
+    #shortlist = ti[0:10]
+    
     with open_nc(file_.filename) as nc:
+        print("{}: beginning masking".format(datetime.datetime.now()))
 
         data = OrderedDict([(
             timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
             np.asscalar(np.mean(get_array(nc, file_.filename, idx, area, variable)))
         )
+            #for timeval, idx in shortlist
             for timeval, idx in ti
         ])
         units = get_units_from_netcdf_file(nc, variable)
+
+    print("{}: masking finished".format(datetime.datetime.now()))
 
     return {
         'id': id_,
