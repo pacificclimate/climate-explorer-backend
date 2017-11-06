@@ -94,6 +94,8 @@ class memoize_mask(object):
             self.cache[key] = result
             self.misses += 1
             while getsize(self.cache) > self.maxsize * 1024 * 1024: # convert to MB
+                if len(self.cache) == 1:
+                    print("Single item too large for cache, size {}".format(getsize(self.cache)))
                 self.cache.popitem(0) # Purge least recently used cache entry
 
         return result
@@ -111,7 +113,6 @@ def wkt_to_masked_array(nc, fname, wkt, variable):
 
 
 def polygon_to_masked_array(nc, fname, poly, variable):
-    print ("{}:Polygon To Masked Array".format(datetime.datetime.now()))
 
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
@@ -129,13 +130,4 @@ def polygon_to_masked_array(nc, fname, poly, variable):
 
         the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True, filled=False)
 
-
-    # Weirdly rasterio's mask operation sets, but doesn't respect the
-    # Fill_Value, scale_factor, or add_offset
-    var = nc.variables[variable]
-    #the_array.mask = the_array==the_array.fill_value
-    #scale_factor = getattr(var, 'scale_factor', 1.0)
-    #add_offset = getattr(var, 'add_offset', 0.0)
-
-    #the_array = the_array * scale_factor + add_offset
     return the_array
