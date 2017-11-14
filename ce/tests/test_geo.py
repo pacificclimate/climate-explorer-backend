@@ -3,8 +3,7 @@ import time
 import pytest
 
 from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
-from shapely.wkt import loads
-from shapely.errors import ReadingError
+from geomet import wkt as wkt_parser
 
 test_polygons = [
     'POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))',
@@ -32,8 +31,8 @@ def test_cache(netcdf_file):
 def test_clip_speed(ncobject, polygon):
     ncobject, fname = ncobject
     try:
-        poly = loads(polygon)
-    except ReadingError:
+        poly = wkt_parser.loads(polygon)
+    except ValueError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
     polygon_to_masked_array(ncobject, fname, poly, 'tasmax')

@@ -7,11 +7,9 @@ from threading import RLock
 import datetime
 from netCDF4 import Dataset
 import numpy as np
-from shapely.wkt import loads
-from shapely.affinity import translate
-from shapely.geometry import mapping # convert a Shapely Geom to GeoJSON
 import rasterio
 from rasterio.mask import mask as rio_mask
+from geomet import wkt as wkt_parser
 
 ### From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -108,7 +106,7 @@ class memoize_mask(object):
 
 @memoize_mask
 def wkt_to_masked_array(nc, fname, wkt, variable):
-    poly = loads(wkt)
+    poly = wkt_parser.loads(wkt)
     return polygon_to_masked_array(nc, fname, poly, variable)
 
 
@@ -116,18 +114,32 @@ def polygon_to_masked_array(nc, fname, poly, variable):
 
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
-        poly = translate(poly, xoff=180)
+        poly = translate_polygon_longitudes(poly, 180) if poly['type'] == 'Polygon' else translate_multipolygon_longitudes(poly, 180)
 
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
 
-#        if raster.affine == rasterio.Affine.identity():
-#            raise Exception("Unable to determine projection parameters for GDAL "
-#                            "dataset {}".format(dst_name))
         if raster.transform == rasterio.Affine.identity():
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True, filled=False)
+        the_array, _ = rio_mask(raster, [poly], crop=False, all_touched=True, filled=False)
 
     return the_array
+
+def translate_polygon_longitudes (poly, offset):
+    """Takes a geoJSON POLYGON-like object, adds offset to each point's longitude"""
+    coords = []
+    for point in poly['coordinates'][0]: #assumes a single ring
+        coords.append([point[0] + offset % 360, point[1]])
+    return dict(type='Polygon', coordinates=[coords])
+
+def translate_multipolygon_longitudes (multi, offset):
+    """Takes a geoJSON MULTIPOLYGON-like object, adds offset of each point's longitude"""
+    rings = []
+    for ring in multi['coordinates'][0]:
+        coords = []
+        for point in ring:
+            coords.append([point[0] + offset % 360, point[1]])
+        rings.append(coords)
+    return dict(type='MultiPolygon', coordinates=[rings])
