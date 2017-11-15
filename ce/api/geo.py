@@ -9,6 +9,7 @@ from netCDF4 import Dataset
 import numpy as np
 import rasterio
 from rasterio.mask import mask as rio_mask
+from rasterio.mask import raster_geometry_mask as rio_getmask
 from geomet import wkt as wkt_parser
 
 ### From http://stackoverflow.com/a/30316760/597593
@@ -51,11 +52,15 @@ def getsize(obj):
 log = logging.getLogger(__name__)
 cache_lock = RLock()
 
-class memoize_mask(object):
+class memoize(object):
     '''
-    Decorator. Caches wkt_to_masked_array keyed to filename and the WKT string
+    Decorator to add caching to a function.
+    Initialized with a key-generating function and maxsize. Caches up to maxsize
+    MB worth of results from the decorated function using a key created from the
+    decorated function's arguments by the key function.
+    A key generator should have the same signature as the cached function.
     '''
-    def __init__(self, func, maxsize=100):
+    def __init__(self, keyfunc, maxsize=50):
         '''
         Args:
             func: the function to wrap
@@ -63,40 +68,41 @@ class memoize_mask(object):
         '''
 
         self.hits = self.misses = 0
-        self.func = func
         self.maxsize = maxsize
         self.cache = OrderedDict()
+        self.keyfunc = keyfunc
+        self.toMBfactor = 1024 * 1024
 
-    def __call__(self, *args):
+    def __call__(self, func):
 
-        nc, fname, wkt, varname = args
+        def cached_function(*args):
+            key = self.keyfunc(*args)
+            log.debug('Checking cache for key {}'.format(key))
 
-        # Set key to file and wkt polygon
-        key = (fname, wkt)
-        log.debug('Checking cache for key %s', key)
+            with cache_lock:
+                try:
+                    result = self.cache[key]
+                    self.cache.move_to_end(key)
+                    self.hits += 1
+                    log.debug("Cache HIT for {}".format(func))
+                    return result
+                except KeyError:
+                    pass
 
-        with cache_lock:
-            try:
-                result = self.cache[key]
-                self.cache.move_to_end(key) # record recent use of this key
-                self.hits += 1
-                log.debug('Cache HIT')
-                return result
-            except KeyError:
-                pass
+                log.debug('Cache MISS for {}'.format(func))
+                result= func(*args)
 
-        log.debug('Cache MISS')
-        result = self.func(*args)
+            with cache_lock:
+                self.cache[key] = result
+                self.misses += 1
+                while getsize(self.cache) > self.maxsize * self.toMBfactor:
+                    if len(self.cache) == 1:
+                        log.warning("Cache maxsize is set to {} MB but tried to cache a {} MB item".format(self.maxsize, getsize(self.cache) / self.toMBfactor))
+                    self.cache.popitem(0)
 
-        with cache_lock:
-            self.cache[key] = result
-            self.misses += 1
-            while getsize(self.cache) > self.maxsize * 1024 * 1024: # convert to MB
-                if len(self.cache) == 1:
-                    print("Single item too large for cache, size {}".format(getsize(self.cache)))
-                self.cache.popitem(0) # Purge least recently used cache entry
+            return result
 
-        return result
+        return cached_function
 
     def cache_clear(self):
         with cache_lock:
@@ -104,17 +110,55 @@ class memoize_mask(object):
             self.hits = 0
             self.misses = 0
 
-@memoize_mask
+def make_mask_grid_key(nc, fname, poly, variable):
+    '''
+    Generates a key for characterizing a numpy mask  meant to
+    be applied to netCDF files: the polygon the mask is generated from
+    and min / max / number of steps for both latitutde and longitude.
+    Assumes a regular grid.
+    '''
+    latsteps = nc.variables['lat'].shape[0]
+    latmin = nc.variables['lat'][0]
+    latmax = nc.variables['lat'][latsteps - 1]
+    lonsteps = nc.variables['lon'].shape[0]
+    lonmin = nc.variables['lon'][0]
+    lonmax = nc.variables['lon'][lonsteps - 1]
+    wkt = wkt_parser.dumps(poly) #dict-style geoJSON can't be hashed
+    return (wkt, latmin, latmax, latsteps, lonmin, lonmax, lonsteps)
+
+@memoize(make_mask_grid_key, 10)
+def polygon_to_mask(nc, fname, poly, variable):
+    """Generates a numpy mask from a wkt polygon"""
+    nclons = nc.variables['lon'][:]
+    if np.any(nclons > 180):
+        poly = translate_polygon_longitudes(poly, 180)
+
+    dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
+    with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
+        if raster.transform == rasterio.Affine.identity():
+            raise Exception("Unable to determine projection parameters for GDAL "
+                            "dataset {}".format(dst_name))
+        mask, out_transform, window = rio_getmask(raster, [poly], all_touched=True)
+
+    return mask, out_transform, window
+
+def make_masked_file_key(nc, fname, wkt, varname):
+    """generates a key suitable for characterizing a masked netCDF file:
+       filename and polygon"""
+    return (fname, wkt)
+
+@memoize(make_masked_file_key, 100)
 def wkt_to_masked_array(nc, fname, wkt, variable):
     poly = wkt_parser.loads(wkt)
     return polygon_to_masked_array(nc, fname, poly, variable)
 
 
 def polygon_to_masked_array(nc, fname, poly, variable):
+    """Applies a geoJSON polygon mask to a variable read from a netCDF file,
+    in addition to any masks specified in the file itself (_FillValue)
+    Returns a numpy masked array with every time slice masked"""
 
-    nclons = nc.variables['lon'][:]
-    if np.any(nclons > 180):
-        poly = translate_polygon_longitudes(poly, 180) if poly['type'] == 'Polygon' else translate_multipolygon_longitudes(poly, 180)
+    mask, out_transform, window  = polygon_to_mask(nc, fname, poly, variable)
 
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
@@ -123,23 +167,32 @@ def polygon_to_masked_array(nc, fname, poly, variable):
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        the_array, _ = rio_mask(raster, [poly], crop=False, all_touched=True, filled=False)
+        #this code drawn from rasterio.mask.mask
+        # https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
+        height, width = mask.shape
+        out_shape = (raster.count, height, width)
 
-    return the_array
+        array = raster.read(window=window, out_shape=out_shape, masked=True)
+        array.mask = array.mask | mask
+
+    return array
 
 def translate_polygon_longitudes (poly, offset):
-    """Takes a geoJSON POLYGON-like object, adds offset to each point's longitude"""
-    coords = []
-    for point in poly['coordinates'][0]: #assumes a single ring
-        coords.append([point[0] + offset % 360, point[1]])
-    return dict(type='Polygon', coordinates=[coords])
+    """Takes a geoJSON POLYGON or MULTIPOLYGON-like object,
+    adds offset to each point's longitude"""
 
-def translate_multipolygon_longitudes (multi, offset):
-    """Takes a geoJSON MULTIPOLYGON-like object, adds offset of each point's longitude"""
-    rings = []
-    for ring in multi['coordinates'][0]:
+    if(poly['type']=="Polygon"):
         coords = []
-        for point in ring:
+        for point in poly['coordinates'][0]: #assumes a single ring
             coords.append([point[0] + offset % 360, point[1]])
-        rings.append(coords)
-    return dict(type='MultiPolygon', coordinates=[rings])
+        return dict(type='Polygon', coordinates=[coords])
+    elif(poly['type'] == "MultiPolygon"):
+        rings = []
+        for ring in poly['coordinates'][0]:
+            coords = []
+            for point in ring:
+                coords.append([point[0] + offset % 360, point[1]])
+            rings.append(coords)
+        return dict(type='MultiPolygon', coordinates=[rings])
+    else:
+        raise Exception("Mask geometry must be Polygon or MultiPolygon: {}".format(poly))

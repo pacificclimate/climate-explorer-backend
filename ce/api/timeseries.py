@@ -61,10 +61,7 @@ def timeseries(sesh, id_, area, variable):
     ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
     ti.sort(key=lambda x: x[1])
     
-    #shortlist = ti[0:10]
-    
     with open_nc(file_.filename) as nc:
-        print("{}: beginning masking".format(datetime.datetime.now()))
 
         data = OrderedDict([(
             timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -74,8 +71,6 @@ def timeseries(sesh, id_, area, variable):
             for timeval, idx in ti
         ])
         units = get_units_from_netcdf_file(nc, variable)
-
-    print("{}: masking finished".format(datetime.datetime.now()))
 
     return {
         'id': id_,
