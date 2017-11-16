@@ -1,7 +1,6 @@
 '''module for requesting sinlge-file data through the API
 '''
 
-import datetime
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound
 from collections import OrderedDict

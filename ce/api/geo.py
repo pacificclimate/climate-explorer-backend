@@ -4,7 +4,6 @@ import math
 from collections import OrderedDict
 from threading import RLock
 
-import datetime
 from netCDF4 import Dataset
 import numpy as np
 import rasterio
@@ -63,52 +62,75 @@ class memoize(object):
     def __init__(self, keyfunc, maxsize=50):
         '''
         Args:
-            func: the function to wrap
+            keyfunc: used to generate keys for the cache hash
             maxsize (int): Max size of cache (in MB)
         '''
-
-        self.hits = self.misses = 0
-        self.maxsize = maxsize
-        self.cache = OrderedDict()
         self.keyfunc = keyfunc
-        self.toMBfactor = 1024 * 1024
+        self.maxsize = maxsize
 
     def __call__(self, func):
 
-        def cached_function(*args):
-            key = self.keyfunc(*args)
-            log.debug('Checking cache for key {}'.format(key))
+        #Under normal circumstances, the callable object returned by this function (and
+        #therefore the decorator as a whole) should be called as if it were a decorated
+        #function.
+        #As an object, it provides a few extra methods for testing and debugging cache
+        #performance, but these aren't used in production and can generally be ignored.
+        class CachedFunction(object):
+            def __init__(self, maxsize, keyfunc, func):
+                self.hits = self.misses = 0
+                self.maxsize = maxsize
+                self.keyfunc = keyfunc
+                self.func = func
+                self.func.__name__ = func.__name__
+                self.cache = OrderedDict()
+                self.MBconversion = 1024 * 1024
 
-            with cache_lock:
-                try:
-                    result = self.cache[key]
-                    self.cache.move_to_end(key)
-                    self.hits += 1
-                    log.debug("Cache HIT for {}".format(func))
-                    return result
-                except KeyError:
-                    pass
 
-                log.debug('Cache MISS for {}'.format(func))
-                result= func(*args)
+            def __call__(self, *args):
+                key = self.keyfunc(*args)
+                log.debug('Checking cache for key {}'.format(key))
 
-            with cache_lock:
-                self.cache[key] = result
-                self.misses += 1
-                while getsize(self.cache) > self.maxsize * self.toMBfactor:
-                    if len(self.cache) == 1:
-                        log.warning("Cache maxsize is set to {} MB but tried to cache a {} MB item".format(self.maxsize, getsize(self.cache) / self.toMBfactor))
-                    self.cache.popitem(0)
+                with cache_lock:
+                    try:
+                        result = self.cache[key]
+                        self.cache.move_to_end(key)
+                        self.hits += 1
+                        log.debug("Cache Hit for {}".format(self.func))
+                        return result
+                    except KeyError:
+                        pass
 
-            return result
+                    log.debug('Cache MISS for {}'.format(self.func))
+                    result = self.func(*args)
 
-        return cached_function
+                with cache_lock:
+                    self.cache[key] = result
+                    self.misses += 1
+                    while getsize(self.cache) > self.maxsize * self.MBconversion:
+                        if len(self.cache) == 1:
+                            log.warning("Cache maxsize is set to {} MB ".format(self.maxsize),
+                                        "but tried to cache a {} MB item".format(getsize(self.cache) / self.MBconversion))
+                        self.cache.popitem(0)
 
-    def cache_clear(self):
-        with cache_lock:
-            self.cache.clear()
-            self.hits = 0
-            self.misses = 0
+                return result
+
+            #cache testing / debugging functions
+            def cache_clear(self):
+                with cache_lock:
+                    self.cache.clear()
+                    self.hits = 0
+                    self.misses = 0
+
+            def get_hits(self): return self.hits
+
+            def get_misses(self): return self.misses
+
+            def get_size(self): return getsize(self.cache)
+
+            def get_length(self): return len(self.cache)
+
+        cf = CachedFunction(self.maxsize, self.keyfunc, func)
+        return cf
 
 def make_mask_grid_key(nc, fname, poly, variable):
     '''
@@ -183,7 +205,7 @@ def translate_polygon_longitudes (poly, offset):
 
     if(poly['type']=="Polygon"):
         coords = []
-        for point in poly['coordinates'][0]: #assumes a single ring
+        for point in poly['coordinates'][0]:
             coords.append([point[0] + offset % 360, point[1]])
         return dict(type='Polygon', coordinates=[coords])
     elif(poly['type'] == "MultiPolygon"):
