@@ -34,9 +34,6 @@ setup(
         'rasterio==1.0a11',
         'pytest',
     ],
-    scripts=[
-        'scripts/devserver.py',
-    ],
     package_dir={
         'ce': 'ce',
     },
