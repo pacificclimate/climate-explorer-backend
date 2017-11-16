@@ -6,7 +6,7 @@ from threading import RLock
 
 from netCDF4 import Dataset
 import numpy as np
-from shapely.wkt import loads
+from shapely.wkt import loads, dumps
 from shapely.affinity import translate
 from shapely.geometry import mapping # convert a Shapely Geom to GeoJSON
 import rasterio
@@ -147,7 +147,7 @@ def make_mask_grid_key(nc, fname, poly, variable):
     lonsteps = nc.variables['lon'].shape[0]
     lonmin = nc.variables['lon'][0]
     lonmax = nc.variables['lon'][lonsteps - 1]
-    wkt = wkt_parser.dumps(poly) #dict-style geoJSON can't be hashed
+    wkt = dumps(poly) #dict-style geoJSON can't be hashed
     return (wkt, latmin, latmax, latsteps, lonmin, lonmax, lonsteps)
 
 @memoize(make_mask_grid_key, 10)
@@ -162,7 +162,7 @@ def polygon_to_mask(nc, fname, poly, variable):
         if raster.transform == rasterio.Affine.identity():
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
-        mask, out_transform, window = rio_getmask(raster, [poly], all_touched=True)
+        mask, out_transform, window = rio_getmask(raster, [mapping(poly)], all_touched=True)
 
     return mask, out_transform, window
 

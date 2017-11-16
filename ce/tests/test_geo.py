@@ -33,8 +33,8 @@ def test_mask_cache(netcdf_file):
     var = 'tasmax'
     nc, fname = netcdf_file
     f.cache_clear()
-    gj0 = wkt_parser.loads(test_polygons[0])
-    gj1 = wkt_parser.loads(test_polygons[1])
+    gj0 = loads(test_polygons[0])
+    gj1 = loads(test_polygons[1])
     f(nc, fname, gj0, var)
     assert f.get_hits() == 0, f.get_misses() == 1
     assert f.get_length() == 1
