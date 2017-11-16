@@ -6,10 +6,12 @@ from threading import RLock
 
 from netCDF4 import Dataset
 import numpy as np
+from shapely.wkt import loads
+from shapely.affinity import translate
+from shapely.geometry import mapping # convert a Shapely Geom to GeoJSON
 import rasterio
 from rasterio.mask import mask as rio_mask
 from rasterio.mask import raster_geometry_mask as rio_getmask
-from geomet import wkt as wkt_parser
 
 ### From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -153,7 +155,7 @@ def polygon_to_mask(nc, fname, poly, variable):
     """Generates a numpy mask from a wkt polygon"""
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
-        poly = translate_polygon_longitudes(poly, 180)
+        poly = translate(poly, xoff=180)
 
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
@@ -171,7 +173,7 @@ def make_masked_file_key(nc, fname, wkt, varname):
 
 @memoize(make_masked_file_key, 100)
 def wkt_to_masked_array(nc, fname, wkt, variable):
-    poly = wkt_parser.loads(wkt)
+    poly = loads(wkt)
     return polygon_to_masked_array(nc, fname, poly, variable)
 
 
@@ -185,36 +187,13 @@ def polygon_to_masked_array(nc, fname, poly, variable):
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
 
+#        if raster.affine == rasterio.Affine.identity():
+#            raise Exception("Unable to determine projection parameters for GDAL "
+#                            "dataset {}".format(dst_name))
         if raster.transform == rasterio.Affine.identity():
             raise Exception("Unable to determine projection parameters for GDAL "
                             "dataset {}".format(dst_name))
 
-        #this code drawn from rasterio.mask.mask
-        # https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
-        height, width = mask.shape
-        out_shape = (raster.count, height, width)
+        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True, filled=False)
 
-        array = raster.read(window=window, out_shape=out_shape, masked=True)
-        array.mask = array.mask | mask
-
-    return array
-
-def translate_polygon_longitudes (poly, offset):
-    """Takes a geoJSON POLYGON or MULTIPOLYGON-like object,
-    adds offset to each point's longitude"""
-
-    if(poly['type']=="Polygon"):
-        coords = []
-        for point in poly['coordinates'][0]:
-            coords.append([point[0] + offset % 360, point[1]])
-        return dict(type='Polygon', coordinates=[coords])
-    elif(poly['type'] == "MultiPolygon"):
-        rings = []
-        for ring in poly['coordinates'][0]:
-            coords = []
-            for point in ring:
-                coords.append([point[0] + offset % 360, point[1]])
-            rings.append(coords)
-        return dict(type='MultiPolygon', coordinates=[rings])
-    else:
-        raise Exception("Mask geometry must be Polygon or MultiPolygon: {}".format(poly))
+    return the_array

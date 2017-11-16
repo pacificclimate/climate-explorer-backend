@@ -2,11 +2,11 @@ Flask
 Flask-SQLAlchemy
 Flask-Cors
 modelmeta
+shapely>=1.6
 numpy
 netcdf4
 GDAL
 rasterio==1.0a11
-geomet
 # For testing
 pytest
 python-dateutil
