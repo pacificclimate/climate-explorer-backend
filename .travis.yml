@@ -12,7 +12,7 @@ env:
   global:
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
-    - GDALVERSION="2.0.2"
+    - GDALVERSION="2.2.1"
     - CPLUS_INCLUDE_PATH=$GDALINST/include
     - C_INCLUDE_PATH=$GDALINST/include
     - CFLAGS=-I$GDALINST/include

@@ -5,7 +5,7 @@ modelmeta
 shapely>=1.6
 numpy
 netcdf4
-GDAL
+GDAL==2.2
 rasterio==1.0a11
 # For testing
 pytest
