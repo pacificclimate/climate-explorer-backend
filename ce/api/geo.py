@@ -152,7 +152,7 @@ def make_mask_grid_key(nc, fname, poly, variable):
 
 @memoize(make_mask_grid_key, 10)
 def polygon_to_mask(nc, fname, poly, variable):
-    """Generates a numpy mask from a wkt polygon"""
+    """Generates a numpy mask from a polygon"""
     nclons = nc.variables['lon'][:]
     if np.any(nclons > 180):
         poly = translate(poly, xoff=180)
@@ -178,7 +178,7 @@ def wkt_to_masked_array(nc, fname, wkt, variable):
 
 
 def polygon_to_masked_array(nc, fname, poly, variable):
-    """Applies a geoJSON polygon mask to a variable read from a netCDF file,
+    """Applies a polygon mask to a variable read from a netCDF file,
     in addition to any masks specified in the file itself (_FillValue)
     Returns a numpy masked array with every time slice masked"""
 
@@ -186,14 +186,11 @@ def polygon_to_masked_array(nc, fname, poly, variable):
 
     dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
     with rasterio.open(dst_name, 'r', driver='NetCDF') as raster:
+        #based on https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
+        height, width = mask.shape
+        out_shape = (raster.count, height, width)
 
-#        if raster.affine == rasterio.Affine.identity():
-#            raise Exception("Unable to determine projection parameters for GDAL "
-#                            "dataset {}".format(dst_name))
-        if raster.transform == rasterio.Affine.identity():
-            raise Exception("Unable to determine projection parameters for GDAL "
-                            "dataset {}".format(dst_name))
+        array = raster.read(window=window, out_shape=out_shape, masked=True)
+        array.mask = array.mask | mask
 
-        the_array, _ = rio_mask(raster, [mapping(poly)], crop=False, all_touched=True, filled=False)
-
-    return the_array
+    return array
