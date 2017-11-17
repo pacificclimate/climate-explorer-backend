@@ -9,4 +9,4 @@ RUN python3 ./setup.py install
 
 EXPOSE 8000
 
-CMD devserver.py -p 8000 -t
+CMD devserver.py -p 8000

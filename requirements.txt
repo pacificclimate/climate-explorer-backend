@@ -5,9 +5,8 @@ modelmeta
 shapely>=1.6
 numpy
 netcdf4
-nchelpers
 GDAL
-rasterio
+rasterio==1.0a11
 # For testing
 pytest
 python-dateutil
