@@ -35,9 +35,11 @@ $ source venv/bin/activate
 
 ### Running the dev server
 
+A development server can be run locally by using the Flask command line interface documented [here](http://flask.pocoo.org/docs/0.12/cli/). In general, you need to set one environment variable FLASK_APP=ce.wsgi:app and can optionally set FLASK_DEBUG=1 for live code reloading.
+
 Database dsn can be configured with the MDDB_DSN environment variable. Defaults to 'postgresql://httpd_meta@monsoon.pcic.uvic.ca/pcic_meta'
 
-(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname python scripts/devserver.py -p <port>
+(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname FLASK_APP=ce.wsgi:app flask run -p <port>
 
 ### Testing
 
