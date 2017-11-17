@@ -59,14 +59,13 @@ def timeseries(sesh, id_, area, variable):
     # Get all time indexes for this file
     ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
     ti.sort(key=lambda x: x[1])
-    
+
     with open_nc(file_.filename) as nc:
 
         data = OrderedDict([(
             timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
             np.asscalar(np.mean(get_array(nc, file_.filename, idx, area, variable)))
         )
-            #for timeval, idx in shortlist
             for timeval, idx in ti
         ])
         units = get_units_from_netcdf_file(nc, variable)
