@@ -193,4 +193,10 @@ def polygon_to_masked_array(nc, fname, poly, variable):
         array = raster.read(window=window, out_shape=out_shape, masked=True)
         array.mask = array.mask | mask
 
-    return array
+    # Weirdly rasterio's mask operation sets, but doesn't respect the
+    # scale_factor or add_offset
+    var = nc.variables[variable]
+    scale_factor = getattr(var, 'scale_factor', 1.0)
+    add_offset = getattr(var, 'add_offset', 0.0)
+
+    return array * scale_factor + add_offset
