@@ -37,7 +37,7 @@ $ source venv/bin/activate
 
 Database dsn can be configured with the MDDB_DSN environment variable. Defaults to 'postgresql://httpd_meta@monsoon.pcic.uvic.ca/pcic_meta'
 
-(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname python scripts/devserver.py -p <port>
+(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname FLASK_APP=ce.wsgi:app flask run -p <port>
 
 ### Testing
 
