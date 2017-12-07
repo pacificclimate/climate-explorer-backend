@@ -32,6 +32,8 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     url = '/api/' + endpoint
     response = test_client.get(url, query_string=query_params)
     assert response.status_code == 200
+    assert response.cache_control.public == True
+    assert response.cache_control.max_age > 0
 
 
 @pytest.mark.parametrize(('endpoint', 'missing_params'), [
