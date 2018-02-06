@@ -36,7 +36,7 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     assert response.status_code == 200
     assert response.cache_control.public == True
     assert response.cache_control.max_age > 0
-    if endpoint in ('data', 'timeseries'):
+    if endpoint in ('data', 'timeseries', 'stats', 'multistats'):
         assert response.last_modified is not None
 
 
@@ -151,6 +151,7 @@ def test_stats(populateddb, polygon, unique_id, var_name):
 
     assert type(statistics['ncells']) == int
     assert parse(statistics['time'])
+    assert isinstance(statistics['modtime'], datetime)
 
 
 @pytest.mark.parametrize(('filters', 'keys'), (
@@ -182,6 +183,7 @@ def test_stats_bad_params(populateddb, unique_id, var):
     assert math.isnan(rv[unique_id]['max'])
     assert 'time' not in rv[unique_id]
     assert 'units' not in rv[unique_id]
+    assert 'modtime' not in rv[unique_id]
 
 
 def test_stats_bad_id(populateddb):

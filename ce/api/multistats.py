@@ -48,7 +48,8 @@ def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
                     'median': 301.61065673828125,
                     'ncells': 72,
                     'units': 'K',
-                    'time': '1985-06-30T12:00:00Z'
+                    'time': '1985-06-30T12:00:00Z',
+                    'modtime': '2010-01-01T17:30:04Z'
                 }
              'file1':
                 {
@@ -59,7 +60,8 @@ def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
                     'median': 42.1,
                     'ncells': 72,
                     'units': 'K',
-                    'time': '1985-06-30T12:00:00Z'
+                    'time': '1985-06-30T12:00:00Z',
+                    'modtime': '2010-01-01T17:30:04Z'
                 }
             }
     '''

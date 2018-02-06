@@ -55,7 +55,8 @@ def stats(sesh, id_, time, area, variable):
                     'median': 301.61065673828125,
                     'ncells': 72,
                     'units': 'K',
-                    'time': '1985-06-30T12:00:00Z'
+                    'time': '1985-06-30T12:00:00Z',
+                    'modtime': '2010-01-01T17:30:04Z'
                 }
             }
 
@@ -106,7 +107,8 @@ def stats(sesh, id_, time, area, variable):
 
     stats.update({
         'units': units,
-        'time': timeval.strftime('%Y-%m-%dT%H:%M:%SZ')
+        'time': timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'modtime': df.index_time
     })
     return {id_: stats}
 
