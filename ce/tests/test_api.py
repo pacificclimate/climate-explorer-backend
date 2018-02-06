@@ -36,7 +36,7 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     assert response.status_code == 200
     assert response.cache_control.public == True
     assert response.cache_control.max_age > 0
-    if endpoint in ('data'):
+    if endpoint in ('data', 'timeseries'):
         assert response.last_modified is not None
 
 
@@ -277,6 +277,7 @@ def test_timeseries(populateddb, polygon, unique_id, var):
     for val in rv['data'].values():
         assert type(val) == float
     assert rv['units'] == 'K'
+    assert isinstance(rv['modtime'], datetime)
 
 #verifies that different months or seasons of an annual timeseries
 #have different values
