@@ -9,6 +9,7 @@ from flask import url_for
 from dateutil.parser import parse
 
 from ce.api import *
+from ce.api import find_modtime
 
 
 def extract_ids(s):
@@ -35,6 +36,8 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     assert response.status_code == 200
     assert response.cache_control.public == True
     assert response.cache_control.max_age > 0
+    if endpoint in ('data'):
+        assert response.last_modified is not None
 
 
 @pytest.mark.parametrize(('endpoint', 'missing_params'), [
@@ -320,3 +323,17 @@ def test_grid(populateddb, unique_id):
       assert 'longitudes' in rv[key]
       assert len(rv[key]['longitudes']) > 0
       assert type(rv[key]['longitudes'][0]) == float
+
+
+@pytest.mark.parametrize(('obj', 'expected'), [
+    ({}, None),
+    ('', None),
+    (None, None),
+    ({'modtime': datetime(2018, 1, 1)}, datetime(2018, 1, 1)),
+    ({'modtime': datetime(2018, 1, 1),
+      'foo': {'modtime': datetime(2018, 1, 10)}}, datetime(2018, 1, 10)),
+    ({'foo': {'modtime': datetime(2018, 1, 1)},
+      'bar': {'modtime': datetime(2018, 1, 10)}}, datetime(2018, 1, 10))
+])
+def test_find_modtime(obj, expected):
+    assert find_modtime(obj) == expected

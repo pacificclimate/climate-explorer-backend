@@ -6,9 +6,10 @@
 
 
 import inspect
+from datetime import datetime
 
 from json import dumps
-from werkzeug.wrappers import BaseResponse as Response
+from werkzeug.wrappers import Response
 from flask import request
 
 from ce.api.stats import stats
@@ -68,13 +69,16 @@ def call(session, request_type):
     args = { key: request.args.get(key) for key in required_params }
     kwargs = { key: request.args.get(key) for key in optional_params if request.args.get(key) is not None }
     args.update(kwargs)
-    return Response(
-        # Note: all arguments to the delgate functions are necessarily strings
-        # at this point, since they're all coming through the URL query
-        # parameters
-        dumps(func(session, **args)),
+    # Note: all arguments to the delgate functions are necessarily strings
+    # at this point, since they're all coming through the URL query
+    # parameters
+    rv = func(session, **args)
+    resp = Response(
+        rv,
         content_type='application/json'
     )
+    resp.last_modified = find_modtime(rv)
+    return resp
 
 # from http://stackoverflow.com/questions/196960/can-you-list-the-keyword-arguments-a-python-function-receives
 def get_required_args(func):
@@ -89,3 +93,19 @@ def get_keyword_args(func):
         return args[-len(defaults):]
     else:
         return []
+
+
+def find_modtime(obj):
+    '''Find the maximum modtime in an object
+
+    Recursively search a dictionary, returning the maximum value found
+    in all keys named 'modtime
+    '''
+    if not isinstance(obj, dict):
+        return None
+
+    candidates = [find_modtime(val) for val in obj.values() if isinstance(val, dict)]
+    if 'modtime' in obj and isinstance(obj['modtime'], datetime):
+        candidates.append(obj['modtime'])
+    if candidates:
+        return max(candidates)
