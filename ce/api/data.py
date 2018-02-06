@@ -142,11 +142,14 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                 'data': {},
                 'units': get_units_from_run_object(
                     data_file_variable.file.run, variable),
+                'modtime': data_file_variable.file.index_time
             }
         time_key = (
             get_time_value(data_file_variable.file.timeset, time)
                 .strftime('%Y-%m-%dT%H:%M:%SZ'))
         value = get_spatially_averaged_data(data_file_variable.file, time)
         run_result['data'][time_key] = value
+        run_result['modtime'] = max(run_result['modtime'],\
+                                    data_file_variable.file.index_time)
 
     return result

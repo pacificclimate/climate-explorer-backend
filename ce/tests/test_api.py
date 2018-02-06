@@ -1,6 +1,7 @@
 import math
 from time import time
 import re
+from datetime import datetime
 
 import pytest
 
@@ -235,6 +236,7 @@ def test_data_single_file(populateddb, variable,
             assert 173 <= value <= 373 # -100 to +100 C, in K
         # FIXME: Or, fix something: units are wrong! Its K, not C.
         assert run_value['units'] == 'degC'
+        assert isinstance(run_value['modtime'], datetime)
 
 
 def test_data_multiple_times(multitime_db):
@@ -250,6 +252,7 @@ def test_data_multiple_times(multitime_db):
     assert len(rv) > 1
     for run in rv.values():
         assert len(run['data']) > 1
+        assert isinstance(run['modtime'], datetime)
 
 
 @pytest.mark.parametrize(('unique_id', 'var'), (
