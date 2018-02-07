@@ -103,7 +103,7 @@ def test_metadata(populateddb, unique_id):
     times = file_metadata['times']
     assert len(times) > 0
 
-    # Are the values propert datetimes?
+    # Are the values proper datetimes?
     for val in times.values():
         assert isinstance(val, datetime)
 
