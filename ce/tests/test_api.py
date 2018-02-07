@@ -141,6 +141,7 @@ def test_multimeta(populateddb, model):
     assert 'start_date' in rv[unique_id]
     assert 'end_date' in rv[unique_id]
     assert 'modtime' in rv[unique_id]
+    assert isinstance(rv[unique_id]['modtime'], datetime)
 
 
 @pytest.mark.parametrize('unique_id, var_name', [
