@@ -107,5 +107,6 @@ def find_modtime(obj):
     candidates = [find_modtime(val) for val in obj.values() if isinstance(val, dict)]
     if 'modtime' in obj and isinstance(obj['modtime'], datetime):
         candidates.append(obj['modtime'])
+    candidates = [ x for x in candidates if isinstance(x, datetime) ]
     if candidates:
         return max(candidates)
