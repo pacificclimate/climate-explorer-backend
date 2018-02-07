@@ -2,6 +2,7 @@ import math
 from time import time
 import re
 from datetime import datetime
+from json import loads
 
 import pytest
 
@@ -36,8 +37,21 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     assert response.status_code == 200
     assert response.cache_control.public == True
     assert response.cache_control.max_age > 0
-    if endpoint in ('data', 'timeseries', 'stats', 'multistats'):
+    if endpoint in ('data', 'timeseries', 'stats', 'multistats', 'metadata', 'multimeta'):
         assert response.last_modified is not None
+
+
+def test_dates_are_formatted(test_client, populateddb):
+    url = '/api/metadata'
+    query_params = {'model_id': 'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230'}
+    response = test_client.get(url, query_string=query_params)
+    assert response.status_code == 200
+    content = loads(response.data.decode(response.charset))
+
+    one_date = parse(content[query_params['model_id']]['times']['0'])
+    assert isinstance(one_date, datetime)
+    another_date = parse(content[query_params['model_id']]['modtime'])
+    assert isinstance(another_date, datetime)
 
 
 @pytest.mark.parametrize(('endpoint', 'missing_params'), [
@@ -83,23 +97,24 @@ def test_metadata(populateddb, unique_id):
 
     for key in ['institution', 'model_id', 'model_name', 'experiment',
                 'variables', 'ensemble_member', 'times', 'timescale',
-                'multi_year_mean', 'start_date', 'end_date']:
+                'multi_year_mean', 'start_date', 'end_date', 'modtime']:
         assert key in file_metadata
 
     times = file_metadata['times']
     assert len(times) > 0
 
-    # Are the values converible into times?
+    # Are the values propert datetimes?
     for val in times.values():
-        assert parse(val)
+        assert isinstance(val, datetime)
 
     if file_metadata['multi_year_mean'] is True:
-        assert parse(file_metadata['start_date'])
-        assert parse(file_metadata['end_date'])
+        assert isinstance(file_metadata['start_date'], datetime)
+        assert isinstance(file_metadata['end_date'], datetime)
     else:
         assert file_metadata['start_date'] is None
         assert file_metadata['end_date'] is None
 
+    assert isinstance(file_metadata['modtime'], datetime)
 
 def test_metadata_no_times(populateddb):
     sesh = populateddb.session
@@ -125,6 +140,7 @@ def test_multimeta(populateddb, model):
     # make sure start_date and end_date are present
     assert 'start_date' in rv[unique_id]
     assert 'end_date' in rv[unique_id]
+    assert 'modtime' in rv[unique_id]
 
 
 @pytest.mark.parametrize('unique_id, var_name', [
@@ -150,7 +166,7 @@ def test_stats(populateddb, polygon, unique_id, var_name):
         assert statistics[attr]
 
     assert type(statistics['ncells']) == int
-    assert parse(statistics['time'])
+    assert isinstance(statistics['time'], datetime)
     assert isinstance(statistics['modtime'], datetime)
 
 

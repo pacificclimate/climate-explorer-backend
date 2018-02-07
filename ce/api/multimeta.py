@@ -46,8 +46,9 @@ def multimeta(sesh, ensemble_name='ce', model=''):
               ensemble_member: "r1i1p1",
               timescale: "monthly",
               multi_year_mean: false,
-              start_date: "1950-01-01T00:00:00Z",
-              end_date: "2100-12-31T00:00:00Z"
+              start_date: datetime.datetime(1950, 1, 1, 0, 0),
+              end_date: datetime.datetime(2100, 12, 31, 0, 0),
+              modtime: datetime.datetime(2010, 1, 1, 17, 30, 4)
               },
           unique_id2:
               ...
@@ -66,7 +67,8 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                    TimeSet.time_resolution,
                    TimeSet.multi_year_mean,
                    TimeSet.start_date,
-                   TimeSet.end_date)\
+                   TimeSet.end_date,
+                   DataFile.index_time)\
             .join(Run)\
             .join(Model)\
             .join(Emission)\
@@ -83,13 +85,12 @@ def multimeta(sesh, ensemble_name='ce', model=''):
     rv = {}
     results = q.all()
 
-    time_format = '%Y-%m-%dT%H:%M:%SZ'
-
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
     # circa release 1.1
     for id_, org, model_short, model_long, emission, run, var, long_var, \
-            timescale, multi_year_mean, start_date, end_date in results:
+            timescale, multi_year_mean, start_date, end_date, modtime in \
+            results:
         if id_ not in rv:
             rv[id_] = {
                 'institution': org,
@@ -100,8 +101,9 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                 'ensemble_member': run,
                 'timescale': timescale,
                 'multi_year_mean': multi_year_mean,
-                'start_date': start_date.strftime(time_format),
-                'end_date': end_date.strftime(time_format)
+                'start_date': start_date,
+                'end_date': end_date,
+                'modtime': modtime
             }
         else:
             rv[id_]['variables'][var] = long_var

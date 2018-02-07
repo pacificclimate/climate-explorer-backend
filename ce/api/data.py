@@ -57,7 +57,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                         '2075-1-15T00:00:00Z': 12.4,
                     }
                     'units': 'degC',
-                    'modtime': '2010-01-01T17:30:04Z'
+                    'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
                 }
                 'r2i1p1':
                 {
@@ -69,7 +69,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                         '2075-1-15T00:00:00Z': 12.5,
                     }
                     'units': 'degC',
-                    'modtime': '2010-01-01T17:30:04Z'
+                    'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
                 }
             }
 
