@@ -37,7 +37,7 @@ def test_api_endpoints_are_callable(test_client, cleandb, endpoint, query_params
     assert response.status_code == 200
     assert response.cache_control.public == True
     assert response.cache_control.max_age > 0
-    if endpoint in ('data', 'timeseries', 'stats', 'multistats', 'metadata', 'multimeta'):
+    if endpoint not in ('models', 'lister'):
         assert response.last_modified is not None
 
 
@@ -342,6 +342,8 @@ def test_grid(populateddb, unique_id):
       assert 'longitudes' in rv[key]
       assert len(rv[key]['longitudes']) > 0
       assert type(rv[key]['longitudes'][0]) == float
+      assert 'modtime' in rv[key]
+      assert ininstance(rv[key]['modtime'], datetime)
 
 
 @pytest.mark.parametrize(('obj', 'expected'), [

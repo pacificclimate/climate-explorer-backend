@@ -47,7 +47,8 @@ def grid(sesh, id_):
                         -180, 
                         -177.1875, 
                         -174.375, ... 
-                        ]
+                        ],
+                    'modtime': datetime.datetime(2011, 11, 11, 11, 11, 11)
                 }
             }
 
@@ -76,5 +77,6 @@ def grid(sesh, id_):
         except (RuntimeError, KeyError):
             return {id_: na_grid}
 
-    return {id_: grid}
+    grid.update({'modtime': df.index_time})
 
+    return {id_: grid}
