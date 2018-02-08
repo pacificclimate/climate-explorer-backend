@@ -1,5 +1,19 @@
 # News / Release Notes
 
+## 1.0.0
+
+*08-February-2018*
+
+* Improvements to data processing pipline PRs [#32](https://github.com/pacificclimate/climate-explorer-backend/pull/32), [#33](https://github.com/pacificclimate/climate-explorer-backend/pull/33), [#38](https://github.com/pacificclimate/climate-explorer-backend/pull/38).
+* Improves the 400 error message with a list of missing query params [PR #28](https://github.com/pacificclimate/climate-explorer-backend/pull/28).
+* Replaces home-cooked code for "burning" a polygon into a raster with [rasterio](https://github.com/mapbox/rasterio)'s mask() function [PR #55](https://github.com/pacificclimate/climate-explorer-backend/pull/55).
+* Add climatological info to GET /api/metadata request [PR #56](https://github.com/pacificclimate/climate-explorer-backend/pull/56).
+* Add climatology bounds info to /api/multimeta request [PR #62](https://github.com/pacificclimate/climate-explorer-backend/pull/62).
+* Fixes bug in timeseries call where values would not vary across the year [PR #66](https://github.com/pacificclimate/climate-explorer-backend/pull/66).
+* Fixes GDAL crash bug [PR #70](https://github.com/pacificclimate/climate-explorer-backend/pull/70).
+* Sets HTTP headers to enable client-side caching [PR #75](https://github.com/pacificclimate/climate-explorer-backend/pull/75).
+* Replaces Dockerfile with a build that uses gunicorn for production deployment.
+
 ## 0.2.0
 
 *11-April-2017*
