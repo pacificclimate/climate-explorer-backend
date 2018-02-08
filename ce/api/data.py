@@ -56,7 +56,8 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                         '2045-1-15T00:00:00Z': 10.3,
                         '2075-1-15T00:00:00Z': 12.4,
                     }
-                    'units': 'degC'
+                    'units': 'degC',
+                    'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
                 }
                 'r2i1p1':
                 {
@@ -67,7 +68,8 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                         '2045-1-15T00:00:00Z': 10.4,
                         '2075-1-15T00:00:00Z': 12.5,
                     }
-                    'units': 'degC'
+                    'units': 'degC',
+                    'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
                 }
             }
 
@@ -142,11 +144,14 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                 'data': {},
                 'units': get_units_from_run_object(
                     data_file_variable.file.run, variable),
+                'modtime': data_file_variable.file.index_time
             }
         time_key = (
             get_time_value(data_file_variable.file.timeset, time)
                 .strftime('%Y-%m-%dT%H:%M:%SZ'))
         value = get_spatially_averaged_data(data_file_variable.file, time)
         run_result['data'][time_key] = value
+        run_result['modtime'] = max(run_result['modtime'],\
+                                    data_file_variable.file.index_time)
 
     return result

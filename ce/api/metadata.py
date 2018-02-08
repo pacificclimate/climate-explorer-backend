@@ -50,14 +50,15 @@ def metadata(sesh, model_id):
                     'timescale': 'monthly',
                     'times':
                     {
-                        0: '1985-01-15T00:00:00Z',
-                        1: '1985-02-15T00:00:00Z',
-                        2: '1985-03-15T00:00:00Z',
-                        3: '1985-04-15T00:00:00Z'
+                        0: datetime.datetime(1985, 1, 15, 0, 0),
+                        1: datetime.datetime(1985, 2, 15, 0, 0),
+                        2: datetime.datetime(1985, 3, 15, 0, 0),
+                        3: datetime.datetime(1985, 4, 15, 0, 0),
                     }
                     'multi_year_mean': False,
-                    'start_date': '1985-01-15T00:00:00Z',
-                    'end_date': '1985-04-15T00:00:00Z',
+                    'start_date': 'datetime.datetime(1985, 1, 15, 0, 0),
+                    'end_date': datetime.datetime(1985, 4, 15, 0, 0),
+                    'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
                 }
             }
 
@@ -65,8 +66,6 @@ def metadata(sesh, model_id):
         ValueError
 
     '''
-    time_format = '%Y-%m-%dT%H:%M:%SZ'
-
     try:
         data_file = (
             sesh.query(DataFile)
@@ -93,13 +92,13 @@ def metadata(sesh, model_id):
 
     if timeset:
         times = {
-            time.time_idx: time.timestep.strftime(time_format)
+            time.time_idx: time.timestep
             for time in timeset.times
         }
         timescale = timeset.time_resolution
         multi_year_mean = timeset.multi_year_mean
-        start_date = timeset.start_date.strftime(time_format)
-        end_date = timeset.end_date.strftime(time_format)
+        start_date = timeset.start_date
+        end_date = timeset.end_date
 
     run = data_file.run
     model = run.model
@@ -117,5 +116,6 @@ def metadata(sesh, model_id):
             'multi_year_mean': multi_year_mean,
             'start_date': start_date,
             'end_date': end_date,
+            'modtime': data_file.index_time
         }
     }

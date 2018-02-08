@@ -44,7 +44,8 @@ def timeseries(sesh, id_, area, variable):
                     '1985-04-15T00:00:00Z': 10.2,
                     ...
                     '1985-12-15T00:00:00Z': 2.5,
-                }
+                },
+                'modtime': '2010-01-01T17:30:04Z'
             }
 
     Raises:
@@ -73,5 +74,6 @@ def timeseries(sesh, id_, area, variable):
     return {
         'id': id_,
         'data': data,
-        'units': units
+        'units': units,
+        'modtime': file_.index_time
     }

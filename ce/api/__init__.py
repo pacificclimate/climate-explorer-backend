@@ -6,9 +6,10 @@
 
 
 import inspect
+from datetime import datetime
 
 from json import dumps
-from werkzeug.wrappers import BaseResponse as Response
+from werkzeug.wrappers import Response
 from flask import request
 
 from ce.api.stats import stats
@@ -68,13 +69,18 @@ def call(session, request_type):
     args = { key: request.args.get(key) for key in required_params }
     kwargs = { key: request.args.get(key) for key in optional_params if request.args.get(key) is not None }
     args.update(kwargs)
-    return Response(
-        # Note: all arguments to the delgate functions are necessarily strings
-        # at this point, since they're all coming through the URL query
-        # parameters
-        dumps(func(session, **args)),
+    # Note: all arguments to the delgate functions are necessarily strings
+    # at this point, since they're all coming through the URL query
+    # parameters
+    rv = func(session, **args)
+    modtime = find_modtime(rv)
+    resp = Response(
+        dumps(format_dates(rv)),
         content_type='application/json'
     )
+    resp.last_modified = find_modtime(rv)
+    return resp
+
 
 # from http://stackoverflow.com/questions/196960/can-you-list-the-keyword-arguments-a-python-function-receives
 def get_required_args(func):
@@ -89,3 +95,40 @@ def get_keyword_args(func):
         return args[-len(defaults):]
     else:
         return []
+
+
+def find_modtime(obj):
+    '''Find the maximum modtime in an object
+
+    Recursively search a dictionary, returning the maximum value found
+    in all keys named 'modtime
+    '''
+    if not isinstance(obj, dict):
+        return None
+
+    candidates = [find_modtime(val) for val in obj.values() if isinstance(val, dict)]
+    if 'modtime' in obj and isinstance(obj['modtime'], datetime):
+        candidates.append(obj['modtime'])
+    candidates = [ x for x in candidates if isinstance(x, datetime) ]
+    if candidates:
+        return max(candidates)
+
+
+def format_dates(obj):
+    '''Recursively format datetimes to strings
+
+    json.dumps doesn't properly convert datetimes to their
+    representative format. It simply using the __repr__ of the datetime
+    object (which is not what we want).
+
+    This method recursively searches a dict, formatting all datetime
+    objects, and leaving everything else unchanged. The formatted object
+    is returned.
+    '''
+    time_format = '%Y-%m-%dT%H:%M:%SZ'
+    if not isinstance(obj, dict):
+        return obj
+    return {
+        key: val.strftime(time_format)
+        if isinstance(val, datetime) else format_dates(val)
+        for key, val in obj.items()}
