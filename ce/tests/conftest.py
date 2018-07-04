@@ -8,7 +8,7 @@ import pytest
 
 import modelmeta
 from modelmeta import *
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from netCDF4 import Dataset
 
 from ce import get_app
