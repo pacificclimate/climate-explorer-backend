@@ -10,6 +10,7 @@ addons:
       - libnetcdf-dev
 env:
   global:
+    - PIP_INDEX_URL=https://pypi.pacificclimate.org/simple
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
     - GDALVERSION="2.2.1"
@@ -35,7 +36,7 @@ before_install:
 install:
   - pip install -I pytest>=3.0.0
   - pip install -r requirements.txt .
-  - pip install -i https://pypi.pacificclimate.org/simple/ .
+  - pip install .
 script:
   - py.test -v ce/tests
 
