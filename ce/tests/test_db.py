@@ -1,5 +1,5 @@
 import pytest
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from modelmeta import *
 
 def test_can_query_db(cleandb):
