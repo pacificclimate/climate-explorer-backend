@@ -9,3 +9,7 @@ def add_routes(app):
     @app.route("/api/<request_type>")
     def api_request(*args, **kwargs):
         return ce.api.call(db.session, *args, **kwargs)
+    
+    @app.route("/api/streamflow/<request_type>")
+    def streamflow_request(*args, **kwargs):
+        return ce.api.call(db.session, *args, **kwargs)

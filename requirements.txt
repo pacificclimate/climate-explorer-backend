@@ -1,12 +1,14 @@
-Flask
+Flask==0.12.2
 Flask-SQLAlchemy
 Flask-Cors
 modelmeta
 shapely>=1.6
 numpy
-netcdf4
+netcdf4==1.2.9
+nchelpers
 GDAL==2.2
 rasterio==1.0a11
+
 # For testing
 pytest
 python-dateutil

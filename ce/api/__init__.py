@@ -20,7 +20,9 @@ from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
-from ce.api.multistation import multistation
+from ce.api.streamflow.multistation import multistation
+from ce.api.streamflow.watershed import watershed
+from ce.api.streamflow.flowseries import flowseries
 
 methods = {
     'stats': stats,
@@ -32,7 +34,9 @@ methods = {
     'timeseries': timeseries,
     'lister': lister,
     'grid': grid,
-    'multistation': multistation
+    'multistation': multistation,
+    'watershed': watershed,
+    'flowseries': flowseries
 }
 
 __all__ = list(methods.keys()) + ['call']
