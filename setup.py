@@ -31,7 +31,7 @@ setup(
         'netcdf4',
         'python-dateutil',
         'GDAL',
-        'rasterio==1.0a12',
+        'rasterio',
         'pytest',
     ],
     package_dir={
