@@ -130,6 +130,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
 
         .join(DataFile.timeset)
         .filter(TimeSet.time_resolution == timescale)
+        .filter(TimeSet.multi_year_mean == True)
 
         .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
     )
