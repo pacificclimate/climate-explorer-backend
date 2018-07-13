@@ -13,22 +13,13 @@ env:
     - PIP_INDEX_URL=https://pypi.pacificclimate.org/simple
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
-    - GDALVERSION="2.2.1"
+    - GDALVERSION="2.3.1"
     - CPLUS_INCLUDE_PATH=$GDALINST/include
     - C_INCLUDE_PATH=$GDALINST/include
     - CFLAGS=-I$GDALINST/include
 
 before_install:
-  - mkdir $GDALBUILD
-  - mkdir $GDALINST
-  - cd $GDALBUILD
-  - wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
-  - tar -xzf gdal-$GDALVERSION.tar.gz
-  - cd gdal-$GDALVERSION
-  - ./configure --prefix=$GDALINST
-  - make -s -j 2
-  - make install
-  - cd $TRAVIS_BUILD_DIR
+  - ./build_gdal.sh
   - export PATH=$GDALINST/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/lib:$LD_LIBRARY_PATH
   - export GDAL_MINOR_VERSION=$(echo $GDALVERSION | sed -e "s/\\.[0-9]\+$//")
@@ -39,4 +30,3 @@ install:
   - pip install .
 script:
   - py.test -v ce/tests
-
