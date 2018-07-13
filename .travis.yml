@@ -26,7 +26,7 @@ before_install:
   - tar -xzf gdal-$GDALVERSION.tar.gz
   - cd gdal-$GDALVERSION
   - ./configure --prefix=$GDALINST
-  - make -s -j 2
+  - make -j 2
   - make install
   - cd $TRAVIS_BUILD_DIR
   - export PATH=$GDALINST/bin:$PATH
