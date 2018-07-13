@@ -5,8 +5,8 @@ modelmeta
 shapely>=1.6
 numpy
 netcdf4==1.3
-GDAL==2.2
-rasterio==1.0
+GDAL~=2.3
+rasterio~=1.0
 # For testing
 pytest
 python-dateutil
