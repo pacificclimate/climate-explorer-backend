@@ -19,19 +19,7 @@ env:
     - CFLAGS=-I$GDALINST/include
 
 before_install:
-  - mkdir $GDALBUILD
-  - mkdir $GDALINST
-  - cd $GDALBUILD
-  - wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
-  - tar -xzf gdal-$GDALVERSION.tar.gz
-  - cd gdal-$GDALVERSION
-  - ./configure --prefix=$GDALINST
-  - make -j 2
-  - make install
-  - cd $TRAVIS_BUILD_DIR
-  - export PATH=$GDALINST/bin:$PATH
-  - export LD_LIBRARY_PATH=$GDALINST/lib:$LD_LIBRARY_PATH
-  - export GDAL_MINOR_VERSION=$(echo $GDALVERSION | sed -e "s/\\.[0-9]\+$//")
+  - ./build_gdal.sh
   - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' GDAL==$GDAL_MINOR_VERSION"
 install:
   - pip install -I pytest>=3.0.0
@@ -39,4 +27,3 @@ install:
   - pip install .
 script:
   - py.test -v ce/tests
-
