@@ -8,7 +8,8 @@ from flask import request
 
 from ce.api.routed_streamflow.result_list import result_list
 from ce.api.routed_streamflow.result_metadata import result_metadata
-from ce.api.routed_streamflow.result_timeseries import result_timeseries
+from ce.api.routed_streamflow.result_annual_series import result_annual_means
+from ce.api.routed_streamflow.result_annual_series import result_annual_max
 from ce.api.routed_streamflow.hydromodel_output import hydromodel_output
 
 def call(session, resource, *args):
@@ -22,18 +23,19 @@ def call(session, resource, *args):
             rv = result_metadata(session, args[0])
         
         if args[1]:
-            if args[1] == "timeseries":
-                rv = result_timeseries(session, args[0])
-            elif args[1] == "long_term_average":
-                rv = result_long_term_average(session, args[0])
+            if args[1] == "annualmean":
+                rv = result_annual_means(session, args[0])
+            elif args[1] == "annualmax":
+                rv = result_annual_max(session, args[0])
             else:
                 rv = "unrecognized data request: {}".format(args[1])
-    
-    if resource == "hydromodel_output":
+    elif resource == "hydromodel_output":
         if not args[0]:
             rv = hydromodel_output(session)
         else:
             return "Individual hydromodel pages are not implemented yet"
+    else:
+        rv = "Unrecognized resource: {}" #need to 400 or something here.
             
     resp = Response(
       dumps(rv),
