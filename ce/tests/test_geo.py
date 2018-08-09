@@ -1,10 +1,11 @@
 import time
-
 import pytest
 
-from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array, polygon_to_mask
+from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
+from ce.api.geo import polygon_to_mask, memoize, getsize
 from shapely.wkt import loads
 from shapely.errors import ReadingError
+from collections import OrderedDict
 
 test_polygons = [
     'POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))',
@@ -28,6 +29,7 @@ def test_data_cache(netcdf_file):
     f(netcdf_file, fname, test_polygons[1], var)
     assert f.get_hits() == 3, f.get_misses() == 2
 
+
 def test_mask_cache(netcdf_file):
     f = polygon_to_mask
     var = 'tasmax'
@@ -50,6 +52,44 @@ def test_mask_cache(netcdf_file):
     f(nc, fname, gj1, var)
     assert f.get_hits() == 3, f.get_misses() == 2
     assert f.get_length() == 2
+
+
+# because we don't have enough test netCDF data to fill up the 100MB data
+# cache to trigger a delete, test cache clearing with a simple function
+# and tiny cache instead.
+def test_cache_delete():
+
+    def make_fib_key(n):
+        return n
+
+    # determine the size of a ten-integer OrderedDict, then use that as the
+    # cache size to ensure we see some item removal with twenty calls
+    od = OrderedDict()
+    for i in range(1, 10):
+        od[i] = i
+
+    mb_conversion = 1024 * 1024
+    cache_size_mb = getsize(od) / mb_conversion
+
+    @memoize(make_fib_key, cache_size_mb)
+    def cached_fibonacci(n):
+        if(n < 3):
+            return 1
+        else:
+            return cached_fibonacci(n-1) + cached_fibonacci(n-2)
+
+    f = cached_fibonacci
+    previous_cache = f.get_size()
+
+    for n in range(1, 20):
+        cached_fibonacci(n)
+        assert (f.get_size() / mb_conversion) <= cache_size_mb
+        if(previous_cache >= f.get_size()):
+            return True
+        previous_cache = f.get_size()
+
+    # make sure cache has stayed the same size or shrunk at least once.
+    assert(0)
 
 
 def test_clip_speed(ncobject, polygon):
