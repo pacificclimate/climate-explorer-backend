@@ -14,9 +14,9 @@ def add_routes(app):
     @app.route("/api/routed_streamflow/result", methods=['GET'])
     @app.route("/api/routed_streamflow/result/<id>", methods=['GET'])
     @app.route("/api/routed_streamflow/result/<id>/<data_type>", methods=['GET'])
-    @app.route("/api/routed_streamflow/result/<id>/<data_type>&<params>", methods=['GET'])
-    def routed_streamflow_result(id=None, data_type=None, params=None):
-        return ce.api.routed_streamflow.call(db.session, "result", id, data_type, params)
+    @app.route("/api/routed_streamflow/result/<id>/<data_type>/<constraints>", methods=['GET'])
+    def routed_streamflow_result(id=None, data_type=None, constraints=None):
+        return ce.api.routed_streamflow.call(db.session, "result", id, data_type, constraints)
     
     @app.route("/api/routed_streamflow/hydromodel_output", methods=['GET'])
     @app.route("/api/routed_streamflow/hydromodel_output/<id>", methods=['GET'])
@@ -24,7 +24,7 @@ def add_routes(app):
         return ce.api.routed_streamflow.call(db.session, "hydromodel_output", id)
     
     @app.route("/api/relations/<relation_type>", methods=['GET'])
-    def routed_streamflow_relations(relation_type=None):
+    def routed_streamflow_relations(relation_type=None, constraints=None):
         return "Relation pages aren't implemented yet"
 
     @app.after_request

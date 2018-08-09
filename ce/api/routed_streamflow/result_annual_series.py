@@ -6,13 +6,13 @@ could be used for aggregation.
 Returns a JSON object with separate arrays of timestamps and values:
 {
   "id": "0", 
-  "startTime": "Jan 1 1950", 
+  "startTime": "1950-01-01T00:00:00", 
   "times": [
-    1950, 
-    1951, 
-    1952, 
-    1953, 
-    1954
+    "1950-07-02T00:00:00",
+    "1951-07-02T00:00:00",
+    "1952-07-02T00:00:00",
+    "1953-07-02T00:00:00",
+    "1954-07-02T00:00:00",
   ], 
   "timeIncrement": "1 year", 
   "values": [
@@ -29,7 +29,7 @@ Returns a JSON object with separate arrays of timestamps and values:
 
 from modelmeta import DataFile
 from ce.api.util import open_nc
-from ce.api.routed_streamflow.streamflow_helpers import result_file_list
+from ce.api.routed_streamflow.streamflow_helpers import result_file_list, days_per_year
 import numpy as np
 import datetime
 
@@ -69,10 +69,3 @@ def annual_series(file, aggregate):
     
     return series
 
-def days_per_year(year):
-    if year % 4 != 0:
-        return 365
-    elif year % 100 == 0 and year % 400 != 0:
-        return 365
-    else:
-        return 366

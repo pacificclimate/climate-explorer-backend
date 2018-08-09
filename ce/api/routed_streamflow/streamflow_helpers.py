@@ -26,3 +26,14 @@ def base_api_url():
 def result_file_list():
         result_dir = '/storage/data/projects/comp_support/climate_explorer_data_prep/hydro/sample_data/set5/results'
         return list(map(lambda f: result_dir + '/' + f, sorted(os.listdir(result_dir))))
+
+
+#returns the number of days in a year.
+#TODO: replace this with something more pythonic using datetime
+def days_per_year(year):
+    if year % 4 != 0:
+        return 365
+    elif year % 100 == 0 and year % 400 != 0:
+        return 365
+    else:
+        return 366

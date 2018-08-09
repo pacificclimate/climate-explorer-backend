@@ -10,6 +10,7 @@ from ce.api.routed_streamflow.result_list import result_list
 from ce.api.routed_streamflow.result_metadata import result_metadata
 from ce.api.routed_streamflow.result_annual_series import result_annual_means
 from ce.api.routed_streamflow.result_annual_series import result_annual_max
+from ce.api.routed_streamflow.result_annual_cycle import result_annual_cycle
 from ce.api.routed_streamflow.hydromodel_output import hydromodel_output
 
 def call(session, resource, *args):
@@ -27,6 +28,8 @@ def call(session, resource, *args):
                 rv = result_annual_means(session, args[0])
             elif args[1] == "annualmax":
                 rv = result_annual_max(session, args[0])
+            elif args[1] == "annualcycle":
+                rv = result_annual_cycle(session, args[0], args[2])
             else:
                 rv = "unrecognized data request: {}".format(args[1])
     elif resource == "hydromodel_output":
