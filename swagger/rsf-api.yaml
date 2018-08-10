@@ -1,0 +1,487 @@
+openapi: 3.0.0
+info:
+  version: "1.1.0"
+  title: Routed streamflow backend API
+  description: Web service providing resources necessary to support routed streamflow web app
+  
+servers: 
+  - url: http://apis.pcic.uvic.ca
+  
+tags:
+  - name: Hydromodel outputs
+    description: |
+      Hydrological model outputs are used as inputs by the routed streamflow computation.
+    
+      Hydrological model outputs are gridded fields of baseflow and runoff. A set of hydrological model outputs (baseflow and runoff fields) is the result of a hydrological model run, which is a run of the hydrological model with particular input files and parameters.
+      
+      A hydrological model run and its outputs are characterized (for our purposes) by the following inputs to the hydrological model.
+    
+      - a specific hydrographic model - soil types, etc. defined over a gridded spatial field
+      
+      - a specific climate - a time series of gridded spatial fields of observed or simulated climate variables relevant to hydrology (e.g., temperature, precipitation)
+      
+      These characterizing inputs, and therefore the hydrological model run and its outputs, are uniquely identified by a set of metadata. For example, the hydrographic model has a name; the climate model has model and scenario identifiers. 
+    
+      Note This is a static resource collection in the sense that its content is determined by activities that are not controlled by the backend (specifically, running the VIC model, and indexing the results of those runs in the database).
+
+  - name: Orders
+    description: |
+        Since the routed streamflow computation is time consuming, its results are in general not available immediately. (Results may be available immediately if it has been requested recently and is still in the results cache.) Therefore we introduce the order system as an intermediary between the request and the result proper. 
+        
+        In terms of the actual routed streamflow data that is computed and delivered, matching orders (containing the same parameters) will be fulfilled by identical streamflow data. 
+        
+        However, because of of asynchrony and caching, matching orders (containing the same parameters) may be fulfilled by different result resources (represented by the /routed_streamflows resource collection) as result resources become invalidated in the cache. In other words, if a result has to be regenerated, it is a different resource that contains identical data computed at a different time.
+
+
+  - name: Results
+    description: |
+      A result resource represents result of a routed streamflow computation. 
+      
+      Computing a result is time consuming. Therefore a result may be in a pending status (computation not complete) state. 
+      
+      Result data is bulky. Therefore result data is maintained in a cache, and a completed result may be in-cache (status ready) or invalidated (out of cache; status invalidated).
+      
+      Over time, result data for a single set of routed streamflow computation parameters may be computed and cached, then invalidated (removed from cache), then recomputed and cached again, etc. The actual data computed is identical for matching sets of streamflow computation parameters, but they are actually distinct objects. Therefore result resources that represent different (re)computations of the same data are distinct, i.e, have different URIs.
+  
+
+paths:
+
+  ### Hydromodel outputs
+  
+  /hydromodel_output:
+    get:
+      summary: Get descriptions of all VIC hydrological model outputs available for driving streamflow modelling.
+      tags:
+        - Hydromodel outputs
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/HydromodelOutputMetadata'
+
+  ### Orders
+  
+  /routed_streamflow/order:
+    post:
+      summary: Create a new order for the result of a routed streamflow computation
+      tags:
+        - Orders
+      requestBody:
+        description: Parameters defining a routed streamflow order.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutedStreamflowOrderStateNew'
+      responses:
+        201:
+          description: Success. A new order has been created.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of newly created order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowOrder'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+          
+    get:
+      summary: Get a list of all currently pending orders for routed streamflow computations, filtered by user
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowOrderList'
+        
+                
+  /routed_streamflow/order/{id}:
+    get:
+      summary: Get existing routed streamflow order
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowOrder'
+        404:
+          $ref: '#/components/responses/NotFound'
+            
+
+    delete:
+      summary: Cancel a routed streamflow order
+      description: |
+        If the streamflow order is not cancellable (not in pending status), response status is 409 Conflict.
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        204:
+          $ref: '#/components/responses/NoContent'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+
+  ### Results
+  
+  /routed_streamflow/result:
+    get:
+      summary: List currently ready routed streamflow results
+      tags:
+        - Results
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowResultList'
+
+  /routed_streamflow/result/{id}:
+    get:
+      summary: Get metadata of a routed streamflow result
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowResult'
+        404:
+          $ref: '#/components/responses/NotFound'
+          
+    delete:
+      summary: Deprecate a routed streamflow result (mark as no longer needed)
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        204:
+          $ref: '#/components/responses/NoContent'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+        409:
+          $ref: '#/components/responses/Conflict'
+      
+    
+  /routed_streamflow/result/{id}/timeseries:
+    get:
+      summary: Get timeseries data of an existing routed streamflow result
+      description: |
+        If the streamflow result is not in ready status, response status is 404 Not Found.
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutedStreamflowResultTimeseries'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+        
+components:
+  parameters:
+    orderId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique id of an order resource.
+      
+    resultId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique id of result resource.
+      
+    userId:
+      name: userid
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Id of user.
+      
+  responses:
+    Conflict:
+      description: Attempt to put resource into impossible, inconsistent, or unavailable state.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NoContent:
+      description: No content.
+      
+    NotFound:
+      description: The specified resource was not found.
+      content: 
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+                
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'     
+            
+  schemas:
+    Error:
+      description: Generic error response body
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+      example:
+        code: '404'
+        message: you idiot
+
+    URI:
+      description: URI property
+      type: object
+      properties:
+        uri:
+          type: string
+      
+    HypermediaLink:
+      description: Annotated hypermedia link to a related resource
+      type: object
+      properties:
+        rel:
+          type: string
+        uri:
+          type: string
+      required:
+        - rel
+        - uri
+
+    HypermediaLinkList:
+      description: List of annotated hypermedia links to related resources
+      type: array
+      items:
+        $ref: '#/components/schemas/HypermediaLink'
+        
+    HydromodelOutputMetadataId:    
+      description: Unique id of hydromodel output that drives a routed streamflow computation
+      type: integer
+      example: 4
+    
+    HydromodelOutputMetadata:
+      description: Metadata for a hydrological model output file
+      type: object
+      properties:
+        hydromodel_output_metadata_id:
+          $ref: '#/components/schemas/HydromodelOutputMetadataId'
+        model_definition:
+          type: object
+          properties:
+            name:
+              type: string
+              example: A
+            description:
+              type: string
+              example: The one and only hydrographic model of this region
+            other metadata:
+              type: string
+              example: ...
+        climate_input:
+          type: object
+          properties:
+            model:
+              type: string
+              example: model
+            scenario:
+              type: string
+              example: scenario
+            other metadata:
+              type: string
+              example: ...
+        
+    RoutedStreamflowOrderStateNew:
+      description: Defines a new order for a routed streamflow result set.
+      type: object
+      properties:
+        hydromodel_output_metadata_id:
+          $ref: '#/components/schemas/HydromodelOutputMetadataId'
+        longitude:
+          type: number
+          example: -123.5
+        latitude:
+          type: number
+          example: 48.5
+        notification:
+          type: object
+          properties:
+            method:
+              type: string
+              enum: [email]
+            address:
+              type: string
+              example: example@uvic.ca
+        
+    RoutedStreamflowOrderState:
+      description: State for a routed streamflow order
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+              example: 5
+            status:
+              type: string
+              enum: [pending, cancelled, fulfilled, deprecated]
+              example: fulfilled
+        - $ref: '#/components/schemas/RoutedStreamflowOrderStateNew'
+        
+    RoutedStreamflowOrderHypermedia:
+      description: Hypermedia for a routed streamflow order
+      type: object
+      properties:
+        links:
+          allOf: 
+            - $ref: '#/components/schemas/HypermediaLinkList'
+            - example:
+                - rel: 'self'
+                  uri: 'http://apis.paccifcclimate.org/routed_streamflow/order/5'
+                - rel: 'http://apis.paccifcclimate.org/relations/routed_streamflow/order/cancel'
+                  uri: 'http://apis.paccifcclimate.org/routed_streamflow/order/5'
+                - rel: 'http://apis.paccifcclimate.org/relations/routed_streamflow/result/metadata'
+                  uri: 'http://apis.paccifcclimate.org/routed_streamflow/result/6'
+                - rel: 'http://apis.paccifcclimate.org/relations/routed_streamflow/result/timeseries'
+                  uri: 'http://apis.paccifcclimate.org/routed_streamflow/result/6/timeseries'
+
+    RoutedStreamflowOrder:
+      description: Representation of a routed streamflow order - state + hypermedia.
+      allOf:
+        - $ref: '#/components/schemas/RoutedStreamflowOrderState'
+        - $ref: '#/components/schemas/RoutedStreamflowOrderHypermedia'
+
+    RoutedStreamflowOrderListItem:
+      description: List of routed streamflow results
+      type: object
+      allOf:
+        - type: object
+          properties:
+            uri:
+              type: string
+              description: URI of routed streamflow order
+        - $ref: '#/components/schemas/RoutedStreamflowOrderState'
+          
+    RoutedStreamflowOrderList:
+      description: List of routed streamflow results
+      type: array
+      items:
+        $ref: '#/components/schemas/RoutedStreamflowOrderListItem'
+
+    RoutedStreamflowResultState:
+      description: State describing a routed streamflow result
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [processing, ready, removed]
+          example: ready
+        hydromodel_output_metadata_id:
+          $ref: '#/components/schemas/HydromodelOutputMetadataId'
+        cell_x:
+          description: x-index of routed streamflow cell
+          type: integer
+          example: 27
+        cell_y: 
+          description: y-index of routed streamflow cell
+          type: integer
+          example: 33
+
+    RoutedStreamflowResultHypermedia:
+      type: object
+      properties:
+        links:
+          allOf: 
+            - $ref: '#/components/schemas/HypermediaLinkList'
+            - example:
+              - rel: 'self'
+                uri: 'http://apis.paccifcclimate.org/routed_streamflow/result/6'
+              - rel: 'http://apis.paccifcclimate.org/relations/routed_streamflow/result/deprecate'
+                uri: 'http://apis.paccifcclimate.org/routed_streamflow/result/6'
+              - rel: 'http://apis.paccifcclimate.org/relations/routed_streamflow/result/timeseries'
+                uri: 'http://apis.paccifcclimate.org/routed_streamflow/result/6/timeseries'
+    
+    RoutedStreamflowResult:
+      description: Metadata and hyperlinks for a single routed streamflow result
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/RoutedStreamflowResultState'
+        - $ref: '#/components/schemas/RoutedStreamflowResultHypermedia'
+
+    RoutedStreamflowResultListItem:
+      description: Item in list of routed streamflow results
+      type: object
+      allOf:
+        - type: object
+          properties:
+            uri:
+              type: string
+              description: URI of routed streamflow result
+        - $ref: '#/components/schemas/RoutedStreamflowResultState'
+          
+    RoutedStreamflowResultList:
+      description: List of routed streamflow results
+      type: array
+      items:
+        $ref: '#/components/schemas/RoutedStreamflowResultListItem'
+
+    RoutedStreamflowResultTimeseries:
+      description: Timeseries for a routed streamflow result set
+      type: object
+      properties:
+        startTime:
+          type: string
+        timeIncrement:
+          type: string
+        values:
+          type: array
+          items:
+            type: number
