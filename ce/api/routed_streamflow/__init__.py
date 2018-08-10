@@ -12,6 +12,7 @@ from ce.api.routed_streamflow.result_annual_series import result_annual_means
 from ce.api.routed_streamflow.result_annual_series import result_annual_max
 from ce.api.routed_streamflow.result_annual_cycle import result_annual_cycle
 from ce.api.routed_streamflow.hydromodel_output import hydromodel_output
+from ce.api.routed_streamflow.health import health
 
 def call(session, resource, *args):
     rv = ""
@@ -37,6 +38,8 @@ def call(session, resource, *args):
             rv = hydromodel_output(session)
         else:
             return "Individual hydromodel pages are not implemented yet"
+    elif resource == "health":
+        return health() #this endpoint sets its own HTTP code.
     else:
         rv = "Unrecognized resource: {}" #need to 400 or something here.
             

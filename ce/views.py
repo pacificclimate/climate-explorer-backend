@@ -22,6 +22,10 @@ def add_routes(app):
     @app.route("/api/routed_streamflow/hydromodel_output/<id>", methods=['GET'])
     def routed_streamflow_hydromodel_output(id=None):
         return ce.api.routed_streamflow.call(db.session, "hydromodel_output", id)
+
+    @app.route("/api/routed_streamflow/health", methods=['GET'])
+    def routed_streamflow_health():
+        return ce.api.routed_streamflow.call(db.session, "health")
     
     @app.route("/api/relations/<relation_type>", methods=['GET'])
     def routed_streamflow_relations(relation_type=None, constraints=None):
