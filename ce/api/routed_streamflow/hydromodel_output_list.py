@@ -7,7 +7,7 @@ from modelmeta import DataFile
 #inspecting netCDF files, but the files in question have gotten corrupted
 #somehow. So for now, it's 100% canned data. :/
 
-def hydromodel_output(sesh):
+def hydromodel_output_list(sesh):
     
     #results.nc has gotten corrupted somehow (?) so return canned answers
     model_definition = {}

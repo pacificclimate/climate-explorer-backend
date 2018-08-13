@@ -14,26 +14,30 @@ def result_metadata(sesh, id):
     result = {}
     with open_nc(result_file) as nc:
         result["status"] = "ready"
-        result["hydromodel_output_metadata_id"] = 4
         result["cell_x"] = int(nc.variables["outlet_x_ind"][0])
         result["cell_y"] = int(nc.variables["outlet_y_ind"][0])
+        result["longitude"] = float(nc.variables["lon"][0])
+        result["latitude"] = float(nc.variables["lat"][0])
                 
         links = []
-        #todo: have rel be links, like in Rod's documents        
         links.append({
             "rel": "self",
             "uri": request.url
             })
         links.append({
-            "rel": base_api_url() + "/relations/timeseries",
-            "uri": request.url + "/timeseries"
+            "rel": "annual mean",
+            "uri": request.url + "/annualmean"
             })
         links.append({
-            "rel": "deprecate",
-            "uri": request.url + "/deprecate"
+            "rel": "annual max",
+            "uri": request.url + "/annualmax"
             })
         links.append({
-            "rel": base_api_url() + "/relations/hydromodel_output",
+            "rel": "annual cycle",
+            "uri": request.url + "/annualcycle"
+            })
+        links.append({
+            "rel": "hydromodel_output",
             "uri": base_streamflow_url() + "/hydromodel_output/0"})
         
         result["links"] = links

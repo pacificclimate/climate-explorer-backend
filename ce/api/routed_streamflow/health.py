@@ -38,12 +38,14 @@ def check_ncdf_datastore(directory):
                 not_nc.append(f)
             
         status["metricValue"] = len(nc_files)    
-        if len(not_openable) > 0 or len(not_nc) > 0:
+        if len(not_openable) > 0 or len(not_nc) > 0 or len(nc_files) == 0:
             status["status"] = "warning"
             output = []
+            if len(nc_files) == 0:
+                output.append("WARNING: Directory contains no valid netCDF files")
             if len(not_openable) > 0:
                 output.append("WARNING: Directory contains misformatted netCDF files: {}".format(not_openable))
-            if len(nc_files) > 0:
+            if len(not_nc) > 0:
                 output.append("WARNING: Directory contains non-netCDF files: {}".format(not_nc))
             status["output"] = output
             
@@ -57,7 +59,7 @@ def check_ncdf_datastore(directory):
     return status
     
 #check to make sure the result file directory exists and files in it
-#can be opened. (Will someday be replaced by a database connection check)   
+#can be opened. (Will someday be replaced by a database connection check)
 def result_files():
     return check_ncdf_datastore('/storage/data/projects/comp_support/climate_explorer_data_prep/hydro/sample_data/set5/results')
     
@@ -65,7 +67,6 @@ def result_files():
 #files in it can be opened. (Will be replaced by a database check)    
 def hydromodel_output_files():
     return check_ncdf_datastore('/storage/data/projects/comp_support/climate_explorer_data_prep/hydro/sample_data/set5/hydromodel_output')
-
 
 #check to see that there's enough memory available to open a typical
 #file.
@@ -82,7 +83,7 @@ def memory():
         status["status"] = "pass"
         status["output"] = ""
     elif status["metricValue"] > 1:
-        status["status"] = "warn"
+        status["status"] = "warning"
         status["output"] = "WARNING: Available memory low"
     else:
         status["status"] = "fail"
@@ -100,7 +101,7 @@ def health():
     fails = []
     for c in components:
         comp_status = c()
-        if comp_status["status"] == "warn":
+        if comp_status["status"] == "warning":
             warnings.append(comp_status["output"])
         elif comp_status["status"] == "fail":
             fails.append(comp_status["output"])
@@ -127,6 +128,5 @@ def health():
       content_type='application/json',
       status=http_status
       )
-    
-    
+
     return resp
