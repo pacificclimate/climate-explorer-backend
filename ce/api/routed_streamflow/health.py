@@ -2,9 +2,52 @@
 Health endpoint - returns information about the service, and
 the services it depends on.
 
-Right now, the service isn't hooked up to most of its pieces, (database,
-queue, etc) so it just returns information aboit available memory and
-files.
+Right now, the service isn't fully integrated with the database, so the only
+database information it checks is whether it has a valid database connection, 
+as well as available memory and filestore info.
+
+Example output:
+{
+  "status": "warning", 
+  "output": "WARNING: Directory contains misformatted netCDF files: ['results.nc']", 
+  "notes": "0 failures and 1 warnings from sub-services", 
+  "version": "0.0.1",
+  "details": {
+    "result_files": {
+      "output": "", 
+      "status": "pass", 
+      "metricUnit": "files", 
+      "metricValue": 5, 
+      "componentType": "datastore", 
+      "time": "2018-08-13T11:39:40.482048"
+    }, 
+    "hydromodel_output_files": {
+      "output": "WARNING: Directory contains misformatted netCDF files: ['results.nc']", 
+      "status": "warning", 
+      "metricUnit": "files", 
+      "metricValue": 1, 
+      "componentType": "datastore", 
+      "time": "2018-08-13T11:39:40.628266"
+    }, 
+    "memory": {
+      "output": "", 
+      "status": "pass", 
+      "metricUnit": "MB", 
+      "metricValue": 959.225856, 
+      "componentType": "system", 
+      "time": "2018-08-13T11:39:40.684203"
+    }
+    "database": {
+      "metricName": "connections",
+      "componentType": "datastore",
+      "status": "pass",
+      "output": "",
+      "time": "2018-08-13T11:39:40.303659",
+      "metricValue": 1,
+    }
+  } 
+}
+
 '''
 from json import dumps
 from werkzeug.wrappers import Response
@@ -47,7 +90,7 @@ def check_ncdf_datastore(directory):
                 output.append("WARNING: Directory contains misformatted netCDF files: {}".format(not_openable))
             if len(not_nc) > 0:
                 output.append("WARNING: Directory contains non-netCDF files: {}".format(not_nc))
-            status["output"] = output
+            status["output"] = '\n'.join(output)
             
         else:
             status["status"] = "pass"
@@ -60,17 +103,17 @@ def check_ncdf_datastore(directory):
     
 #check to make sure the result file directory exists and files in it
 #can be opened. (Will someday be replaced by a database connection check)
-def result_files():
+def result_files(session):
     return check_ncdf_datastore('/storage/data/projects/comp_support/climate_explorer_data_prep/hydro/sample_data/set5/results')
     
 #check to make sure that the hydromodel output directory exists and 
 #files in it can be opened. (Will be replaced by a database check)    
-def hydromodel_output_files():
+def hydromodel_output_files(session):
     return check_ncdf_datastore('/storage/data/projects/comp_support/climate_explorer_data_prep/hydro/sample_data/set5/hydromodel_output')
 
 #check to see that there's enough memory available to open a typical
 #file.
-def memory():
+def memory(session):
     status = {}
     available_memory = psu.virtual_memory()[1]
     status["metricValue"] = available_memory / 1000000
@@ -91,16 +134,38 @@ def memory():
     
     return status
 
-components = [result_files, hydromodel_output_files, memory]
+def database(session):
+    status = {}
+    status["componentType"] = "datastore"
+    status["metricName"] = "connections"
+    status["time"] = datetime.datetime.now().isoformat()
+    db_connected = True
+    try:
+        result = session.execute("select 1 as test_select")
+        result.close()
+    except Exception:
+        db_connected = False
 
-def health():
+    if db_connected:
+        status["status"] = "pass"
+        status["metricValue"] = 1 #not actually try, but not sure how to get actual number
+        status["output"] = ""
+    else:
+        status["status"] = "fail"
+        status["output"] = "ERROR: No database connections available"
+        status["metricValue"] = 0
+    return status
+
+components = [result_files, hydromodel_output_files, memory, database]
+
+def health(session):
     status = {}
     details = {}
     notes = []
     warnings = []
     fails = []
     for c in components:
-        comp_status = c()
+        comp_status = c(session)
         if comp_status["status"] == "warning":
             warnings.append(comp_status["output"])
         elif comp_status["status"] == "fail":
@@ -109,10 +174,10 @@ def health():
 
     if len(fails) > 0:
         status["status"] = "fail"
-        status["output"] = fails
+        status["output"] = '\n'.join(fails)
     elif len(warnings) > 0:
         status["status"] = "warning"
-        status["output"] = warnings
+        status["output"] = '\n'.join(warnings)
     else:
         status["status"] = "pass"
         status["output"] = ""
