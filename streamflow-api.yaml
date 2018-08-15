@@ -78,6 +78,23 @@ paths:
         404:
           $ref: '#/components/responses/404NotFound'
 
+  /hydromodel_outputs/{id}/bounds:
+    get:
+      summary: Get bounds of a specific VIC hydrological model output.
+      tags:
+        - Hydromodel outputs
+      parameters:
+        - $ref: '#/components/parameters/hydromodelOutputId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HydromodelOutputBounds'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
   ### Orders
 
   /streamflow/orders:
@@ -451,12 +468,20 @@ components:
             experiment:
               type: string
               example: rcp85
+            cell_x_size:
+              type: number
+              example: 3.75
+              description: Size of grid cells in X (longitude) direction.
+            cell_y_size:
+              type: number
+              example: 2.5
+              description: Size of grid cells in Y (latitude) direction.
             etc:
               type: string
               example: ... more tbd ...
 
     HydromodelOutputHypermedia:
-      description: Hypermedia for a thing
+      description: Hypermedia for a hydromodel output.
       type: object
       properties:
         links:
@@ -465,12 +490,43 @@ components:
             - example:
                 - rel: 'self'
                   uri: 'http://apis.paccifcclimate.org/hydromodel_output/4'
+                - rel: 'bounds'
+                  uri: 'http://apis.paccifcclimate.org/hydromodel_output/4/bounds'
 
     HydromodelOutput:
       description: Full representation of a hydromodel output - state + hypermedia.
       allOf:
         - $ref: '#/components/schemas/HydromodelOutputState'
         - $ref: '#/components/schemas/HydromodelOutputHypermedia'
+
+    HydromodelOutputBounds:
+      description: Geographic bounds of hydromodel data set.
+      type: object
+      properties:
+        bounds:
+          type: object
+          description: GeoJSON defining the bounds
+        links:
+          - $ref: '#/components/schemas/HypermediaLinkList'
+      example:
+        bounds:
+          type: Feature
+          properties:
+            name: Columbia Basin
+            area: 1000000
+          geometry:
+            type: Polygon
+            coordinates:
+              -
+                - [-64.73, 32.31]
+                - [-80.19, 25.76]
+                - [-66.09, 18.43]
+                - [-64.73, 32.31]
+        links:
+          - rel: 'self'
+            uri: 'http://apis.paccifcclimate.org/hydromodel_output/4/bounds'
+          - rel: 'hydromodel_output'
+            uri: 'http://apis.paccifcclimate.org/hydromodel_output/4'
 
     # Lists (collections) of hydromodel outputs
 
