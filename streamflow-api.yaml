@@ -5,7 +5,7 @@ info:
   description: Web service providing resources necessary to support streamflow web app
 
 servers:
-  - url: http://services.pacificclimate.org
+  - url: https://services.pacificclimate.org
 
 tags:
   - name: Hydromodel outputs
@@ -492,9 +492,9 @@ components:
             - $ref: '#/components/schemas/HypermediaLinkList'
             - example:
                 - rel: 'self'
-                  uri: 'http://apis.paccifcclimate.org/hydromodel_output/4'
+                  uri: 'https://services.pacificclimate.org/hydromodel_output/4'
                 - rel: 'bounds'
-                  uri: 'http://apis.paccifcclimate.org/hydromodel_output/4/bounds'
+                  uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
 
     HydromodelOutput:
       description: Full representation of a hydromodel output - state + hypermedia.
@@ -527,9 +527,9 @@ components:
                 - [-64.73, 32.31]
         links:
           - rel: 'self'
-            uri: 'http://apis.paccifcclimate.org/hydromodel_output/4/bounds'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
           - rel: 'hydromodel_output'
-            uri: 'http://apis.paccifcclimate.org/hydromodel_output/4'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4'
 
     # Lists (collections) of hydromodel outputs
 
@@ -542,7 +542,7 @@ components:
             uri:
               type: string
               description: URI of hydromodel output
-              example: 'http://apis.paccifcclimate.org/hydromodel_output/4'
+              example: 'https://services.pacificclimate.org/hydromodel_output/4'
         - $ref: '#/components/schemas/HypermediaLinkList'
         - $ref: '#/components/schemas/HydromodelOutputState'
 
@@ -552,10 +552,10 @@ components:
       items:
         $ref: '#/components/schemas/HydromodelOutputListItem'
       example:
-        - uri: 'http://apis.paccifcclimate.org/hydromodel_output/3'
+        - uri: 'https://services.pacificclimate.org/hydromodel_output/3'
           model: "CanESM2"
           experiment: "rcp45"
-        - uri: 'http://apis.paccifcclimate.org/hydromodel_output/4'
+        - uri: 'https://services.pacificclimate.org/hydromodel_output/4'
           model: "CanESM2"
           experiment: "rcp85"
 
@@ -626,11 +626,11 @@ components:
               address: example@uvic.ca
             links:
               - rel: 'self'
-                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
               - rel: 'cancel'
-                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
               - rel: 'hydromodel_output'
-                uri: 'http://apis.paccifcclimate.org/hydromodel_outputs/4'
+                uri: 'https://services.pacificclimate.org/hydromodel_outputs/4'
 
     StreamflowOrderGeneric:
       description: Representation of a generic streamflow order.
@@ -651,19 +651,19 @@ components:
               address: example@uvic.ca
             links:
               - rel: 'self'
-                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
               - rel: 'cancel'
-                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
               - rel: 'hydromodel_output'
-                uri: 'http://apis.paccifcclimate.org/hydromodel_outputs/4'
+                uri: 'https://services.pacificclimate.org/hydromodel_outputs/4'
               - rel: 'results/metadata'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6'
               - rel: 'results/annual-max'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-max'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
               - rel: 'results/annual-mean'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-mean'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
               - rel: 'results/annual-cycle'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-cycle'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle'
 
     # List of streamflow orders
 
@@ -676,7 +676,7 @@ components:
             uri:
               type: string
               description: URI of streamflow order
-              example: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+              example: 'https://services.pacificclimate.org/streamflow/orders/5'
         - $ref: '#/components/schemas/StreamflowOrderState'
 
     StreamflowOrderList:
@@ -685,14 +685,14 @@ components:
       items:
         $ref: '#/components/schemas/StreamflowOrderListItem'
       example:
-        - uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+        - uri: 'https://services.pacificclimate.org/streamflow/orders/5'
           hydromodel_output_id: 4
           longitude: -123.5
           latitude: 48.5
           notification:
             method: email
             address: abc@example.ca
-        - uri: 'http://apis.paccifcclimate.org/streamflow/orders/6'
+        - uri: 'https://services.pacificclimate.org/streamflow/orders/6'
           hydromodel_output_id: 5
           longitude: -120.0
           latitude: 50.2
@@ -743,15 +743,15 @@ components:
             - $ref: '#/components/schemas/HypermediaLinkList'
             - example:
               - rel: 'self'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6'
               - rel: 'deprecate'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6'
               - rel: 'annual-cycle'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-cycle'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle'
               - rel: 'annual-max'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-max'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
               - rel: 'annual-mean'
-                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-mean'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
 
     StreamflowResult:
       description: Metadata and hyperlinks for a single streamflow result
@@ -771,7 +771,7 @@ components:
             uri:
               type: string
               description: URI of streamflow result
-              example: 'http://apis.paccifcclimate.org/streamflow/results/6'
+              example: 'https://services.pacificclimate.org/streamflow/results/6'
         - $ref: '#/components/schemas/StreamflowResultState'
 
     StreamflowResultList:
@@ -780,12 +780,12 @@ components:
       items:
         $ref: '#/components/schemas/StreamflowResultListItem'
       example:
-        - uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
+        - uri: 'https://services.pacificclimate.org/streamflow/results/6'
           status: ready
           hydromodel_output_id: 4
           cell_x: 27
           cell_y: 33
-        - uri: 'http://apis.paccifcclimate.org/streamflow/results/7'
+        - uri: 'https://services.pacificclimate.org/streamflow/results/7'
           status: ready
           hydromodel_output_id: 5
           cell_x: 18
@@ -841,13 +841,13 @@ components:
             - $ref: '#/components/schemas/HypermediaLinkList'
             - example:
                 - rel: 'self'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
-                - rel: 'http://apis.paccifcclimate.org/relations/streamflow/orders/cancel'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
-                - rel: 'http://apis.paccifcclimate.org/relations/streamflow/results/metadata'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
-                - rel: 'http://apis.paccifcclimate.org/relations/streamflow/results/timeseries'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6/timeseries'
+                  uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+                - rel: 'https://services.pacificclimate.org/relations/streamflow/orders/cancel'
+                  uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+                - rel: 'https://services.pacificclimate.org/relations/streamflow/results/metadata'
+                  uri: 'https://services.pacificclimate.org/streamflow/results/6'
+                - rel: 'https://services.pacificclimate.org/relations/streamflow/results/timeseries'
+                  uri: 'https://services.pacificclimate.org/streamflow/results/6/timeseries'
 
     Thing:
       description: Representation of a thing - state + hypermedia.
