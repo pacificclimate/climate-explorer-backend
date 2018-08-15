@@ -682,6 +682,18 @@ components:
           description: y-index of streamflow cell
           type: integer
           example: 33
+        start_date:
+          description: Date-time of first timestep in streamflow results (ISO 8601)
+          type: string
+          example: '2000-01-01'
+        end_date:
+          description: Date-time of last timestep in streamflow results (ISO 8601)
+          type: string
+          example: '2100-12-31'
+        time_resolution:
+          description: Interval between timesteps in streamflow results (ISO 8601 duration)
+          type: string
+          example: 'PD1'
 
     StreamflowResultHypermedia:
       type: object
