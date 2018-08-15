@@ -24,7 +24,6 @@ Returns a JSON object with separate arrays of timestamps and values:
   ], 
   "aggregator": "maximum"
 }
-
 '''
 
 from modelmeta import DataFile

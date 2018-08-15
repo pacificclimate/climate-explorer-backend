@@ -1,3 +1,32 @@
+''' Hydromodel output metadata - provides metadata about the
+models used to generate the output, as well as spatial and chronological
+coverage.
+
+Example output:
+{
+  "hydromodel_output_metadata_id": 0, 
+  "time": {
+    "start": "1950-01-01T00:00:00", 
+    "increment": "1 day", 
+    "stop": "2100-01-01T00:00:00"
+  }, 
+  "model_definition": {
+    "description": "Variable Infiltration Capacity Model GL with glacier dynamics", 
+    "name": "VIC (Built from source: v0.0.2-142-g981d56a1bb)."
+  }, 
+  "climate_input": {
+    "run": "r1i1p1", 
+    "scenario": "historical+rcp45", 
+    "model": "ACCESS1-0"
+  }, 
+  "grid": {
+    "latstep": 0.0625, 
+    "longitude": [-124.96875, -109.71875], 
+    "latitude": [41.03125, 53.15625], 
+    "lonstep": 0.0625
+  }
+}
+'''
 from modelmeta import DataFile
 
 #The final version of this query will get all its information

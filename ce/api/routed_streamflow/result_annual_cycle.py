@@ -1,8 +1,13 @@
 '''Endpoint that yields mean daily streamflow values over the specified period into
-monthly values representing an annual cycle. If no period is specified, all available
-timesteps will be used. If only one value is given, that year will be used.
+monthly values representing an annual cycle. If no period is specified, the full
+temporal extent of the file will be used. If only one value is given, that 
+year will be used.
+Valid URIs:
+  /result/0/annualcycle/
+  /result/0/annualcycle/1980
+  /result/0/annualcycle/1980-2010
 
-Example:
+Example output:
 {
   "id": "0", 
   "means": [
@@ -36,8 +41,6 @@ Example:
     "1995-12-15T00:00:00"
   ]
 }
-
-
 '''
 
 from modelmeta import DataFile

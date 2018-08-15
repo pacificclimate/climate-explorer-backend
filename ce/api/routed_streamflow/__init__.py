@@ -1,7 +1,17 @@
-''' PCIC Climate Explorer streamflow API module'''
+''' PCIC Climate Explorer routed streamflow API module: a RESTful API 
+that serves modeled streamflow data.
+
+Resources:
+  * /hydromodel_output - datasets containing baseflow and runoff that can be 
+    to generated routed streamflow
+  * /result - a dataset containing routed streamflow data
+      - annual mean - annual-resolution timeseries with the mean streamflow for each year  
+      - annual max - annual-resolution timeseries with the max streamflow for each year
+      - annual cycle - returns average daily streamflow for each month over the selected period
+  * /health - reports on whether all parts of the system are working
+'''
 
 from datetime import datetime
-
 from json import dumps
 from werkzeug.wrappers import Response
 from flask import request
@@ -20,7 +30,7 @@ def call(session, resource, *args):
     status = 200
 
     #todo: handle the case where a nonexistant member of a valid resource type
-    #is specified.
+    #is specified, like /result/banana or the like.
     #todo: handle cases where extra arguments are supplied (but not 
     #needed or checked for)
     if resource == "result":
@@ -49,7 +59,7 @@ def call(session, resource, *args):
             rv = "Unrecognized hydromodel output request: {}"
             status = 404
     elif resource == "health":
-        return health() #this endpoint sets its own HTTP code.
+        return health(session) #this endpoint sets its own HTTP code.
     else:
         rv = "Unrecognized resource: {}"
         status = 404
