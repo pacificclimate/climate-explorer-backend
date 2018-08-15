@@ -120,7 +120,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StreamflowOrder'
+                $ref: '#/components/schemas/StreamflowOrderNew'
         401:
           $ref: '#/components/responses/401Unauthorized'
 
@@ -142,6 +142,9 @@ paths:
   /streamflow/orders/{id}:
     get:
       summary: Get existing streamflow order
+      description: |
+        Content of the `links` property depends on the value of the `status` property.
+        If `status /= 'fulfilled'`, the data links are absent.
       tags:
         - Orders
       parameters:
@@ -152,7 +155,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StreamflowOrder'
+                $ref: '#/components/schemas/StreamflowOrderGeneric'
         404:
           $ref: '#/components/responses/404NotFound'
 
@@ -589,7 +592,6 @@ components:
           properties:
             id:
               type: integer
-              example: 5
             status:
               type: string
               enum: [pending, cancelled, fulfilled, deprecated]
@@ -601,29 +603,67 @@ components:
       type: object
       properties:
         links:
-          allOf:
-            - $ref: '#/components/schemas/HypermediaLinkList'
-            - example:
-                - rel: 'self'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
-                - rel: 'cancel'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
-                - rel: 'hydromodel_output'
-                  uri: 'http://apis.paccifcclimate.org/hydromodel_outputs/4'
-                - rel: 'results/metadata'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
-                - rel: 'results/annual-max'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-max'
-                - rel: 'results/annual-mean'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-mean'
-                - rel: 'results/annual-cycle'
-                  uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-cycle'
+          $ref: '#/components/schemas/HypermediaLinkList'
 
     StreamflowOrder:
-      description: Representation of a streamflow order - state + hypermedia.
+      description: Representation of a streamflow order = state + hypermedia.
       allOf:
         - $ref: '#/components/schemas/StreamflowOrderState'
         - $ref: '#/components/schemas/StreamflowOrderHypermedia'
+
+    StreamflowOrderNew:
+      description: Representation of a new streamflow order.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/StreamflowOrder'
+        - example:
+            id: 5
+            status: pending
+            longitude: -123.5
+            latitude: 48.5
+            notification:
+              method: email
+              address: example@uvic.ca
+            links:
+              - rel: 'self'
+                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+              - rel: 'cancel'
+                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+              - rel: 'hydromodel_output'
+                uri: 'http://apis.paccifcclimate.org/hydromodel_outputs/4'
+
+    StreamflowOrderGeneric:
+      description: Representation of a generic streamflow order.
+      type: object
+      # Using `allOf` here to include both schema and example should not be
+      # necessary. The `$ref` and `example` properties should be at the same
+      # level as `description`, `type`; but for some reason this fails in
+      # the Swagger editor.
+      allOf:
+        - $ref: '#/components/schemas/StreamflowOrder'
+        - example:
+            id: 5
+            status: fulfilled
+            longitude: -123.5
+            latitude: 48.5
+            notification:
+              method: email
+              address: example@uvic.ca
+            links:
+              - rel: 'self'
+                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+              - rel: 'cancel'
+                uri: 'http://apis.paccifcclimate.org/streamflow/orders/5'
+              - rel: 'hydromodel_output'
+                uri: 'http://apis.paccifcclimate.org/hydromodel_outputs/4'
+              - rel: 'results/metadata'
+                uri: 'http://apis.paccifcclimate.org/streamflow/results/6'
+              - rel: 'results/annual-max'
+                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-max'
+              - rel: 'results/annual-mean'
+                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-mean'
+              - rel: 'results/annual-cycle'
+                uri: 'http://apis.paccifcclimate.org/streamflow/results/6/annual-cycle'
 
     # List of streamflow orders
 
