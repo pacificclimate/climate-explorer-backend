@@ -507,7 +507,7 @@ components:
           type: object
           description: GeoJSON defining the bounds
         links:
-          - $ref: '#/components/schemas/HypermediaLinkList'
+          $ref: '#/components/schemas/HypermediaLinkList'
       example:
         bounds:
           type: Feature
