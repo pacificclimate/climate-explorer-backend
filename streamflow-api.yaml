@@ -411,6 +411,19 @@ components:
         uri:
           type: string
 
+    GridCellSize:
+      description: Size of a model grid cell
+      type: object
+      properties:
+        cell_x_size:
+          type: float
+          example: 3.75
+          description: Size of grid cell in X (longitude) direction.
+        cell_y_size:
+          type: float
+          example: 2.5
+          description: Size of grid cell in Y (latitude) direction.
+
     HypermediaLink:
       description: Annotated hypermedia link to a related resource
       type: object
@@ -485,14 +498,7 @@ components:
             experiment:
               type: string
               example: rcp85
-            cell_x_size:
-              type: number
-              example: 3.75
-              description: Size of grid cells in X (longitude) direction.
-            cell_y_size:
-              type: number
-              example: 2.5
-              description: Size of grid cells in Y (latitude) direction.
+        - $ref: '#/components/schemas/GridCellSize'
         - $ref: '#/components/schemas/TemporalBounds'
 
     HydromodelOutputHypermedia:
@@ -737,13 +743,22 @@ components:
             hydromodel_output_id:
               $ref: '#/components/schemas/HydromodelOutputId'
             cell_x:
+              description: x coordinate (longitude) of cell centre
+              type: float
+              example: -118.7
+            cell_y:
+              description: y coordinate (longitude) of cell centre
+              type: float
+              example: 54.25
+            cell_x_index:
               description: x-index of streamflow cell
               type: integer
               example: 27
-            cell_y:
+            cell_y_index:
               description: y-index of streamflow cell
               type: integer
               example: 33
+        - $ref: '#/components/schemas/GridCellSize'
         - $ref: '#/components/schemas/TemporalBounds'
 
     StreamflowResultHypermedia:
@@ -794,15 +809,23 @@ components:
         - uri: 'https://services.pacificclimate.org/streamflow/results/6'
           status: ready
           hydromodel_output_id: 4
-          cell_x: 27
-          cell_y: 33
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          cell_x: -118.7
+          cell_y: 54.2
+          cell_x_index: 27
+          cell_y_index: 33
           start_date: '2000-01-01'
           end_date: '2100-12-31'
         - uri: 'https://services.pacificclimate.org/streamflow/results/7'
           status: ready
           hydromodel_output_id: 5
-          cell_x: 18
-          cell_y: 99
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          cell_x: -123.7
+          cell_y: 60.8
+          cell_x_index: 18
+          cell_y_index: 99
           start_date: '2000-01-01'
           end_date: '2100-12-31'
 
