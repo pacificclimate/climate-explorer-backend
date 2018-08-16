@@ -429,6 +429,19 @@ components:
       items:
         $ref: '#/components/schemas/HypermediaLink'
 
+    TemporalBounds:
+      description: Metadata describing temporal bounds of a dataset.
+      type: object
+      properties:
+        start_date:
+          description: Date-time of first timestep in dataset (ISO 8601)
+          type: string
+          example: '2000-01-01'
+        end_date:
+          description: Date-time of last timestep in dataset (ISO 8601)
+          type: string
+          example: '2100-12-31'
+
     Timeseries:
       description: A time series, which is to say a set of values at specified times.
         Data points are (time[i], value[i]).
@@ -460,6 +473,7 @@ components:
 
     HydromodelOutputState:
       description: State for a hydromodel output. Contains complete state.
+      type: object
       allOf:
         - type: object
           properties:
@@ -479,9 +493,7 @@ components:
               type: number
               example: 2.5
               description: Size of grid cells in Y (latitude) direction.
-            etc:
-              type: string
-              example: ... more tbd ...
+        - $ref: '#/components/schemas/TemporalBounds'
 
     HydromodelOutputHypermedia:
       description: Hypermedia for a hydromodel output.
@@ -555,9 +567,17 @@ components:
         - uri: 'https://services.pacificclimate.org/hydromodel_output/3'
           model: "CanESM2"
           experiment: "rcp45"
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
         - uri: 'https://services.pacificclimate.org/hydromodel_output/4'
           model: "CanESM2"
           experiment: "rcp85"
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
 
     ### Streamflow orders
 
@@ -707,33 +727,24 @@ components:
     StreamflowResultState:
       description: State describing a streamflow result
       type: object
-      properties:
-        status:
-          type: string
-          enum: [processing, ready, removed]
-          example: ready
-        hydromodel_output_id:
-          $ref: '#/components/schemas/HydromodelOutputId'
-        cell_x:
-          description: x-index of streamflow cell
-          type: integer
-          example: 27
-        cell_y:
-          description: y-index of streamflow cell
-          type: integer
-          example: 33
-        start_date:
-          description: Date-time of first timestep in streamflow results (ISO 8601)
-          type: string
-          example: '2000-01-01'
-        end_date:
-          description: Date-time of last timestep in streamflow results (ISO 8601)
-          type: string
-          example: '2100-12-31'
-        time_resolution:
-          description: Interval between timesteps in streamflow results (ISO 8601 duration)
-          type: string
-          example: 'PD1'
+      allOf:
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [processing, ready, removed]
+              example: ready
+            hydromodel_output_id:
+              $ref: '#/components/schemas/HydromodelOutputId'
+            cell_x:
+              description: x-index of streamflow cell
+              type: integer
+              example: 27
+            cell_y:
+              description: y-index of streamflow cell
+              type: integer
+              example: 33
+        - $ref: '#/components/schemas/TemporalBounds'
 
     StreamflowResultHypermedia:
       type: object
@@ -785,11 +796,15 @@ components:
           hydromodel_output_id: 4
           cell_x: 27
           cell_y: 33
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
         - uri: 'https://services.pacificclimate.org/streamflow/results/7'
           status: ready
           hydromodel_output_id: 5
           cell_x: 18
           cell_y: 99
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
 
 
     # Streamflow result data
