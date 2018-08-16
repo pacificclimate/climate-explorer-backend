@@ -773,7 +773,7 @@ components:
               - rel: 'deprecate'
                 uri: 'https://services.pacificclimate.org/streamflow/results/6'
               - rel: 'annual-cycle'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/{startYear}-{endYear}'
               - rel: 'annual-max'
                 uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
               - rel: 'annual-mean'
