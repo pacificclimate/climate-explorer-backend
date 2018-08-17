@@ -800,26 +800,16 @@ components:
             cell_y:
               description: y coordinate (longitude) of cell centre
               type: number
-            cell_x_index:
-              description: x-index of streamflow cell
-              type: integer
-            cell_y_index:
-              description: y-index of streamflow cell
-              type: integer
           required:
             - status
             - hydromodel_output_id
             - cell_x
             - cell_y
-            - cell_x_index
-            - cell_y_index
           example:
             status: ready
             hydromodel_output_id: 4
             cell_x: -118.7
             cell_y: 54.25
-            cell_x_index: 27
-            cell_y_index: 33
         - $ref: '#/components/schemas/GridCellSize'
         - $ref: '#/components/schemas/TemporalBounds'
 
@@ -866,8 +856,6 @@ components:
           cell_y_size: 2.5
           cell_x: -118.7
           cell_y: 54.2
-          cell_x_index: 27
-          cell_y_index: 33
           start_date: '2000-01-01'
           end_date: '2100-12-31'
         - uri: 'https://services.pacificclimate.org/streamflow/results/7'
@@ -877,8 +865,6 @@ components:
           cell_y_size: 2.5
           cell_x: -123.7
           cell_y: 60.8
-          cell_x_index: 18
-          cell_y_index: 99
           start_date: '2000-01-01'
           end_date: '2100-12-31'
 
