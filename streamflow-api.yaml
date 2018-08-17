@@ -404,25 +404,31 @@ components:
         code: '404'
         message: Message giving details of problem
 
-    URI:
-      description: URI property
-      type: object
-      properties:
-        uri:
-          type: string
-
     GridCellSize:
       description: Size of a model grid cell
       type: object
       properties:
         cell_x_size:
-          type: float
-          example: 3.75
           description: Size of grid cell in X (longitude) direction.
+          type: number
         cell_y_size:
-          type: float
-          example: 2.5
           description: Size of grid cell in Y (latitude) direction.
+          type: number
+      required:
+        - cell_x_size
+        - cell_y_size
+      example:
+        cell_x_size: 3.75
+        cell_y_size: 2.5
+
+    ListItemUri:
+      type: object
+      properties:
+        uri:
+          description: URI of individual item listed
+          type: string
+      required:
+        - uri
 
     HypermediaLink:
       description: Annotated hypermedia link to a related resource
@@ -442,6 +448,15 @@ components:
       items:
         $ref: '#/components/schemas/HypermediaLink'
 
+    HypermediaLinks:
+      description: Standard property in representations that holds hypermedia links
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/HypermediaLinkList'
+      required:
+        - links
+
     TemporalBounds:
       description: Metadata describing temporal bounds of a dataset.
       type: object
@@ -449,11 +464,15 @@ components:
         start_date:
           description: Date-time of first timestep in dataset (ISO 8601)
           type: string
-          example: '2000-01-01'
         end_date:
           description: Date-time of last timestep in dataset (ISO 8601)
           type: string
-          example: '2100-12-31'
+      required:
+        - start_date
+        - end_date
+      example:
+        start_date: '2000-01-01'
+        end_date: '2100-12-31'
 
     Timeseries:
       description: A time series, which is to say a set of values at specified times.
@@ -493,32 +512,33 @@ components:
             hydromodel_output_id:
               $ref: '#/components/schemas/HydromodelOutputId'
             model:
+              description: Short identifier of model providing climate input to hydromodel
               type: string
-              example: CanESM2
             experiment:
+              description: Short identifier of experiment (emissions scenario) providing climate input to hydromodel
               type: string
-              example: rcp85
+          required:
+            - hydromodel_output_id
+            - model
+            - experiment
+          example:
+            hydromodel_output_id: 4
+            model: CanESM2
+            experiment: rcp85
         - $ref: '#/components/schemas/GridCellSize'
         - $ref: '#/components/schemas/TemporalBounds'
-
-    HydromodelOutputHypermedia:
-      description: Hypermedia for a hydromodel output.
-      type: object
-      properties:
-        links:
-          allOf:
-            - $ref: '#/components/schemas/HypermediaLinkList'
-            - example:
-                - rel: 'self'
-                  uri: 'https://services.pacificclimate.org/hydromodel_output/4'
-                - rel: 'bounds'
-                  uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
 
     HydromodelOutput:
       description: Full representation of a hydromodel output - state + hypermedia.
       allOf:
         - $ref: '#/components/schemas/HydromodelOutputState'
-        - $ref: '#/components/schemas/HydromodelOutputHypermedia'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        links:
+          - rel: 'self'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4'
+          - rel: 'bounds'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
 
     HydromodelOutputBounds:
       description: Geographic bounds of hydromodel data set.
@@ -529,6 +549,9 @@ components:
           description: GeoJSON defining the bounds
         links:
           $ref: '#/components/schemas/HypermediaLinkList'
+      required:
+        - bounds
+        - links
       example:
         bounds:
           type: Feature
@@ -555,13 +578,7 @@ components:
       description: Representation of a single item in a list of hydromodel outputs.
       type: object
       allOf:
-        - type: object
-          properties:
-            uri:
-              type: string
-              description: URI of hydromodel output
-              example: 'https://services.pacificclimate.org/hydromodel_output/4'
-        - $ref: '#/components/schemas/HypermediaLinkList'
+        - $ref: '#/components/schemas/ListItemUri'
         - $ref: '#/components/schemas/HydromodelOutputState'
 
     HydromodelOutputList:
@@ -590,17 +607,15 @@ components:
     # Individual streamflow orders
 
     StreamflowOrderStateNew:
-      description: Defines a new order for a streamflow result set.
+      description: Data required to define a new order for a streamflow result set.
       type: object
       properties:
         hydromodel_output_id:
           $ref: '#/components/schemas/HydromodelOutputId'
         longitude:
           type: number
-          example: -123.5
         latitude:
           type: number
-          example: 48.5
         notification:
           type: object
           properties:
@@ -609,7 +624,21 @@ components:
               enum: [email]
             address:
               type: string
-              example: example@uvic.ca
+          required:
+            - method
+            - address
+      required:
+        - hydromodel_output_id
+        - latitude
+        - longitude
+        - notification
+      example:
+        hydromodel_output_id: 4
+        longitude: -123.5
+        latitude: 48.5
+        notification:
+          method: email
+          address: example@uvic.ca
 
     StreamflowOrderState:
       description: State for a streamflow order
@@ -617,28 +646,25 @@ components:
         - type: object
           properties:
             id:
+              description: Unique id of streamflow order
               type: integer
             status:
+              description: See streamflow order state diagram.
               type: string
               enum: [pending, cancelled, fulfilled, deprecated]
-              example: fulfilled
+          required:
+            - id
+            - status
         - $ref: '#/components/schemas/StreamflowOrderStateNew'
-
-    StreamflowOrderHypermedia:
-      description: Hypermedia for a streamflow order
-      type: object
-      properties:
-        links:
-          $ref: '#/components/schemas/HypermediaLinkList'
 
     StreamflowOrder:
       description: Representation of a streamflow order = state + hypermedia.
       allOf:
         - $ref: '#/components/schemas/StreamflowOrderState'
-        - $ref: '#/components/schemas/StreamflowOrderHypermedia'
+        - $ref: '#/components/schemas/HypermediaLinks'
 
     StreamflowOrderNew:
-      description: Representation of a new streamflow order.
+      description: Representation of a newly created streamflow order.
       type: object
       allOf:
         - $ref: '#/components/schemas/StreamflowOrder'
@@ -697,12 +723,7 @@ components:
       description: List of streamflow results
       type: object
       allOf:
-        - type: object
-          properties:
-            uri:
-              type: string
-              description: URI of streamflow order
-              example: 'https://services.pacificclimate.org/streamflow/orders/5'
+        - $ref: '#/components/schemas/ListItemUri'
         - $ref: '#/components/schemas/StreamflowOrderState'
 
     StreamflowOrderList:
@@ -712,6 +733,7 @@ components:
         $ref: '#/components/schemas/StreamflowOrderListItem'
       example:
         - uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+          id: 5
           hydromodel_output_id: 4
           longitude: -123.5
           latitude: 48.5
@@ -719,6 +741,7 @@ components:
             method: email
             address: abc@example.ca
         - uri: 'https://services.pacificclimate.org/streamflow/orders/6'
+          id: 6
           hydromodel_output_id: 5
           longitude: -120.0
           latitude: 50.2
@@ -739,52 +762,55 @@ components:
             status:
               type: string
               enum: [processing, ready, removed]
-              example: ready
             hydromodel_output_id:
               $ref: '#/components/schemas/HydromodelOutputId'
             cell_x:
               description: x coordinate (longitude) of cell centre
-              type: float
-              example: -118.7
+              type: number
             cell_y:
               description: y coordinate (longitude) of cell centre
-              type: float
-              example: 54.25
+              type: number
             cell_x_index:
               description: x-index of streamflow cell
               type: integer
-              example: 27
             cell_y_index:
               description: y-index of streamflow cell
               type: integer
-              example: 33
+          required:
+            - status
+            - hydromodel_output_id
+            - cell_x
+            - cell_y
+            - cell_x_index
+            - cell_y_index
+          example:
+            status: ready
+            hydromodel_output_id: 4
+            cell_x: -118.7
+            cell_y: 54.25
+            cell_x_index: 27
+            cell_y_index: 33
         - $ref: '#/components/schemas/GridCellSize'
         - $ref: '#/components/schemas/TemporalBounds'
-
-    StreamflowResultHypermedia:
-      type: object
-      properties:
-        links:
-          allOf:
-            - $ref: '#/components/schemas/HypermediaLinkList'
-            - example:
-              - rel: 'self'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6'
-              - rel: 'deprecate'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6'
-              - rel: 'annual-cycle'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/{startYear}-{endYear}'
-              - rel: 'annual-max'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
-              - rel: 'annual-mean'
-                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
 
     StreamflowResult:
       description: Metadata and hyperlinks for a single streamflow result
       type: object
       allOf:
         - $ref: '#/components/schemas/StreamflowResultState'
-        - $ref: '#/components/schemas/StreamflowResultHypermedia'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        links:
+          - rel: 'self'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6'
+          - rel: 'deprecate'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6'
+          - rel: 'annual-cycle'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/{startYear}-{endYear}'
+          - rel: 'annual-max'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
+          - rel: 'annual-mean'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
 
     # List of streamflow results
 
@@ -792,12 +818,7 @@ components:
       description: Item in list of streamflow results
       type: object
       allOf:
-        - type: object
-          properties:
-            uri:
-              type: string
-              description: URI of streamflow result
-              example: 'https://services.pacificclimate.org/streamflow/results/6'
+        - $ref: '#/components/schemas/ListItemUri'
         - $ref: '#/components/schemas/StreamflowResultState'
 
     StreamflowResultList:
@@ -856,7 +877,8 @@ components:
       properties:
         prop:
           type: number
-          example: -123.5
+      example:
+        prop: -123.5
 
     ThingState:
       description: State for a thing. Contains complete state.
@@ -865,33 +887,28 @@ components:
           properties:
             id:
               type: integer
-              example: 5
             etc:
               type: string
         - $ref: '#/components/schemas/ThingStateNew'
+      example:
+        id: 5
+        etc: exciting
 
-    ThingHypermedia:
-      description: Hypermedia for a thing
-      type: object
-      properties:
-        links:
-          allOf:
-            - $ref: '#/components/schemas/HypermediaLinkList'
-            - example:
-                - rel: 'self'
-                  uri: 'https://services.pacificclimate.org/streamflow/orders/5'
-                - rel: 'https://services.pacificclimate.org/relations/streamflow/orders/cancel'
-                  uri: 'https://services.pacificclimate.org/streamflow/orders/5'
-                - rel: 'https://services.pacificclimate.org/relations/streamflow/results/metadata'
-                  uri: 'https://services.pacificclimate.org/streamflow/results/6'
-                - rel: 'https://services.pacificclimate.org/relations/streamflow/results/timeseries'
-                  uri: 'https://services.pacificclimate.org/streamflow/results/6/timeseries'
 
     Thing:
       description: Representation of a thing - state + hypermedia.
       allOf:
         - $ref: '#/components/schemas/ThingState'
-        - $ref: '#/components/schemas/ThingHypermedia'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        - rel: 'self'
+          uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/orders/cancel'
+          uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/results/metadata'
+          uri: 'https://services.pacificclimate.org/streamflow/results/6'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/results/timeseries'
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/timeseries'
 
     # Lists (collections) of things
 
@@ -899,12 +916,7 @@ components:
       description: Representation of a single item in a list of things.
       type: object
       allOf:
-        - type: object
-          properties:
-            uri:
-              type: string
-              description: URI of thing
-        - $ref: '#/components/schemas/HypermediaLinkList'
+        - $ref: '#/components/schemas/ListItemUri'
         - $ref: '#/components/schemas/ThingState'
 
     ThingList:
