@@ -252,6 +252,36 @@ paths:
         404:
           $ref: '#/components/responses/404NotFound'
 
+  /streamflow/results/{id}/annual-cycle/standard-periods:
+    get:
+      summary: |
+        Get list of links to annual cycle timeseries for standard climatology
+        time periods.
+      description: |
+        Get list of links to annual cycle timeseries for standard climatology periods for specified streamflow. Standard climatology periods are:
+
+        - 1961-1999
+        - 1971-2000
+        - 1981-2010
+        - 2010-2039
+        - 2040-2069
+        - 2070-2099
+
+        The list of links returned are for those periods, limited by the time period spanned by the streamflow result set.
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultAnnualCycleStandardPeriodList'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
   /streamflow/results/{id}/annual-max:
     get:
       summary: Get annual maximum timeseries for specified streamflow
@@ -805,8 +835,10 @@ components:
             uri: 'https://services.pacificclimate.org/streamflow/results/6'
           - rel: 'deprecate'
             uri: 'https://services.pacificclimate.org/streamflow/results/6'
-          - rel: 'annual-cycle'
+          - rel: 'annual-cycle-template'
             uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/{startYear}-{endYear}'
+          - rel: 'annual-cycle-standard-periods'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/standard-periods'
           - rel: 'annual-max'
             uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
           - rel: 'annual-mean'
@@ -850,6 +882,52 @@ components:
           start_date: '2000-01-01'
           end_date: '2100-12-31'
 
+    # List of streamflow result annual cycles for standard climatology periods
+
+    StreamflowResultAnnualCycleStandardPeriodsListLitem:
+      description: Hyperlink to annual cycle data for specified period.
+      type: object
+      allOf:
+        - type: object
+          properties:
+            startYear:
+              type: integer
+            endYear:
+              type: integer
+          required:
+            - startYear
+            - endYear
+        - $ref: '#/components/schemas/ListItemUri'
+      example:
+        startYear: 1971
+        endYear: 2000
+        uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1971-2000'
+
+    StreamflowResultAnnualCycleStandardPeriodList:
+      description: |
+        List of hyperlinks to annual cycle data for standard climatology periods.
+      type: array
+      items:
+        $ref: '#/components/schemas/StreamflowResultAnnualCycleStandardPeriodsListLitem'
+      example:
+        - startYear: 1961
+          endYear: 1999
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1961-1999'
+        - startYear: 1971
+          endYear: 2000
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1971-2000'
+        - startYear: 1981
+          endYear: 2010
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1981-2010'
+        - startYear: 2010
+          endYear: 2039
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2010-2039'
+        - startYear: 2040
+          endYear: 2069
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2040-2069'
+        - startYear: 2070
+          endYear: 2099
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2070-2099'
 
     # Streamflow result data
 
