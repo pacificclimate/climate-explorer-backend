@@ -32,10 +32,11 @@ tags:
 
         However, because of of asynchrony and caching, matching orders (containing the same parameters) may be fulfilled by different result resources (represented by the /streamflowss resource collection) as result resources become invalidated in the cache. In other words, if a result has to be regenerated, it is a different resource that contains identical data computed at a different time.
 
+        For detailed information, see the [order lifecycle]https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
 
   - name: Results
     description: |
-      A result resource represents result of a streamflow computation.
+      A result resource represents the result of a streamflow computation.
 
       Computing a result is time consuming. Therefore a result may be in a pending status (computation not complete) state.
 
@@ -43,6 +44,7 @@ tags:
 
       Over time, result data for a single set of streamflow computation parameters may be computed and cached, then invalidated (removed from cache), then recomputed and cached again, etc. The actual data computed is identical for matching sets of streamflow computation parameters, but they are actually distinct objects. Therefore result resources that represent different (re)computations of the same data are distinct, i.e, have different URIs.
 
+      For detailed information, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
 
 paths:
 
@@ -143,8 +145,9 @@ paths:
     get:
       summary: Get existing streamflow order
       description: |
-        Content of the `links` property depends on the value of the `status` property.
-        If `status /= 'fulfilled'`, the data links are absent.
+        Content of the `links` property depends on the value of the `status` property. If `status /= 'fulfilled'`, the data links are absent.
+
+        For status values and meanings, see the [order lifecycle]https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
       tags:
         - Orders
       parameters:
@@ -163,7 +166,7 @@ paths:
     delete:
       summary: Cancel a streamflow order
       description: |
-        If the streamflow order is not cancellable (not in pending status), response status is 409 Conflict.
+        If the streamflow order is not cancellable (not in 'processing' status), response status is 409 Conflict.
       tags:
         - Orders
       parameters:
@@ -196,6 +199,8 @@ paths:
   /streamflow/results/{id}:
     get:
       summary: Get metadata of a streamflow result
+      description: |
+        For status values and meanings, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
       tags:
         - Results
       parameters:
@@ -211,7 +216,13 @@ paths:
           $ref: '#/components/responses/404NotFound'
 
     delete:
-      summary: Deprecate a streamflow result (mark as no longer needed)
+      summary: Cancel or deprecate (mark as no longer needed) a streamflow result.
+      description: |
+        A result can be cancelled if its status is `queued` or `processing`.
+
+        A result can be deprecated if its status is `ready`.
+
+        For status values and meanings, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
       tags:
         - Results
       parameters:
@@ -679,9 +690,9 @@ components:
               description: Unique id of streamflow order
               type: integer
             status:
-              description: See streamflow order state diagram.
+              description: See [order lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
               type: string
-              enum: [pending, cancelled, fulfilled, deprecated]
+              enum: [processing, fulfilled, cancelled, error]
           required:
             - id
             - status
@@ -790,8 +801,9 @@ components:
         - type: object
           properties:
             status:
+              description: See [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
               type: string
-              enum: [processing, ready, removed]
+              enum: [queued, processing, ready, removed, cancelled, errored]
             hydromodel_output_id:
               $ref: '#/components/schemas/HydromodelOutputId'
             cell_x:
