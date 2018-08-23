@@ -166,7 +166,7 @@ paths:
     delete:
       summary: Cancel a streamflow order
       description: |
-        If the streamflow order is not cancellable (not in 'processing' status), response status is 409 Conflict.
+        If the streamflow order is not cancellable (not in 'accepted' status), response status is 409 Conflict.
       tags:
         - Orders
       parameters:
@@ -692,7 +692,7 @@ components:
             status:
               description: See [order lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
               type: string
-              enum: [processing, fulfilled, cancelled, error]
+              enum: [accepted, fulfilled, cancelled, error]
           required:
             - id
             - status
