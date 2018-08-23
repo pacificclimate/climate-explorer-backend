@@ -1,0 +1,1002 @@
+openapi: 3.0.0
+info:
+  version: "1.1.0"
+  title: Routed streamflow backend API
+  description: Web service providing resources necessary to support streamflow web app
+
+servers:
+  - url: https://services.pacificclimate.org
+
+tags:
+  - name: Hydromodel outputs
+    description: |
+      Hydrological model outputs are used as inputs by the streamflow computation.
+
+      Hydrological model outputs are gridded fields of baseflow and runoff. A set of hydrological model outputs (baseflow and runoff fields) is the result of a hydrological model run, which is a run of the hydrological model with particular input files and parameters.
+
+      A hydrological model run and its outputs are characterized (for our purposes) by the following inputs to the hydrological model.
+
+      - a specific hydrographic model - soil types, etc. defined over a gridded spatial field
+
+      - a specific climate - a time series of gridded spatial fields of observed or simulated climate variables relevant to hydrology (e.g., temperature, precipitation)
+
+      These characterizing inputs, and therefore the hydrological model run and its outputs, are uniquely identified by a set of metadata. For example, the hydrographic model has a name; the climate model has model and scenario identifiers.
+
+      Note This is a static resource collection in the sense that its content is determined by activities that are not controlled by the backend (specifically, running the VIC model, and indexing the results of those runs in the database).
+
+  - name: Orders
+    description: |
+        Since the streamflow computation is time consuming, its results are in general not available immediately. (Results may be available immediately if it has been requested recently and is still in the results cache.) Therefore we introduce the order system as an intermediary between the request and the result proper.
+
+        In terms of the actual streamflow data that is computed and delivered, matching orders (containing the same parameters) will be fulfilled by identical streamflow data.
+
+        However, because of of asynchrony and caching, matching orders (containing the same parameters) may be fulfilled by different result resources (represented by the /streamflowss resource collection) as result resources become invalidated in the cache. In other words, if a result has to be regenerated, it is a different resource that contains identical data computed at a different time.
+
+        For detailed information, see the [order lifecycle]https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
+
+  - name: Results
+    description: |
+      A result resource represents the result of a streamflow computation.
+
+      Computing a result is time consuming. Therefore a result may be in a pending status (computation not complete) state.
+
+      Result data is bulky. Therefore result data is maintained in a cache, and a completed result may be in-cache (status ready) or invalidated (out of cache; status invalidated).
+
+      Over time, result data for a single set of streamflow computation parameters may be computed and cached, then invalidated (removed from cache), then recomputed and cached again, etc. The actual data computed is identical for matching sets of streamflow computation parameters, but they are actually distinct objects. Therefore result resources that represent different (re)computations of the same data are distinct, i.e, have different URIs.
+
+      For detailed information, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
+
+paths:
+
+  ### Hydromodel outputs
+
+  /hydromodel_outputs:
+    get:
+      summary: Get descriptions of all VIC hydrological model outputs available for driving streamflow modelling.
+      tags:
+        - Hydromodel outputs
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HydromodelOutputList'
+
+  /hydromodel_outputs/{id}:
+    get:
+      summary: Get description of a specific VIC hydrological model output.
+      tags:
+        - Hydromodel outputs
+      parameters:
+        - $ref: '#/components/parameters/hydromodelOutputId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HydromodelOutput'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  /hydromodel_outputs/{id}/bounds:
+    get:
+      summary: Get bounds of a specific VIC hydrological model output.
+      tags:
+        - Hydromodel outputs
+      parameters:
+        - $ref: '#/components/parameters/hydromodelOutputId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HydromodelOutputBounds'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  ### Orders
+
+  /streamflow/orders:
+    post:
+      summary: Create a new order for the result of a streamflow computation
+      tags:
+        - Orders
+      requestBody:
+        description: Parameters defining a streamflow order.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamflowOrderStateNew'
+      responses:
+        201:
+          description: Success. A new order has been created.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI of newly created order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowOrderNew'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+
+    get:
+      summary: Get a list of all currently pending orders for streamflow computations, filtered by user
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowOrderList'
+
+
+  /streamflow/orders/{id}:
+    get:
+      summary: Get existing streamflow order
+      description: |
+        Content of the `links` property depends on the value of the `status` property. If `status /= 'fulfilled'`, the data links are absent.
+
+        For status values and meanings, see the [order lifecycle]https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowOrderGeneric'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+
+    delete:
+      summary: Cancel a streamflow order
+      description: |
+        If the streamflow order is not cancellable (not in 'accepted' status), response status is 409 Conflict.
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        204:
+          $ref: '#/components/responses/204NoContent'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        409:
+          $ref: '#/components/responses/409Conflict'
+
+  ### Results
+
+  /streamflow/results:
+    get:
+      summary: List currently ready streamflow results
+      tags:
+        - Results
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultList'
+
+  /streamflow/results/{id}:
+    get:
+      summary: Get metadata of a streamflow result
+      description: |
+        For status values and meanings, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResult'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+    delete:
+      summary: Cancel or deprecate (mark as no longer needed) a streamflow result.
+      description: |
+        A result can be cancelled if its status is `queued` or `processing`.
+
+        A result can be deprecated if its status is `ready`.
+
+        For status values and meanings, see [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        204:
+          $ref: '#/components/responses/204NoContent'
+        401:
+          $ref: '#/components/responses/401Unauthorized'
+        404:
+          $ref: '#/components/responses/404NotFound'
+        409:
+          $ref: '#/components/responses/409Conflict'
+
+
+  /streamflow/results/{id}/annual-cycle/{startYear}-{endYear}:
+    get:
+      summary: Get annual cycle timeseries for specified streamflow
+      description: |
+        If the streamflow result is not in ready status, response status is 404 Not Found.
+        If start date >= end date, response status is 400 Bad Request
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+        - $ref: '#/components/parameters/startYear'
+        - $ref: '#/components/parameters/endYear'
+
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultAnnualCycle'
+        400:
+          $ref: '#/components/responses/400BadRequest'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  /streamflow/results/{id}/annual-cycle/standard-periods:
+    get:
+      summary: |
+        Get list of links to annual cycle timeseries for standard climatology
+        time periods.
+      description: |
+        Get list of links to annual cycle timeseries for standard climatology periods for specified streamflow. Standard climatology periods are:
+
+        - 1961-1999
+        - 1971-2000
+        - 1981-2010
+        - 2010-2039
+        - 2040-2069
+        - 2070-2099
+
+        The list of links returned are for those periods, limited by the time period spanned by the streamflow result set.
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultAnnualCycleStandardPeriodList'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  /streamflow/results/{id}/annual-max:
+    get:
+      summary: Get annual maximum timeseries for specified streamflow
+      description: |
+        If the streamflow result is not in ready status, response status is 404 Not Found.
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultAnnualMax'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+  /streamflow/results/{id}/annual-mean:
+    get:
+      summary: Get annual mean timeseries for specified streamflow
+      description: |
+        If the streamflow result is not in ready status, response status is 404 Not Found.
+      tags:
+        - Results
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamflowResultAnnualMean'
+        404:
+          $ref: '#/components/responses/404NotFound'
+
+
+components:
+  parameters:
+    hydromodelOutputId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique id of a hydromodel output resource.
+
+    orderId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique id of an order resource.
+
+    resultId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique id of result resource.
+
+    startYear:
+      name: startYear
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: First year of a multi-year period
+
+    endYear:
+      name: endYear
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Last year of a multi-year period
+
+    userId:
+      name: userid
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Id of user.
+
+  responses:
+    204NoContent:
+      description: Success. No content.
+
+    400BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: '400'
+            message: Message giving details of problem with request
+
+    401Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: '401'
+            message: Message giving details of authorization problem
+
+    404NotFound:
+      description: The specified resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: '404'
+            message: Resource not found
+
+    409Conflict:
+      description: Attempt to put resource into impossible, inconsistent, or unavailable state.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: '409'
+            message: Message giving details of conflict
+
+  schemas:
+
+    ### Generic schemas
+
+    Error:
+      description: Generic error response body
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+      example:
+        code: '404'
+        message: Message giving details of problem
+
+    GridCellSize:
+      description: Size of a model grid cell
+      type: object
+      properties:
+        cell_x_size:
+          description: Size of grid cell in X (longitude) direction.
+          type: number
+        cell_y_size:
+          description: Size of grid cell in Y (latitude) direction.
+          type: number
+      required:
+        - cell_x_size
+        - cell_y_size
+      example:
+        cell_x_size: 3.75
+        cell_y_size: 2.5
+
+    ListItemUri:
+      type: object
+      properties:
+        uri:
+          description: URI of individual item listed
+          type: string
+      required:
+        - uri
+
+    HypermediaLink:
+      description: Annotated hypermedia link to a related resource
+      type: object
+      properties:
+        rel:
+          type: string
+        uri:
+          type: string
+      required:
+        - rel
+        - uri
+
+    HypermediaLinkList:
+      description: List of annotated hypermedia links to related resources
+      type: array
+      items:
+        $ref: '#/components/schemas/HypermediaLink'
+
+    HypermediaLinks:
+      description: Standard property in representations that holds hypermedia links
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/HypermediaLinkList'
+      required:
+        - links
+
+    TemporalBounds:
+      description: Metadata describing temporal bounds of a dataset.
+      type: object
+      properties:
+        start_date:
+          description: Date-time of first timestep in dataset (ISO 8601)
+          type: string
+        end_date:
+          description: Date-time of last timestep in dataset (ISO 8601)
+          type: string
+      required:
+        - start_date
+        - end_date
+      example:
+        start_date: '2000-01-01'
+        end_date: '2100-12-31'
+
+    Timeseries:
+      description: A time series, which is to say a set of values at specified times.
+        Data points are (time[i], value[i]).
+      type: object
+      properties:
+        times:
+          description: Time coordinates, specified as ISO8601 date-time strings.
+          type: array
+          items:
+            type: string
+          example: ["2000-01-15", "2000-02-15"]
+        values:
+          type: array
+          items:
+            type: number
+          example: [5000, 6000]
+      required:
+        - times
+        - values
+
+    ### Hydromodel outputs
+
+    # Individual hydromodel outputs
+
+    HydromodelOutputId:
+      description: Unique id of hydromodel output that drives a streamflow computation
+      type: integer
+      example: 4
+
+    HydromodelOutputState:
+      description: State for a hydromodel output. Contains complete state.
+      type: object
+      allOf:
+        - type: object
+          properties:
+            hydromodel_output_id:
+              $ref: '#/components/schemas/HydromodelOutputId'
+            model:
+              description: Short identifier of model providing climate input to hydromodel
+              type: string
+            experiment:
+              description: Short identifier of experiment (emissions scenario) providing climate input to hydromodel
+              type: string
+          required:
+            - hydromodel_output_id
+            - model
+            - experiment
+          example:
+            hydromodel_output_id: 4
+            model: CanESM2
+            experiment: rcp85
+        - $ref: '#/components/schemas/GridCellSize'
+        - $ref: '#/components/schemas/TemporalBounds'
+
+    HydromodelOutput:
+      description: Full representation of a hydromodel output - state + hypermedia.
+      allOf:
+        - $ref: '#/components/schemas/HydromodelOutputState'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        links:
+          - rel: 'self'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4'
+          - rel: 'bounds'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
+
+    HydromodelOutputBounds:
+      description: Geographic bounds of hydromodel data set.
+      type: object
+      properties:
+        bounds:
+          type: object
+          description: GeoJSON defining the bounds
+        links:
+          $ref: '#/components/schemas/HypermediaLinkList'
+      required:
+        - bounds
+        - links
+      example:
+        bounds:
+          type: Feature
+          properties:
+            name: Columbia Basin
+            area: 1000000
+          geometry:
+            type: Polygon
+            coordinates:
+              -
+                - [-64.73, 32.31]
+                - [-80.19, 25.76]
+                - [-66.09, 18.43]
+                - [-64.73, 32.31]
+        links:
+          - rel: 'self'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4/bounds'
+          - rel: 'hydromodel_output'
+            uri: 'https://services.pacificclimate.org/hydromodel_output/4'
+
+    # Lists (collections) of hydromodel outputs
+
+    HydromodelOutputListItem:
+      description: Representation of a single item in a list of hydromodel outputs.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ListItemUri'
+        - $ref: '#/components/schemas/HydromodelOutputState'
+
+    HydromodelOutputList:
+      description: List of hydromodel outputs in collection.
+      type: array
+      items:
+        $ref: '#/components/schemas/HydromodelOutputListItem'
+      example:
+        - uri: 'https://services.pacificclimate.org/hydromodel_output/3'
+          model: "CanESM2"
+          experiment: "rcp45"
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
+        - uri: 'https://services.pacificclimate.org/hydromodel_output/4'
+          model: "CanESM2"
+          experiment: "rcp85"
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
+
+    ### Streamflow orders
+
+    # Individual streamflow orders
+
+    StreamflowOrderStateNew:
+      description: Data required to define a new order for a streamflow result set.
+      type: object
+      properties:
+        hydromodel_output_id:
+          $ref: '#/components/schemas/HydromodelOutputId'
+        longitude:
+          type: number
+        latitude:
+          type: number
+        notification:
+          type: object
+          properties:
+            method:
+              type: string
+              enum: [email]
+            address:
+              type: string
+          required:
+            - method
+            - address
+      required:
+        - hydromodel_output_id
+        - latitude
+        - longitude
+        - notification
+      example:
+        hydromodel_output_id: 4
+        longitude: -123.5
+        latitude: 48.5
+        notification:
+          method: email
+          address: example@uvic.ca
+
+    StreamflowOrderState:
+      description: State for a streamflow order
+      allOf:
+        - type: object
+          properties:
+            id:
+              description: Unique id of streamflow order
+              type: integer
+            status:
+              description: See [order lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-OrderLifecycle).
+              type: string
+              enum: [accepted, fulfilled, cancelled, error]
+          required:
+            - id
+            - status
+        - $ref: '#/components/schemas/StreamflowOrderStateNew'
+
+    StreamflowOrder:
+      description: Representation of a streamflow order = state + hypermedia.
+      allOf:
+        - $ref: '#/components/schemas/StreamflowOrderState'
+        - $ref: '#/components/schemas/HypermediaLinks'
+
+    StreamflowOrderNew:
+      description: Representation of a newly created streamflow order.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/StreamflowOrder'
+        - example:
+            id: 5
+            status: pending
+            longitude: -123.5
+            latitude: 48.5
+            notification:
+              method: email
+              address: example@uvic.ca
+            links:
+              - rel: 'self'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+              - rel: 'cancel'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+              - rel: 'hydromodel_output'
+                uri: 'https://services.pacificclimate.org/hydromodel_outputs/4'
+
+    StreamflowOrderGeneric:
+      description: Representation of a generic streamflow order.
+      type: object
+      # Using `allOf` here to include both schema and example should not be
+      # necessary. The `$ref` and `example` properties should be at the same
+      # level as `description`, `type`; but for some reason this fails in
+      # the Swagger editor.
+      allOf:
+        - $ref: '#/components/schemas/StreamflowOrder'
+        - example:
+            id: 5
+            status: fulfilled
+            longitude: -123.5
+            latitude: 48.5
+            notification:
+              method: email
+              address: example@uvic.ca
+            links:
+              - rel: 'self'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+              - rel: 'cancel'
+                uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+              - rel: 'hydromodel_output'
+                uri: 'https://services.pacificclimate.org/hydromodel_outputs/4'
+              - rel: 'results/metadata'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6'
+              - rel: 'results/annual-max'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
+              - rel: 'results/annual-mean'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
+              - rel: 'results/annual-cycle'
+                uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle'
+
+    # List of streamflow orders
+
+    StreamflowOrderListItem:
+      description: List of streamflow results
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ListItemUri'
+        - $ref: '#/components/schemas/StreamflowOrderState'
+
+    StreamflowOrderList:
+      description: List of streamflow results
+      type: array
+      items:
+        $ref: '#/components/schemas/StreamflowOrderListItem'
+      example:
+        - uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+          id: 5
+          hydromodel_output_id: 4
+          longitude: -123.5
+          latitude: 48.5
+          notification:
+            method: email
+            address: abc@example.ca
+        - uri: 'https://services.pacificclimate.org/streamflow/orders/6'
+          id: 6
+          hydromodel_output_id: 5
+          longitude: -120.0
+          latitude: 50.2
+          notification:
+            method: email
+            address: def@example.ca
+
+    ### Streamflow results
+
+    # Individual streamflow results
+
+    StreamflowResultState:
+      description: State describing a streamflow result
+      type: object
+      allOf:
+        - type: object
+          properties:
+            status:
+              description: See [result lifecycle](https://pcic.uvic.ca/confluence/pages/viewpage.action?pageId=24117297#StreamflowArchitectureII-ResultLifecycle).
+              type: string
+              enum: [queued, processing, ready, removed, cancelled, errored]
+            hydromodel_output_id:
+              $ref: '#/components/schemas/HydromodelOutputId'
+            cell_x:
+              description: x coordinate (longitude) of cell centre
+              type: number
+            cell_y:
+              description: y coordinate (longitude) of cell centre
+              type: number
+          required:
+            - status
+            - hydromodel_output_id
+            - cell_x
+            - cell_y
+          example:
+            status: ready
+            hydromodel_output_id: 4
+            cell_x: -118.7
+            cell_y: 54.25
+        - $ref: '#/components/schemas/GridCellSize'
+        - $ref: '#/components/schemas/TemporalBounds'
+
+    StreamflowResult:
+      description: Metadata and hyperlinks for a single streamflow result
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/StreamflowResultState'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        links:
+          - rel: 'self'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6'
+          - rel: 'deprecate'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6'
+          - rel: 'annual-cycle-template'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/{startYear}-{endYear}'
+          - rel: 'annual-cycle-standard-periods'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/standard-periods'
+          - rel: 'annual-max'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-max'
+          - rel: 'annual-mean'
+            uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-mean'
+
+    # List of streamflow results
+
+    StreamflowResultListItem:
+      description: Item in list of streamflow results
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ListItemUri'
+        - $ref: '#/components/schemas/StreamflowResultState'
+
+    StreamflowResultList:
+      description: List of streamflow results
+      type: array
+      items:
+        $ref: '#/components/schemas/StreamflowResultListItem'
+      example:
+        - uri: 'https://services.pacificclimate.org/streamflow/results/6'
+          status: ready
+          hydromodel_output_id: 4
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          cell_x: -118.7
+          cell_y: 54.2
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
+        - uri: 'https://services.pacificclimate.org/streamflow/results/7'
+          status: ready
+          hydromodel_output_id: 5
+          cell_x_size: 3.75
+          cell_y_size: 2.5
+          cell_x: -123.7
+          cell_y: 60.8
+          start_date: '2000-01-01'
+          end_date: '2100-12-31'
+
+    # List of streamflow result annual cycles for standard climatology periods
+
+    StreamflowResultAnnualCycleStandardPeriodsListLitem:
+      description: Hyperlink to annual cycle data for specified period.
+      type: object
+      allOf:
+        - type: object
+          properties:
+            startYear:
+              type: integer
+            endYear:
+              type: integer
+          required:
+            - startYear
+            - endYear
+        - $ref: '#/components/schemas/ListItemUri'
+      example:
+        startYear: 1971
+        endYear: 2000
+        uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1971-2000'
+
+    StreamflowResultAnnualCycleStandardPeriodList:
+      description: |
+        List of hyperlinks to annual cycle data for standard climatology periods.
+      type: array
+      items:
+        $ref: '#/components/schemas/StreamflowResultAnnualCycleStandardPeriodsListLitem'
+      example:
+        - startYear: 1961
+          endYear: 1999
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1961-1999'
+        - startYear: 1971
+          endYear: 2000
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1971-2000'
+        - startYear: 1981
+          endYear: 2010
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/1981-2010'
+        - startYear: 2010
+          endYear: 2039
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2010-2039'
+        - startYear: 2040
+          endYear: 2069
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2040-2069'
+        - startYear: 2070
+          endYear: 2099
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/annual-cycle/2070-2099'
+
+    # Streamflow result data
+
+    StreamflowResultAnnualCycle:
+      description: Annual cycle time series for a streamflow result set
+      $ref: '#/components/schemas/Timeseries'
+
+    StreamflowResultAnnualMax:
+      description: Annual maximum time series for a streamflow result set
+      $ref: '#/components/schemas/Timeseries'
+
+    StreamflowResultAnnualMean:
+      description: Annual mean time series for a streamflow result set
+      $ref: '#/components/schemas/Timeseries'
+
+
+    ###
+    ### Template schemas for collections of things
+
+    ### Individual things
+
+    ThingStateNew:
+      description: Defines a new thing. Contains only state directly settable by user.
+      type: object
+      properties:
+        prop:
+          type: number
+      example:
+        prop: -123.5
+
+    ThingState:
+      description: State for a thing. Contains complete state.
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+            etc:
+              type: string
+        - $ref: '#/components/schemas/ThingStateNew'
+      example:
+        id: 5
+        etc: exciting
+
+
+    Thing:
+      description: Representation of a thing - state + hypermedia.
+      allOf:
+        - $ref: '#/components/schemas/ThingState'
+        - $ref: '#/components/schemas/HypermediaLinks'
+      example:
+        - rel: 'self'
+          uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/orders/cancel'
+          uri: 'https://services.pacificclimate.org/streamflow/orders/5'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/results/metadata'
+          uri: 'https://services.pacificclimate.org/streamflow/results/6'
+        - rel: 'https://services.pacificclimate.org/relations/streamflow/results/timeseries'
+          uri: 'https://services.pacificclimate.org/streamflow/results/6/timeseries'
+
+    # Lists (collections) of things
+
+    ThingListItem:
+      description: Representation of a single item in a list of things.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ListItemUri'
+        - $ref: '#/components/schemas/ThingState'
+
+    ThingList:
+      description: List of things in collection.
+      type: array
+      items:
+        $ref: '#/components/schemas/ThingListItem'
