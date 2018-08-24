@@ -1,7 +1,7 @@
 Flask
 Flask-SQLAlchemy
 Flask-Cors
-modelmeta
+modelmeta==0.2.0
 shapely>=1.6
 numpy
 netcdf4==1.3
