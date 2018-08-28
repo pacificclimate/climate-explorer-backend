@@ -226,13 +226,13 @@ def populateddb(cleandb):
     sesh.add_all(variable_aliases)
     sesh.add_all(grids)
     sesh.flush()
-    
-    def make_data_file_variable(file, var_name=None, grid=grid_anuspline):
+
+    def make_data_file_variable_gridded(file, var_name=None, grid=grid_anuspline):
         var_name_to_alias = {
             'tasmin': tasmin,
             'tasmax': tasmax,
         }
-        return DataFileVariable(
+        return DataFileVariableGridded(
             file=file,
             netcdf_variable_name=var_name,
             range_min=0,
@@ -241,15 +241,15 @@ def populateddb(cleandb):
             grid=grid
         )
 
-    tmin1 = make_data_file_variable(file1, var_name='tasmin')
-    tmax1 = make_data_file_variable(file2, var_name='tasmax')
-    tmax2 = make_data_file_variable(file3, var_name='tasmax')
-    tmax3 = make_data_file_variable(df_5_monthly, var_name='tasmax')
-    tmax4 = make_data_file_variable(df_5_seasonal, var_name='tasmax')
-    tmax5 = make_data_file_variable(df_5_yearly, var_name='tasmax')
-    tmax6 = make_data_file_variable(df_6_monthly, var_name='tasmin')
-    tmax7 = make_data_file_variable(df_6_seasonal, var_name='tasmin')
-    tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
+    tmin1 = make_data_file_variable_gridded(file1, var_name='tasmin')
+    tmax1 = make_data_file_variable_gridded(file2, var_name='tasmax')
+    tmax2 = make_data_file_variable_gridded(file3, var_name='tasmax')
+    tmax3 = make_data_file_variable_gridded(df_5_monthly, var_name='tasmax')
+    tmax4 = make_data_file_variable_gridded(df_5_seasonal, var_name='tasmax')
+    tmax5 = make_data_file_variable_gridded(df_5_yearly, var_name='tasmax')
+    tmax6 = make_data_file_variable_gridded(df_6_monthly, var_name='tasmin')
+    tmax7 = make_data_file_variable_gridded(df_6_seasonal, var_name='tasmin')
+    tmax8 = make_data_file_variable_gridded(df_6_yearly, var_name='tasmin')
 
     data_file_variables = [
         tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
@@ -414,7 +414,7 @@ def multitime_db(cleandb):
                           evenly_spaced_y=True)
 
     dfvs = [
-        DataFileVariable(
+        DataFileVariableGridded(
             netcdf_variable_name='tasmax',
             range_min=0,
             range_max=50,
