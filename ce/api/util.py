@@ -99,10 +99,10 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
                           variable='', time=0, timescale=''):
     query = sesh.query(mm.DataFile.unique_id)\
             .distinct(mm.DataFile.unique_id)\
-            .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble,
+            .join(mm.DataFileVariableGridded, mm.EnsembleDataFileVariables, mm.Ensemble,
                   mm.Run, mm.Model, mm.Emission, mm.TimeSet, mm.Time)\
             .filter(mm.Ensemble.name == ensemble_name)\
-            .filter(mm.DataFileVariable.netcdf_variable_name == variable)\
+            .filter(mm.DataFileVariableGridded.netcdf_variable_name == variable)\
             .filter(mm.Time.time_idx == time)
 
     if model:

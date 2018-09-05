@@ -4,7 +4,7 @@
 import numpy as np
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
-from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
+from modelmeta import DataFileVariableGridded, EnsembleDataFileVariables, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
 
 def data(sesh, model, emission, time, area, variable, timescale='other',
@@ -116,10 +116,10 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
                         .format(time_idx))
 
     query = (
-        sesh.query(DataFileVariable)
-        .filter(DataFileVariable.netcdf_variable_name == variable)
+        sesh.query(DataFileVariableGridded)
+        .filter(DataFileVariableGridded.netcdf_variable_name == variable)
 
-        .join(DataFileVariable.file)
+        .join(DataFileVariableGridded.file)
         .join(DataFile.run)
 
         .join(Run.model)
@@ -132,7 +132,7 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         .filter(TimeSet.time_resolution == timescale)
         .filter(TimeSet.multi_year_mean == True)
 
-        .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
+        .filter(DataFileVariableGridded.ensembles.any(Ensemble.name == ensemble_name))
     )
     data_file_variables = query.all()
 

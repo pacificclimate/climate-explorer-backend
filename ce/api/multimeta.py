@@ -2,7 +2,7 @@
 '''
 
 from modelmeta import DataFile, Model, Emission, Run
-from modelmeta import DataFileVariable, VariableAlias, TimeSet
+from modelmeta import DataFileVariableGridded, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
 
 
@@ -62,7 +62,7 @@ def multimeta(sesh, ensemble_name='ce', model=''):
                    Model.long_name,
                    Emission.short_name,
                    Run.name,
-                   DataFileVariable.netcdf_variable_name,
+                   DataFileVariableGridded.netcdf_variable_name,
                    VariableAlias.long_name,
                    TimeSet.time_resolution,
                    TimeSet.multi_year_mean,
@@ -72,7 +72,7 @@ def multimeta(sesh, ensemble_name='ce', model=''):
             .join(Run)\
             .join(Model)\
             .join(Emission)\
-            .join(DataFileVariable)\
+            .join(DataFileVariableGridded)\
             .join(EnsembleDataFileVariables)\
             .join(Ensemble)\
             .join(VariableAlias)\
