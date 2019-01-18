@@ -1,0 +1,7 @@
+# control coverage.py
+[run]
+    source = scripts
+    omit = scripts/main.py
+
+[report]
+    fail_under = 60
