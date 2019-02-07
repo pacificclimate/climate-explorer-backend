@@ -4,7 +4,7 @@
 from ce.api.stats import stats
 from ce.api.util import search_for_unique_ids
 
-def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
+def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
                area=None, variable='', timescale=''):
     '''Request and calculate statistics for multiple models or scenarios
 
@@ -20,14 +20,17 @@ def multistats(sesh, ensemble_name='ce', model='', emission='', time=0,
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         ensemble_name (str): The name of the application-level ensemble
-            (e.g. "ce")
+            (e.g. "ce_files")
         model (str): Short name for some climate model (e.g "CGCM3") to
             be used as a filter
         emission (str): Short name for some emission scenario (e.g.
             "historical+rcp85") to be used as a filter
-        time (int): Timestep integer (1-17) representing the time of year
+        time (int): Timestep index (0-based) representing the time of year;
+            0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
+        timescale (str): Description of the resolution of time to be
+            returned (e.g. "monthly" or "yearly")
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.

@@ -32,7 +32,8 @@ def stats(sesh, id_, time, area, variable):
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
         id_ (str): Unique id which is a key to the data file requested
-        time (int): Timestep integer (1-17) representing the time of year
+        time (int): Timestep index (0-based) representing the time of year;
+            0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
         area (str): WKT polygon of selected area
         variable (str): Short name of the variable to be returned
 
