@@ -6,7 +6,7 @@ from modelmeta import DataFileVariable, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
 
 
-def multimeta(sesh, ensemble_name='ce', model=''):
+def multimeta(sesh, ensemble_name='ce_files', model=''):
     '''Retrieve metadata for all data files in an ensemble
 
     The ``multimeta`` API call is available to retrieve summarized

@@ -3,7 +3,7 @@
 
 from modelmeta import Ensemble
 
-def models(sesh, ensemble_name='ce'):
+def models(sesh, ensemble_name='ce_files'):
 
     '''
     Args
