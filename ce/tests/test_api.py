@@ -15,11 +15,17 @@ from ce.api import find_modtime
 
 def extract_ids(s):
     pattern = re.compile("_(.Clim)_BNU")
-    m = pattern.search(s)
+    try:
+        m = pattern.search(s)
+    except TypeError as e:
+        print('Error occured while producing id: {}'.format(e))
+        return None
+
     if m:
         return m.group(1)
     else:
         return s
+
 
 @pytest.mark.parametrize(('endpoint', 'query_params'), [
     ('stats', {'id_': '', 'time': '', 'area': '', 'variable': ''}),
