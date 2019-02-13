@@ -8,7 +8,7 @@ from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
 
 def data(sesh, model, emission, time, area, variable, timescale='other',
-         ensemble_name='ce'):
+         ensemble_name='ce_files'):
     '''Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and

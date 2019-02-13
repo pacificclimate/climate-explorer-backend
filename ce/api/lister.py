@@ -3,7 +3,7 @@
 
 from modelmeta import Ensemble
 
-def lister(sesh, ensemble_name='ce', model=None):
+def lister(sesh, ensemble_name='ce_files', model=None):
 
     '''
     Args

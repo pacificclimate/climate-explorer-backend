@@ -15,11 +15,17 @@ from ce.api import find_modtime
 
 def extract_ids(s):
     pattern = re.compile("_(.Clim)_BNU")
-    m = pattern.search(s)
+    try:
+        m = pattern.search(s)
+    except TypeError as e:
+        print('Error occured while producing id: {}'.format(e))
+        return None
+
     if m:
         return m.group(1)
     else:
         return s
+
 
 @pytest.mark.parametrize(('endpoint', 'query_params'), [
     ('stats', {'id_': '', 'time': '', 'area': '', 'variable': ''}),
@@ -77,7 +83,7 @@ def test_models(populateddb):
     ({'ensemble_name': 'bccaqv2'},
      ['tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
       'tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
-    ({'model': 'csiro'}, ['file1', 'file2'])
+    ({'ensemble_name': 'ce', 'model': 'csiro'}, ['file1', 'file2'])
 ], ids=extract_ids)
 def test_lister(populateddb, args, expected):
     sesh = populateddb.session
@@ -131,7 +137,7 @@ def test_metadata_empty(populateddb):
 def test_multimeta(populateddb, model):
     unique_id = 'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230'
     sesh = populateddb.session
-    rv = multimeta(sesh, model=model) # Multimeta is wrapped for caching. Call the wrapped function
+    rv = multimeta(sesh, ensemble_name='ce', model=model) # Multimeta is wrapped for caching. Call the wrapped function
     assert unique_id in rv
     assert rv[unique_id]['model_id'] == 'BNU-ESM'
     # times are not included in the multimeta API call
@@ -243,6 +249,7 @@ def test_data_single_file(populateddb, variable,
         variable=variable,
         timescale=timescale,
         time=time_idx,
+        ensemble_name='ce'
     )
 
     assert len(rv) == 1
@@ -269,7 +276,8 @@ def test_data_multiple_times(multitime_db):
         time=0,
         area=None,
         variable='tasmax',
-        timescale='other'
+        timescale='other',
+        ensemble_name='ce'
     )
     assert len(rv) > 1
     for run in rv.values():

@@ -226,7 +226,7 @@ def populateddb(cleandb):
     sesh.add_all(variable_aliases)
     sesh.add_all(grids)
     sesh.flush()
-    
+
     def make_data_file_variable(file, var_name=None, grid=grid_anuspline):
         var_name_to_alias = {
             'tasmin': tasmin,
