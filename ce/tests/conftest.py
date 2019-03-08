@@ -231,14 +231,19 @@ def populateddb(cleandb):
         var_name_to_alias = {
             'tasmin': tasmin,
             'tasmax': tasmax,
-        }
+        }[var_name]
+        variable_cell_methods = {
+            'tasmin': 'time: minimum',
+            'tasmax': 'time: maximum time: standard_deviation',
+        }[var_name]
         return DataFileVariable(
             file=file,
             netcdf_variable_name=var_name,
             range_min=0,
             range_max=50,
-            variable_alias=var_name_to_alias[var_name],
-            grid=grid
+            variable_alias=var_name_to_alias,
+            grid=grid,
+            variable_cell_methods=variable_cell_methods
         )
 
     tmin1 = make_data_file_variable(file1, var_name='tasmin')
