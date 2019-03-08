@@ -96,7 +96,7 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
-                          variable='', time=0, timescale=''):
+                          variable='', time=0, timescale='', cell_method=''):
     query = sesh.query(mm.DataFile.unique_id)\
             .distinct(mm.DataFile.unique_id)\
             .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble,
@@ -113,5 +113,11 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
 
     if timescale:
         query = query.filter(mm.TimeSet.time_resolution == timescale)
+
+    if cell_method:
+        if not validate_cell_method(cell_method):
+            raise Exception('Unsupported cell_method: {}'.format(cell_method))
+        search_string = '%{}%'.format(cell_method)
+        query = query.filter(mm.DataFileVariable.variable_cell_methods.like(search_string))
 
     return ( r[0] for r in query.all() )
