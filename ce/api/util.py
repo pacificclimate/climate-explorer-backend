@@ -1,6 +1,7 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import re
 
 import numpy as np
 import numpy.ma as ma
@@ -95,6 +96,13 @@ def mean_datetime(datetimes):
     mean = np.mean(timestamps)
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
+def validate_cell_method(cell_method):
+    supported_methods = {
+        'mean',
+        'standard_deviation'
+    }
+    return cell_method in supported_methods
+
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
                           variable='', time=0, timescale='', cell_method=''):
     query = sesh.query(mm.DataFile.unique_id)\
@@ -117,7 +125,15 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
     if cell_method:
         if not validate_cell_method(cell_method):
             raise Exception('Unsupported cell_method: {}'.format(cell_method))
-        search_string = '%{}%'.format(cell_method)
-        query = query.filter(mm.DataFileVariable.variable_cell_methods.like(search_string))
+
+        cell_methods = sesh.query(mm.DataFileVariable.variable_cell_methods)\
+                        .distinct(mm.DataFileVariable.variable_cell_methods).all()
+        pattern = {
+            'standard_deviation': r'time: [a-z]* time: standard_deviation over days',
+            'mean': r'time: [a-z]*( time: mean .*)?'
+        }[cell_method]
+
+        matching_cell_methods = [r[0] for r in cell_methods if re.match(pattern, r[0])]
+        query = query.filter(mm.DataFileVariable.variable_cell_methods.in_(matching_cell_methods))
 
     return ( r[0] for r in query.all() )
