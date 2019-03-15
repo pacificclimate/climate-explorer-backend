@@ -31,11 +31,8 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
         variable (str): Short name of the variable to be returned
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
-        cell_method (str): CF convention cell method, table can be found at:
-            'http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/
-             cf-conventions.html#appendix-cell-methods'
-            If left empty files containing climatological means will be
-            selected. Otherwise specify cell method (i.e. stnadard_deviation)
+        cell_method (str): Statistical operation applied to variable in a
+            climatological dataset (e.g "mean" or "standard_deviation")
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.
