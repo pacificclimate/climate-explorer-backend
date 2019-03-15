@@ -234,7 +234,7 @@ def populateddb(cleandb):
         }[var_name]
         variable_cell_methods = {
             'tasmin': 'time: minimum',
-            'tasmax': 'time: maximum time: standard_deviation',
+            'tasmax': 'time: maximum time: standard_deviation over days',
         }[var_name]
         return DataFileVariable(
             file=file,
