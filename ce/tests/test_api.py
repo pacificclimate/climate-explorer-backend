@@ -186,6 +186,8 @@ def test_stats(populateddb, polygon, unique_id, var_name):
      ['tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
     ({'variable': 'tasmin', 'model': 'BNU-ESM', 'cell_method': 'mean'},
      ['tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
+    ({'variable': 'pr', 'model': 'BNU-ESM', 'cell_method': 'mean'},
+     ['pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
 ), ids=extract_ids)
 def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session
