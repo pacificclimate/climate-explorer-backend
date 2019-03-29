@@ -196,10 +196,15 @@ def populateddb(cleandb):
         unique_id='tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
         run=run3
     )
+    df_7_yearly = make_data_file(
+        unique_id='pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
+        run=run3
+    )
     data_files = [
         file1, file2, file3,
         df_5_monthly, df_5_seasonal, df_5_yearly,
         df_6_monthly, df_6_seasonal, df_6_yearly,
+        df_7_yearly,
     ]
 
     tasmin = VariableAlias(
@@ -210,8 +215,14 @@ def populateddb(cleandb):
     tasmax = VariableAlias(
         long_name='Daily Maximum Temperature',
         standard_name='air_temperature',
-        units='degC')
-    variable_aliases = [tasmin, tasmax]
+        units='degC'
+    )
+    pr = VariableAlias(
+        long_name='Precipitation',
+        standard_name='precipitation_flux',
+        units='kg d-1 m-2'
+    )
+    variable_aliases = [tasmin, tasmax, pr]
 
     grid_anuspline = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
                           yc_grid_step=0.0833333, xc_origin=-140.958,
@@ -231,14 +242,21 @@ def populateddb(cleandb):
         var_name_to_alias = {
             'tasmin': tasmin,
             'tasmax': tasmax,
-        }
+            'pr': pr,
+        }[var_name]
+        variable_cell_methods = {
+            'tasmin': 'time: minimum',
+            'tasmax': 'time: maximum time: standard_deviation over days',
+            'pr': 'time: mean time: mean over days',
+        }[var_name]
         return DataFileVariable(
             file=file,
             netcdf_variable_name=var_name,
             range_min=0,
             range_max=50,
-            variable_alias=var_name_to_alias[var_name],
-            grid=grid
+            variable_alias=var_name_to_alias,
+            grid=grid,
+            variable_cell_methods=variable_cell_methods
         )
 
     tmin1 = make_data_file_variable(file1, var_name='tasmin')
@@ -250,10 +268,12 @@ def populateddb(cleandb):
     tmax6 = make_data_file_variable(df_6_monthly, var_name='tasmin')
     tmax7 = make_data_file_variable(df_6_seasonal, var_name='tasmin')
     tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
+    pr1 = make_data_file_variable(df_7_yearly, var_name='pr')
 
     data_file_variables = [
         tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
-        tmax6, tmax7, tmax8
+        tmax6, tmax7, tmax8,
+        pr1
     ]
 
     sesh.add_all(data_file_variables)
@@ -337,7 +357,7 @@ def populateddb(cleandb):
             )
         ]
     )
-    ts_yearly.files = [df_5_yearly, df_6_yearly]
+    ts_yearly.files = [df_5_yearly, df_6_yearly, df_7_yearly]
 
     sesh.add_all(sesh.dirty)
 

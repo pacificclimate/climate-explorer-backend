@@ -1,6 +1,7 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import re
 
 import numpy as np
 import numpy.ma as ma
@@ -95,14 +96,30 @@ def mean_datetime(datetimes):
     mean = np.mean(timestamps)
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
+def validate_cell_method(cell_method):
+    return cell_method in ('mean', 'standard_deviation')
+
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
-                          variable='', time=0, timescale=''):
+                          variable='', time=0, timescale='', cell_method='mean'):
+    if not validate_cell_method(cell_method):
+        raise Exception('Unsupported cell_method: {}'.format(cell_method))
+
+    cell_methods = sesh.query(mm.DataFileVariable.variable_cell_methods)\
+                    .distinct(mm.DataFileVariable.variable_cell_methods).all()
+    pattern = {
+        'standard_deviation': r'time:[a-z\s]*time:\s+standard_deviation\s+over\s+(days|years)',
+        'mean': r'time:[a-z\s]*\s+(time:\s+mean\s+over\s+(days|years))?'
+    }[cell_method]
+
+    matching_cell_methods = [r[0] for r in cell_methods if re.match(pattern, r[0])]
+
     query = sesh.query(mm.DataFile.unique_id)\
             .distinct(mm.DataFile.unique_id)\
             .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble,
                   mm.Run, mm.Model, mm.Emission, mm.TimeSet, mm.Time)\
             .filter(mm.Ensemble.name == ensemble_name)\
             .filter(mm.DataFileVariable.netcdf_variable_name == variable)\
+            .filter(mm.DataFileVariable.variable_cell_methods.in_(matching_cell_methods))\
             .filter(mm.Time.time_idx == time)
 
     if model:

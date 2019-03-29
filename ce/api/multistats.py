@@ -5,7 +5,7 @@ from ce.api.stats import stats
 from ce.api.util import search_for_unique_ids
 
 def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
-               area=None, variable='', timescale=''):
+               area=None, variable='', timescale='', cell_method='mean'):
     '''Request and calculate statistics for multiple models or scenarios
 
     There are some cases for which one may want to get a set of
@@ -31,6 +31,9 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
         variable (str): Short name of the variable to be returned
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
+        cell_method (str): Statistical operation applied to variable in a
+            climatological dataset (e.g "mean" or "standard_deviation").
+            Defaulted to "mean".
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.
@@ -70,7 +73,7 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
     '''
 
     ids = search_for_unique_ids(sesh, ensemble_name, model, emission, variable,
-                                time, timescale)
+                                time, timescale, cell_method)
     return {
         id_: stats(sesh, id_, time, area, variable)[id_]
         for id_ in ids

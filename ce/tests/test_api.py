@@ -180,10 +180,14 @@ def test_stats(populateddb, polygon, unique_id, var_name):
 @pytest.mark.parametrize(('filters', 'keys'), (
     ({'variable': 'tasmax'},
      ('CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc', 'file2')),
-    ({'variable': 'tasmax', 'model': 'BNU-ESM'},
+    ({'variable': 'tasmax', 'model': 'BNU-ESM', 'cell_method': 'standard_deviation'},
      ['tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
     ({'variable': 'tasmax', 'timescale': 'seasonal'},
-     ['tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230'])
+     ['tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
+    ({'variable': 'tasmin', 'model': 'BNU-ESM', 'cell_method': 'mean'},
+     ['tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
+    ({'variable': 'pr', 'model': 'BNU-ESM', 'cell_method': 'mean'},
+     ['pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230']),
 ), ids=extract_ids)
 def test_multistats(populateddb, filters, keys):
     sesh = populateddb.session
