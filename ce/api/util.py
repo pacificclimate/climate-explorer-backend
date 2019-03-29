@@ -107,8 +107,8 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
     cell_methods = sesh.query(mm.DataFileVariable.variable_cell_methods)\
                     .distinct(mm.DataFileVariable.variable_cell_methods).all()
     pattern = {
-        'standard_deviation': r'time:[a-z\s]*time:\s+standard_deviation\s+over\s+days',
-        'mean': r'time:[a-z\s]*\s+(time:\s+mean\s+over\s+days)?'
+        'standard_deviation': r'time:[a-z\s]*time:\s+standard_deviation\s+over\s+(days|years)',
+        'mean': r'time:[a-z\s]*\s+(time:\s+mean\s+over\s+(days|years))?'
     }[cell_method]
 
     matching_cell_methods = [r[0] for r in cell_methods if re.match(pattern, r[0])]
