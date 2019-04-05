@@ -1,5 +1,16 @@
 # News / Release Notes
 
+## 1.1.0
+
+*08-February-2018*
+
+* Update rasterio to new release candidate [PR #80](https://github.com/pacificclimate/climate-explorer-backend/pull/80)
+* Update /data query to only use appropriate files [PR #82](https://github.com/pacificclimate/climate-explorer-backend/pull/82)
+* Several updates to tests [PR #84](https://github.com/pacificclimate/climate-explorer-backend/pull/84) [PR #90](https://github.com/pacificclimate/climate-explorer-backend/pull/90)
+* Add streamflow API spec [PR #88](https://github.com/pacificclimate/climate-explorer-backend/pull/88)
+* Fix outdated documentation [PR #95](https://github.com/pacificclimate/climate-explorer-backend/pull/95)
+* Add `cell_method` filtering option [PR #96](https://github.com/pacificclimate/climate-explorer-backend/pull/96)
+
 ## 1.0.0
 
 *08-February-2018*

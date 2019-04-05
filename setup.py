@@ -9,7 +9,7 @@ def recursive_list(pkg_dir, basedir):
                 yield os.path.join(dirname, filename).lstrip(pkg_dir)
     return [x for x in find()]
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 setup(
     name="ce",
