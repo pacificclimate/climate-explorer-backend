@@ -99,6 +99,20 @@ def mean_datetime(datetimes):
 def validate_cell_method(cell_method):
     return cell_method in ('mean', 'standard_deviation')
 
+def find_matching_cell_methods(cell_methods, target_method):
+    def filter_on_method(cell_method, target_method):
+        pattern = r'time:[a-z\s]*time:\s+{}\s+over\s+(days|years)'.format(target_method)
+        return re.fullmatch(pattern, cell_method)
+
+    if target_method == 'mean':
+        return [cell_method for cell_method in cell_methods
+                if filter_on_method(cell_method, target_method) or
+                   (not filter_on_method(cell_method, target_method) and
+                    not filter_on_method(cell_method, 'standard_deviation'))]
+    else:
+        return [cell_method for cell_method in cell_methods
+                if filter_on_method(cell_method, target_method)]
+
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
                           variable='', time=0, timescale='', cell_method='mean'):
     if not validate_cell_method(cell_method):
@@ -106,12 +120,8 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
 
     cell_methods = sesh.query(mm.DataFileVariable.variable_cell_methods)\
                     .distinct(mm.DataFileVariable.variable_cell_methods).all()
-    pattern = {
-        'standard_deviation': r'time:[a-z\s]*time:\s+standard_deviation\s+over\s+(days|years)',
-        'mean': r'time:[a-z\s]*\s+(time:\s+mean\s+over\s+(days|years))?'
-    }[cell_method]
 
-    matching_cell_methods = [r[0] for r in cell_methods if re.match(pattern, r[0])]
+    matching_cell_methods = find_matching_cell_methods([r[0] for r in cell_methods], cell_method)
 
     query = sesh.query(mm.DataFile.unique_id)\
             .distinct(mm.DataFile.unique_id)\
