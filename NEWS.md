@@ -1,8 +1,13 @@
 # News / Release Notes
 
+## 1.1.1
+*15-April-2019*
+
+* Fix for `cell_method` filter issue [PR #99](https://github.com/pacificclimate/climate-explorer-backend/pull/99) 
+
 ## 1.1.0
 
-*08-February-2018*
+*08-February-2019*
 
 * Update rasterio to new release candidate [PR #80](https://github.com/pacificclimate/climate-explorer-backend/pull/80)
 * Update /data query to only use appropriate files [PR #82](https://github.com/pacificclimate/climate-explorer-backend/pull/82)
