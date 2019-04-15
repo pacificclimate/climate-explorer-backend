@@ -104,6 +104,17 @@ def find_matching_cell_methods(cell_methods, target_method):
         pattern = r'time:[a-z\s]*time:\s+{}\s+over\s+(days|years)'.format(target_method)
         return re.fullmatch(pattern, cell_method)
 
+    # Older data sets were all climatological means and therefore the
+    # cell_method attribute never had to specify that they were such.  With the
+    # introduction of climatological standard deviation data sets the
+    # cell_method usage had to be updated such that we could differentiate
+    # between the different the data operations.  Thus any cell_method that
+    # doesn't match the updated version is considered to be a climatological
+    # mean.
+    #
+    # The conventions that were followed to create these cell_method attributes
+    # can be found here:
+    # http://cfconventions.org/cf-conventions/cf-conventions.html#cell-methods
     if target_method == 'mean':
         return [cell_method for cell_method in cell_methods
                 if filter_on_method(cell_method, target_method) or
