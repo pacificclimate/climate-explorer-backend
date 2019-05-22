@@ -79,13 +79,13 @@ class memoize(object):
         #performance, but these aren't used in production and can generally be ignored.
         class CachedFunction(object):
             def __init__(self, maxsize, keyfunc, func):
-                self.size = 0
                 self.hits = self.misses = 0
                 self.maxsize = maxsize
                 self.keyfunc = keyfunc
                 self.func = func
                 self.func.__name__ = func.__name__
                 self.cache = OrderedDict()
+                self.size = sys.getsizeof(self.cache)
                 self.MBconversion = 1024 * 1024
 
             def __call__(self, *args):
@@ -106,15 +106,20 @@ class memoize(object):
                     result = self.func(*args)
 
                 with cache_lock:
+                    old_container_size = sys.getsizeof(self.cache)
                     self.cache[key] = result
-                    self.size += getsize(result)
+                    new_container_size = sys.getsizeof(self.cache)
+                    self.size += getsize(result) + (new_container_size - old_container_size)
                     self.misses += 1
                     while self.size > self.maxsize * self.MBconversion:
                         if len(self.cache) == 1:
                             log.warning("Cache maxsize is set to {} MB ".format(self.maxsize),
                                         "but tried to cache a {} MB item".format(getsize(self.cache) / self.MBconversion))
+                        old_container_size = sys.getsizeof(self.cache)
                         lru = self.cache.popitem(0)
+                        new_container_size = sys.getsizeof(self.cache)
                         self.size -= getsize(lru)
+                        self.size += (new_container_size - old_container_size)
 
                 return result
 
