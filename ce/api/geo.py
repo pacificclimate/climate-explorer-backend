@@ -3,6 +3,7 @@ import sys
 import math
 from collections import OrderedDict
 from threading import RLock
+from contextlib import ContextDecorator
 
 from netCDF4 import Dataset
 import numpy as np
@@ -52,6 +53,22 @@ def getsize(obj):
 
 log = logging.getLogger(__name__)
 cache_lock = RLock()
+
+
+class cache_sizer(ContextDecorator):
+    def __init__(self, cache):
+        self.cache = cache
+
+    def __enter__(self):
+        self.startsize = sys.getsizeof(self.cache)
+        return self
+
+    def __exit__(self, *exc):
+        self.endsize = sys.getsizeof(self.cache)
+
+    def delta_size(self):
+        return self.endsize - self.startsize
+    
 
 class memoize(object):
     '''
@@ -106,20 +123,18 @@ class memoize(object):
                     result = self.func(*args)
 
                 with cache_lock:
-                    old_container_size = sys.getsizeof(self.cache)
-                    self.cache[key] = result
-                    new_container_size = sys.getsizeof(self.cache)
-                    self.size += getsize(result) + (new_container_size - old_container_size)
+                    with cache_sizer(self.cache) as sizer:
+                        self.cache[key] = result
+                    self.size += getsize(result) + sizer.delta_size()
                     self.misses += 1
                     while self.size > self.maxsize * self.MBconversion:
                         if len(self.cache) == 1:
                             log.warning("Cache maxsize is set to {} MB ".format(self.maxsize),
-                                        "but tried to cache a {} MB item".format(getsize(self.cache) / self.MBconversion))
-                        old_container_size = sys.getsizeof(self.cache)
-                        lru = self.cache.popitem(0)
-                        new_container_size = sys.getsizeof(self.cache)
+                                        "but tried to cache a {} MB item".format(self.size / self.MBconversion))
+                        with cache_sizer(self.cache) as sizer:
+                            lru = self.cache.popitem(0)
                         self.size -= getsize(lru)
-                        self.size += (new_container_size - old_container_size)
+                        self.size += sizer.delta_size()
 
                 return result
 
