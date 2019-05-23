@@ -3,6 +3,7 @@ import sys
 import math
 from collections import OrderedDict
 from threading import RLock
+from contextlib import ContextDecorator
 
 from netCDF4 import Dataset
 import numpy as np
@@ -53,6 +54,22 @@ def getsize(obj):
 log = logging.getLogger(__name__)
 cache_lock = RLock()
 
+
+class cache_sizer(ContextDecorator):
+    def __init__(self, cache):
+        self.cache = cache
+
+    def __enter__(self):
+        self.startsize = sys.getsizeof(self.cache)
+        return self
+
+    def __exit__(self, *exc):
+        self.endsize = sys.getsizeof(self.cache)
+
+    def delta_size(self):
+        return self.endsize - self.startsize
+    
+
 class memoize(object):
     '''
     Decorator to add caching to a function.
@@ -85,8 +102,8 @@ class memoize(object):
                 self.func = func
                 self.func.__name__ = func.__name__
                 self.cache = OrderedDict()
+                self.size = sys.getsizeof(self.cache)
                 self.MBconversion = 1024 * 1024
-
 
             def __call__(self, *args):
                 key = self.keyfunc(*args)
@@ -106,13 +123,18 @@ class memoize(object):
                     result = self.func(*args)
 
                 with cache_lock:
-                    self.cache[key] = result
+                    with cache_sizer(self.cache) as sizer:
+                        self.cache[key] = result
+                    self.size += getsize(result) + sizer.delta_size()
                     self.misses += 1
-                    while getsize(self.cache) > self.maxsize * self.MBconversion:
+                    while self.size > self.maxsize * self.MBconversion:
                         if len(self.cache) == 1:
                             log.warning("Cache maxsize is set to {} MB ".format(self.maxsize),
-                                        "but tried to cache a {} MB item".format(getsize(self.cache) / self.MBconversion))
-                        self.cache.popitem(0)
+                                        "but tried to cache a {} MB item".format(self.size / self.MBconversion))
+                        with cache_sizer(self.cache) as sizer:
+                            lru = self.cache.popitem(0)
+                        self.size -= getsize(lru)
+                        self.size += sizer.delta_size()
 
                 return result
 
@@ -127,7 +149,7 @@ class memoize(object):
 
             def get_misses(self): return self.misses
 
-            def get_size(self): return getsize(self.cache)
+            def get_size(self): return self.size
 
             def get_length(self): return len(self.cache)
 
