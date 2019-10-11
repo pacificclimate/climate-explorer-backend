@@ -21,8 +21,8 @@ $ export C_INCLUDE_PATH=/usr/include/gdal
 
 ### Installation
 
-Setup using virtual environment. 
-Use Python 3 module `venv`, not `virtualenv`, which installs Python 2. 
+Setup using virtual environment.
+Use Python 3 module `venv`, not `virtualenv`, which installs Python 2.
 Unit tests use `datetime.timezone`, which is available only in Python 3.
 
 ```bash
@@ -63,25 +63,29 @@ sudo docker run --rm -it --name backend-test pcic/climate-explorer-backend bash 
 ```
 
 ### Setup using Docker:
-Build the image:
+Build the image manually:
 ```bash
 git clone https://github.com/pacificclimate/climate-explorer-backend
 cd climate-explorer-backend
 docker build -t climate-explorer-backend-image .
 ```
 
-It's convenient to create a seperate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database. 
+It's convenient to create a seperate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database.
+
+Jenkins image build:
+
+Jenkins automatically handles the generation of docker images. Currently it is configured to trigger an image build for each push on individual branches. The image generated will have the name `climate-explorer-backend/[branch_name]`.
 
 ```bash
 docker run --name ce_data -v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/:ro ubuntu 16.04
 ```
 
-Finally run the climate explorer backend image as a new container. 
+Finally run the climate explorer backend image as a new container.
 
 ```bash
-docker run -it -p whateverexternalport:8000 
-               -e "MDDB_DSN=postgresql://dbuser:dbpassword@host/databasename" 
-               --volumes-from ce_data 
+docker run -it -p whateverexternalport:8000
+               -e "MDDB_DSN=postgresql://dbuser:dbpassword@host/databasename"
+               --volumes-from ce_data
                --name climate-explorer-backend
                climate-explorer-backend-image
 ```
