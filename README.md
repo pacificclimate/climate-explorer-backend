@@ -74,7 +74,7 @@ It's convenient to create a seperate read-only docker container to mount the dat
 
 Jenkins image build:
 
-Jenkins automatically handles the generation of docker images. Currently it is configured to trigger an image build for each push on individual branches. The image generated will have the name climate-explorer-backend/[branch_name].
+Jenkins automatically handles the generation of docker images. Currently it is configured to trigger an image build for each push on individual branches. The image generated will have the name `climate-explorer-backend/[branch_name]`.
 
 ```bash
 docker run --name ce_data -v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/:ro ubuntu 16.04
