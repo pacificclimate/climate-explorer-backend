@@ -71,14 +71,20 @@ def watershed(sesh, station, ensemble_name):
 
     #  calculate elevation data
     elevation = time_invariant_variable_dataset(sesh, ensemble_name, "elev")
+    e_units = elevation.variables["elev"].units
     elevations = list(map(lambda lonlat: value_at_lonlat(lonlat,
                                                          elevation,
                                                          "elev"),
                           watershed_lonlats))
 
-    response["maximum_elevation"] = max(elevations)
-    response["minimum_elevation"] = min(elevations)
-    response["hypsometric_curve"] = bin_values(elevations)
+    response["maximum_elevation"] = {"units": e_units,
+                                     "value": max(elevations)}
+    response["minimum_elevation"] = {"units": e_units,
+                                     "value": min(elevations)}
+    hc = bin_values(elevations)
+    hc["x_units"] = e_units
+    hc["y_units"] = "grid cells"
+    response["hypsometric_curve"] = hc
 
     #  calculate area data
     area = time_invariant_variable_dataset(sesh, ensemble_name, "area")
@@ -86,7 +92,8 @@ def watershed(sesh, station, ensemble_name):
                                                     area,
                                                     "area"),
                           watershed_lonlats))
-    response["area"] = sum(areas)
+    response["area"] = {"units": area.variables["area"].units,
+                        "value": sum(areas)}
 
     #  calculate geoJSON shape
     shape = geoJSON_shape(watershed_lonlats, flow_direction)
@@ -240,29 +247,34 @@ def value_at_lonlat(lonlat, nc, var):
 
 
 def bin_values(values):
-    '''returns a histogram dictionary, where the keys are stringified numbers
-    representing the midpoint of each bin, and the values are the number of
-    inputs that fall within each bin.
+    '''returns a histogram dictionary. 
     For N values, sqrt(N) bins will be created.'''
 
     num_bins = math.ceil(math.sqrt(len(values)))
 
     count = []
-    for i in range(num_bins):
-        count.append(0)
-
+    bins = []
     mn = min(values) - 5
     mx = max(values) + 5
     width = (mx - mn) / num_bins
+    center = mn + (width / 2)
+    for i in range(num_bins):
+        count.append(0)
+        bins.append(center)
+        center += width
 
     for n in values:
         bin = math.floor((n - mn) / width)
         count[bin] = count[bin] + 1
-    hist = {}
+    hist = {
+        "bin_width": width,
+        "histogram": {
+            "x_bin_centers": bins,
+            "y_values": count
+            }
+        }
 
-    for b in range(num_bins):
-        midpoint = round(mn + (b * width) - (width / 2))
-        hist[str(midpoint)] = count[b]
+
 
     return hist
 
@@ -276,7 +288,7 @@ def geoJSON_shape(points, nc):
     width = nc_dimension_step(nc, "lon")
     height = nc_dimension_step(nc, "lat")
 
-    geoJSON = {'type': 'Feature', 'geometry': {'type': 'Polygon'}}
+    geoJSON = {'type': 'Feature'}
 
     def grid_square_from_point(point, width, height):
         '''makes shapely Polygon representing grid square centered at point'''
@@ -289,5 +301,5 @@ def geoJSON_shape(points, nc):
 
     squares = list(map(lambda p: grid_square_from_point(p, width, height),
                        points))
-    geoJSON['geometry']['coordinates'] = mapping(cascaded_union(squares))
+    geoJSON["geometry"] = mapping(cascaded_union(squares))
     return geoJSON
