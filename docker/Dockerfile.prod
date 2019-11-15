@@ -1,4 +1,4 @@
-FROM pcic/geospatial-python:add-jenkins-support
+FROM pcic/geospatial-python
 
 ADD . /app
 WORKDIR /app
