@@ -11,7 +11,7 @@ Returns a JSON object with the following attributes:
     elevation: minimum and maximum elevations
     shape: a geoJSON object representing the lat-long contour
                of the watershed
-    hypsometric_surve: a histogram of the watershed
+    hypsometric_curve: a histogram of the watershed
 
 CAUTION: This API juggles two sets of coordinates: spatial coordinates, and
 data indexes. Spatial coordinates (such as the WKT parameter input, or the
@@ -79,11 +79,6 @@ def watershed(sesh, station, ensemble_name):
         "minimum": min(elevations),
         "maximum": max(elevations)
         }
-    
-    hc = bin_values(elevations)
-    hc["x_units"] = e_units
-    hc["y_units"] = "grid cells"
-    response["hypsometric_curve"] = hc
 
     #  calculate area data
     area = time_invariant_variable_dataset(sesh, ensemble_name, "area")
@@ -93,8 +88,15 @@ def watershed(sesh, station, ensemble_name):
                                                     area,
                                                     "area"),
                           watershed_lonlats))
-    response["area"] = {"units": area.variables["area"].units,
+    a_units = area.variables["area"].units
+    response["area"] = {"units": a_units,
                         "value": sum(areas)}
+
+    # calculate the elevation/area curve
+    hc = bin_values(list(zip(elevations, areas)))
+    hc["x_units"] = e_units
+    hc["y_units"] = a_units
+    response["hypsometric_curve"] = hc
 
     #  calculate geoJSON shape
     shape = geoJSON_shape(watershed_lonlats, flow_direction)
@@ -254,29 +256,30 @@ def value_at_lonlat(lonlat, nc, var):
 
 
 def bin_values(values):
-    '''returns a histogram dictionary. 
+    '''Accepts a list of (elevation, area) tuples.
+    returns a histogram dictionary of how much area is at each elevation. 
     For N values, sqrt(N) bins will be created.'''
 
     num_bins = math.ceil(math.sqrt(len(values)))
 
-    count = []
+    area = []
     bins = []
-    mn = min(values) - 5
-    mx = max(values) + 5
+    mn = min(values, key = lambda t: t[0])[0] - 5
+    mx = max(values, key = lambda t: t[0])[0] + 5
     width = (mx - mn) / num_bins
     center = mn + (width / 2)
     for i in range(num_bins):
-        count.append(0)
+        area.append(0)
         bins.append(center)
         center += width
 
-    for n in values:
-        bin = math.floor((n - mn) / width)
-        count[bin] = count[bin] + 1
+    for t in values:
+        bin = math.floor((t[0] - mn) / width)
+        area[bin] = area[bin] + t[1]
     hist = {
         "bin_width": width,
         "x_bin_centers": bins,
-        "y_values": count
+        "y_values": area
         }
     return hist
 
