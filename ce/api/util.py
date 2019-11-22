@@ -153,3 +153,15 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
         query = query.filter(mm.TimeSet.time_resolution == timescale)
 
     return ( r[0] for r in query.all() )
+
+
+def WKT_point_to_lonlat(text):
+    pattern = re.compile(
+        r'POINT\s*\(([+-]?[0-9]+\.?[0-9]*)\s+([+-]?[+-]?[0-9]+\.?[0-9]*)\)'
+    )
+    match = re.match(pattern, text)
+    if not match:
+        raise ValueError('Cannot parse {} as a WKT point'.format(text))
+    lon = float(match.group(1))
+    lat = float(match.group(2))
+    return lon, lat

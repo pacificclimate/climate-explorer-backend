@@ -35,7 +35,7 @@ import numpy as np
 import os
 import math
 
-from ce.api.util import search_for_unique_ids
+from ce.api.util import WKT_point_to_lonlat
 import modelmeta as mm
 
 
@@ -44,12 +44,7 @@ def watershed(sesh, station, ensemble_name):
     # Get the watershed, represented as a list of points
     response = {}
 
-    wkt_point_pattern = 'POINT \(([0-9]*.?[0-9]*),([0-9]*.?[0-9]*)\)'
-    wkt_point_match = re.match(wkt_point_pattern, station)
-    if not wkt_point_match:
-        raise Exception('Cannot parse {} as a WKT point'.format(station))
-    lon = float(wkt_point_match.group(1))
-    lat = float(wkt_point_match.group(2))
+    lon, lat = WKT_point_to_lonlat(station)
 
     flow_direction = time_invariant_variable_dataset(sesh,
                                                      ensemble_name,
