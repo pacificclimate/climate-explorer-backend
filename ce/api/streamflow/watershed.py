@@ -8,13 +8,12 @@ Arguments:
 
 Returns a JSON object with the following attributes:
     area: area of the watershed, in square meters
-    minimum-elevation: the minimum elevation of the watershed, in meters
-    maximum-elevation: the maximum elevation of the watershed, in meters
-    watershed: a geoJSON object representing the lat-long contour
+    elevation: minimum and maximum elevations
+    shape: a geoJSON object representing the lat-long contour
                of the watershed
-    hypsometrics: a histogram of the watershed (??)
+    hypsometric_surve: a histogram of the watershed
 
-CAUTION 1: This API juggles two sets of coordinates: spatial coordinates, and
+CAUTION: This API juggles two sets of coordinates: spatial coordinates, and
 data indexes. Spatial coordinates (such as the WKT parameter input, or the
 geoJSON output) are lon-lat order. But inside the netCDF files, data is
 arranged in lat-lon order.
@@ -24,10 +23,6 @@ Spatial coordinates are named lat and lon. Data coordinates are named x and y.
 The functions lonlat_to_xy() and xy_to_lonlat(), which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order.
-
-CAUTION 2: This API endpoint assumes that the elevation, flow direction, and
-area files all use the same spatial resolution. (IE, they're all from the same
-RVIC run.) It does not assume they have the same spatial extent.
 '''
 
 import json
@@ -71,16 +66,20 @@ def watershed(sesh, station, ensemble_name):
 
     #  calculate elevation data
     elevation = time_invariant_variable_dataset(sesh, ensemble_name, "elev")
+    if not compatible_grids(flow_direction, elevation):
+        raise Exception("Flow direction and elevation do not have the same grid")
+    
     e_units = elevation.variables["elev"].units
     elevations = list(map(lambda lonlat: value_at_lonlat(lonlat,
                                                          elevation,
                                                          "elev"),
                           watershed_lonlats))
-
-    response["maximum_elevation"] = {"units": e_units,
-                                     "value": max(elevations)}
-    response["minimum_elevation"] = {"units": e_units,
-                                     "value": min(elevations)}
+    response["elevation"] = {
+        "units": e_units,
+        "minimum": min(elevations),
+        "maximum": max(elevations)
+        }
+    
     hc = bin_values(elevations)
     hc["x_units"] = e_units
     hc["y_units"] = "grid cells"
@@ -88,6 +87,8 @@ def watershed(sesh, station, ensemble_name):
 
     #  calculate area data
     area = time_invariant_variable_dataset(sesh, ensemble_name, "area")
+    if not compatible_grids(flow_direction, area):
+        raise Exception("Flow direction and area do not have the same grid")
     areas = list(map(lambda lonlat: value_at_lonlat(lonlat,
                                                     area,
                                                     "area"),
@@ -180,6 +181,12 @@ def nc_dimension_step(nc, dimension):
     returns the interval between steps. Assumes all steps same size.'''
     return nc.variables[dimension][1] - nc.variables[dimension][0]
 
+def compatible_grids(nc1, nc2):
+    '''checks whether the two netCDF files have the same size grid.
+    Does not check spatial extent.'''
+    return (abs(nc_dimension_step(nc1, "lon")) == abs(nc_dimension_step(nc2, "lon")) and
+        abs(nc_dimension_step(nc1, "lat")) == abs(nc_dimension_step(nc2, "lat")))
+
 
 def build_VIC_direction_matrix(flow_direction):
     '''Constructs mapping between RVIC's routing encoding (1 = North,
@@ -268,14 +275,9 @@ def bin_values(values):
         count[bin] = count[bin] + 1
     hist = {
         "bin_width": width,
-        "histogram": {
-            "x_bin_centers": bins,
-            "y_values": count
-            }
+        "x_bin_centers": bins,
+        "y_values": count
         }
-
-
-
     return hist
 
 
