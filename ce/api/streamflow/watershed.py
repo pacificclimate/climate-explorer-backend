@@ -47,9 +47,10 @@ from modelmeta import \
 def watershed(sesh, station, ensemble_name):
     '''Documentation goes here --- what is the format?'''
     # Get the watershed, represented as a list of points
-    response = {}
 
     lon, lat = WKT_point_to_lonlat(station)
+    
+    # Compute lonlats of watershed whose mouth is at `station`
 
     flow_direction = get_time_invariant_variable_dataset(
         sesh, ensemble_name, 'flow_direction'
@@ -58,50 +59,74 @@ def watershed(sesh, station, ensemble_name):
     start_xy = lonlat_to_xy([lon, lat], flow_direction)
 
     VIC_direction_matrix = build_VIC_direction_matrix(flow_direction)
-    watershed_xys = build_watershed(start_xy,
-                                    flow_direction.variables["flow_direction"],
-                                    VIC_direction_matrix)
-    watershed_lonlats = list(map(lambda xy: xy_to_lonlat(xy, flow_direction),
-                             watershed_xys))
+    watershed_xys = build_watershed(
+        start_xy, 
+        flow_direction.variables['flow_direction'],
+        VIC_direction_matrix
+    )
+    watershed_lonlats = list(
+        map(lambda xy: xy_to_lonlat(xy, flow_direction), watershed_xys)
+    )
 
-    #  calculate elevation data
-    elevation = get_time_invariant_variable_dataset(sesh, ensemble_name, "elev")
-    if not compatible_grids(flow_direction, elevation):
-        raise Exception("Flow direction and elevation do not have the same grid")
+    # TODO: DRY up the following two computations
+
+    #  Compute elevations at each lonlat of watershed
     
-    e_units = elevation.variables["elev"].units
-    elevations = list(map(lambda lonlat: value_at_lonlat(lonlat,
-                                                         elevation,
-                                                         "elev"),
-                          watershed_lonlats))
-    response["elevation"] = {
-        "units": e_units,
-        "minimum": min(elevations),
-        "maximum": max(elevations)
-        }
+    elevation = get_time_invariant_variable_dataset(sesh, ensemble_name, 'elev')
+    if not compatible_grids(flow_direction, elevation):
+        raise ValueError(
+            'Flow direction and elevation do not have the same grid')
+    
+    elevations = list(
+        map(lambda lonlat: value_at_lonlat(lonlat, elevation, "elev"), 
+            watershed_lonlats)
+    )
+    
+    #  Compute area of each cell in watershed
 
-    #  calculate area data
     area = get_time_invariant_variable_dataset(sesh, ensemble_name, "area")
     if not compatible_grids(flow_direction, area):
         raise Exception("Flow direction and area do not have the same grid")
-    areas = list(map(lambda lonlat: value_at_lonlat(lonlat,
-                                                    area,
-                                                    "area"),
-                          watershed_lonlats))
-    a_units = area.variables["area"].units
-    response["area"] = {"units": a_units,
-                        "value": sum(areas)}
 
-    # calculate the elevation/area curve
+    areas = list(
+        map(lambda lonlat: value_at_lonlat(lonlat, area, "area"),
+            watershed_lonlats)
+    )
+
+    # Compute the elevation/area curve
+
     hc = bin_values(list(zip(elevations, areas)))
-    hc["x_units"] = e_units
-    hc["y_units"] = a_units
-    response["hypsometric_curve"] = hc
 
     #  calculate geoJSON shape
+
     shape = geoJSON_shape(watershed_lonlats, flow_direction)
-    shape["properties"] = {"mouth_longitude": lon, "mouth_latitude": lat}
-    response["shape"] = shape
+    
+    # Compose response
+
+    response = {
+        'elevation': {
+            'units': elevation.variables['elev'].units,
+            'minimum': min(elevations),
+            'maximum': max(elevations),
+        },
+        'area': {
+            'units': area.variables['area'].units,
+             'value': sum(areas),
+        },
+        'hypsometric_curve': {
+            **hc,
+            'x_units': elevation.variables['elev'].units,
+            'y_units': area.variables['area'].units,
+        },
+        'shape': {
+            **shape,
+            'properties': {
+                'mouth_longitude': lon, 
+                'mouth_latitude': lat
+            },
+        },
+    }
+
 
     elevation.close()
     flow_direction.close()
@@ -290,8 +315,6 @@ def geoJSON_shape(points, nc):
     only, probably.'''
     width = nc_dimension_step(nc, "lon")
     height = nc_dimension_step(nc, "lat")
-
-    geoJSON = {'type': 'Feature'}
 
     def grid_square_from_point(point, width, height):
         '''makes shapely Polygon representing grid square centered at point'''
