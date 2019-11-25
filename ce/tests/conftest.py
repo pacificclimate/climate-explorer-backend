@@ -82,6 +82,8 @@ def populateddb(cleandb):
     populateable_db = cleandb
     sesh = populateable_db.session
 
+    # Ensembles
+
     ens_bccaqv2 = Ensemble(
         name='bccaqv2',
         version=1.0,
@@ -102,15 +104,21 @@ def populateddb(cleandb):
     )
     ensembles = [ens_bccaqv2, ens_bc_prism, ens_ce]
 
+    # Emissions
+
     rcp45 = Emission(short_name='rcp45')
     rcp85 = Emission(short_name='rcp85')
     historical = Emission(short_name='historical')
     emissions = [rcp45, rcp85, historical]
 
+    # Runs
+
     run1 = Run(name='run1', emission=rcp45)
     run2 = Run(name='r1i1p1', emission=rcp85)
     run3 = Run(name='r1i1p1', emission=historical)
     runs = [run1, run2, run3]
+
+    # Models
 
     csiro = Model(
         short_name='csiro',
@@ -134,6 +142,8 @@ def populateddb(cleandb):
         organization='BNU'
     )
     models = [csiro, canems2, bnu_esm]
+
+    # Data files
 
     def make_data_file(unique_id, filename=None, run=None):
         if not filename:
@@ -200,12 +210,20 @@ def populateddb(cleandb):
         unique_id='pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
         run=run3
     )
+    df_ti_flow_direction = make_data_file(
+        unique_id='flow-direction_peace'
+    )
+
     data_files = [
         file1, file2, file3,
         df_5_monthly, df_5_seasonal, df_5_yearly,
         df_6_monthly, df_6_seasonal, df_6_yearly,
         df_7_yearly,
+        df_ti_flow_direction,
     ]
+
+    # VariableAlias
+    # TODO: Really? Do we really use aliases?
 
     tasmin = VariableAlias(
         long_name='Daily Minimum Temperature',
@@ -222,7 +240,14 @@ def populateddb(cleandb):
         standard_name='precipitation_flux',
         units='kg d-1 m-2'
     )
-    variable_aliases = [tasmin, tasmax, pr]
+    flow_direction = VariableAlias(
+        long_name='Flow Direction',
+        standard_name='flow_direction',
+        units='1'
+    )
+    variable_aliases = [tasmin, tasmax, pr, flow_direction]
+
+    # Grids
 
     grid_anuspline = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
                           yc_grid_step=0.0833333, xc_origin=-140.958,
@@ -231,6 +256,8 @@ def populateddb(cleandb):
                           evenly_spaced_y=True)
     grids = [grid_anuspline]
 
+    # Add all the above
+
     sesh.add_all(ensembles)
     sesh.add_all(models)
     sesh.add_all(data_files)
@@ -238,16 +265,20 @@ def populateddb(cleandb):
     sesh.add_all(grids)
     sesh.flush()
 
+    # DataFileVariable
+
     def make_data_file_variable(file, var_name=None, grid=grid_anuspline):
         var_name_to_alias = {
             'tasmin': tasmin,
             'tasmax': tasmax,
             'pr': pr,
+            'flow_direction': flow_direction,
         }[var_name]
         variable_cell_methods = {
             'tasmin': 'time: minimum',
             'tasmax': 'time: maximum time: standard_deviation over days',
             'pr': 'time: mean time: mean over days',
+            'flow_direction': 'foo'
         }[var_name]
         return DataFileVariable(
             file=file,
@@ -269,15 +300,21 @@ def populateddb(cleandb):
     tmax7 = make_data_file_variable(df_6_seasonal, var_name='tasmin')
     tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
     pr1 = make_data_file_variable(df_7_yearly, var_name='pr')
+    fd = make_data_file_variable(
+        df_ti_flow_direction, var_name='flow_direction'
+    )
 
     data_file_variables = [
         tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
         tmax6, tmax7, tmax8,
-        pr1
+        pr1,
+        fd,
     ]
 
     sesh.add_all(data_file_variables)
     sesh.flush()
+
+    # Associate to Ensembles
 
     for dfv in [tmax3, tmax6]:
         ens_bccaqv2.data_file_variables.append(dfv)
@@ -289,6 +326,8 @@ def populateddb(cleandb):
         ens_ce.data_file_variables.append(dfv)
 
     sesh.add_all(sesh.dirty)
+
+    # TimeSets
 
     ts_monthly = TimeSet(
         calendar='gregorian',

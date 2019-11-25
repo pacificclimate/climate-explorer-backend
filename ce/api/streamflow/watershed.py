@@ -35,8 +35,13 @@ import numpy as np
 import os
 import math
 
+from sqlalchemy import distinct
+from sqlalchemy.orm.exc import NoResultFound
+
 from ce.api.util import WKT_point_to_lonlat
 import modelmeta as mm
+from modelmeta import \
+    DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
 
 def watershed(sesh, station, ensemble_name):
@@ -46,9 +51,9 @@ def watershed(sesh, station, ensemble_name):
 
     lon, lat = WKT_point_to_lonlat(station)
 
-    flow_direction = time_invariant_variable_dataset(sesh,
-                                                     ensemble_name,
-                                                     "flow_direction")
+    flow_direction = get_time_invariant_variable_dataset(
+        sesh, ensemble_name, 'flow_direction'
+    )
 
     start_xy = lonlat_to_xy([lon, lat], flow_direction)
 
@@ -60,7 +65,7 @@ def watershed(sesh, station, ensemble_name):
                              watershed_xys))
 
     #  calculate elevation data
-    elevation = time_invariant_variable_dataset(sesh, ensemble_name, "elev")
+    elevation = get_time_invariant_variable_dataset(sesh, ensemble_name, "elev")
     if not compatible_grids(flow_direction, elevation):
         raise Exception("Flow direction and elevation do not have the same grid")
     
@@ -76,7 +81,7 @@ def watershed(sesh, station, ensemble_name):
         }
 
     #  calculate area data
-    area = time_invariant_variable_dataset(sesh, ensemble_name, "area")
+    area = get_time_invariant_variable_dataset(sesh, ensemble_name, "area")
     if not compatible_grids(flow_direction, area):
         raise Exception("Flow direction and area do not have the same grid")
     areas = list(map(lambda lonlat: value_at_lonlat(lonlat,
@@ -216,28 +221,26 @@ def build_VIC_direction_matrix(flow_direction):
     return directions
 
 
-def time_invariant_variable_dataset(sesh, ensemble_name, variable):
+def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     '''This function locates and opens a time-invariant dataset.
     These datasets contain things like elevation or area of a grid cell -
     they're independent of time and there should be only one per ensemble.
     If more or less than one is found in the ensemble, it raises an error.'''
-    query = sesh.query(mm.DataFile.filename)\
-        .distinct(mm.DataFile.unique_id)\
-        .join(mm.DataFileVariable, mm.EnsembleDataFileVariables, mm.Ensemble)\
-        .filter(mm.Ensemble.name == ensemble_name)\
-        .filter(mm.DataFileVariable.netcdf_variable_name == variable)
+    # TODO: Should these be filtered for being time-invariant?
+    query = (
+        sesh.query(distinct(DataFile.filename).label('filename'))
+        .join(
+            DataFileVariable,
+            EnsembleDataFileVariables,
+            Ensemble,
+        )
+        .filter(Ensemble.name == ensemble_name)
+        .filter(DataFileVariable.netcdf_variable_name == variable)
+        .filter(DataFile.time_set_id == None)
+    )
 
-    if not query.all():
-        raise Exception('No {} datasets found in ensemble {}'.format(
-            variable, ensemble_name))
-
-    file_list = query.all()[0]
-
-    if len(file_list) == 1:
-        return Dataset(file_list[0], "r")
-    else:
-        raise Exception('ensemble {} has {} datasets containing {}'.format(
-            ensemble_name, len(file_list), variable))
+    file = query.one()  # Raises exception if n != 1 results found
+    return Dataset(file.filename, 'r')
 
 
 def add_tuples(a, b):
