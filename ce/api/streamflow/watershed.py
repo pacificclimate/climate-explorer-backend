@@ -327,5 +327,7 @@ def geoJSON_shape(points, nc):
 
     squares = list(map(lambda p: grid_square_from_point(p, width, height),
                        points))
-    geoJSON["geometry"] = mapping(cascaded_union(squares))
-    return geoJSON
+    return {
+        'type': 'Feature',
+        'geometry': mapping(cascaded_union(squares))
+    }
