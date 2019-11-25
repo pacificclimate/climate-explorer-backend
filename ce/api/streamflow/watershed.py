@@ -111,7 +111,7 @@ def watershed(sesh, station, ensemble_name):
         },
         'area': {
             'units': area.variables['area'].units,
-             'value': sum(areas),
+            'value': sum(areas),
         },
         'hypsometric_curve': {
             **hc,
@@ -126,7 +126,6 @@ def watershed(sesh, station, ensemble_name):
             },
         },
     }
-
 
     elevation.close()
     flow_direction.close()
@@ -303,7 +302,7 @@ def bin_values(values):
         "bin_width": width,
         "x_bin_centers": bins,
         "y_values": area
-        }
+    }
     return hist
 
 
