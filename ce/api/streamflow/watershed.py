@@ -95,7 +95,8 @@ def watershed(sesh, station, ensemble_name):
 
     # Compute the elevation/area curve
 
-    hc = bin_values(list(zip(elevations, areas)))
+    h_bin_width, h_bin_centres, h_cumulative_areas = \
+        hypsometry(elevations, areas)
 
     #  calculate geoJSON shape
 
@@ -114,7 +115,9 @@ def watershed(sesh, station, ensemble_name):
             'value': sum(areas),
         },
         'hypsometric_curve': {
-            **hc,
+            'bin_width': h_bin_width,
+            'x_bin_centers': h_bin_centres,
+            'y_values': h_cumulative_areas,
             'x_units': elevation.variables['elev'].units,
             'y_units': area.variables['area'].units,
         },
@@ -277,6 +280,29 @@ def value_at_lonlat(lonlat, nc, var):
     return float(nc.variables[var][lonlat_to_xy(lonlat, nc)])
 
 
+def hypsometry(elevations, areas, num_bins=None):
+    if len(elevations) != len(areas):
+        raise IndexError(
+            'elevations ({}) and areas ({}) do not have same lengths'.format(
+                len(elevations), len(areas)))
+
+    if num_bins is None:
+        num_bins = math.ceil(math.sqrt(len(elevations)))
+    bin_min = min(elevations) - 5
+    bin_max = max(elevations) + 5
+    bin_width = (bin_max - bin_min) / num_bins
+
+    bin_centres = [bin_min + (i + 0.5) * bin_width for i in range(num_bins)]
+
+    cumulative_areas = [0] * num_bins
+    for elevation, area in zip(elevations, areas):
+        bin = math.floor((elevation - bin_min) / bin_width)
+        cumulative_areas[bin] += area
+
+    return bin_width, bin_centres, cumulative_areas
+
+
+# TODO: Remove
 def bin_values(values):
     '''Accepts a list of (elevation, area) tuples.
     returns a histogram dictionary of how much area is at each elevation. 
