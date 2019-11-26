@@ -52,44 +52,45 @@ def watershed(sesh, station, ensemble_name):
     
     # Compute lonlats of watershed whose mouth is at `station`
 
-    flow_direction = get_time_invariant_variable_dataset(
+    flow_direction_ds = get_time_invariant_variable_dataset(
         sesh, ensemble_name, 'flow_direction'
     )
 
-    start_xy = lonlat_to_xy([lon, lat], flow_direction)
+    start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
 
-    VIC_direction_matrix = build_VIC_direction_matrix(flow_direction)
+    VIC_direction_matrix = build_VIC_direction_matrix(flow_direction_ds)
     watershed_xys = build_watershed(
         start_xy, 
-        flow_direction.variables['flow_direction'],
+        flow_direction_ds.variables['flow_direction'],
         VIC_direction_matrix
     )
     watershed_lonlats = list(
-        map(lambda xy: xy_to_lonlat(xy, flow_direction), watershed_xys)
+        map(lambda xy: xy_to_lonlat(xy, flow_direction_ds), watershed_xys)
     )
 
     # TODO: DRY up the following two computations
 
     #  Compute elevations at each lonlat of watershed
     
-    elevation = get_time_invariant_variable_dataset(sesh, ensemble_name, 'elev')
-    if not compatible_grids(flow_direction, elevation):
+    elevation_ds = \
+        get_time_invariant_variable_dataset(sesh, ensemble_name, 'elev')
+    if not compatible_grids(flow_direction_ds, elevation_ds):
         raise ValueError(
             'Flow direction and elevation do not have the same grid')
     
     elevations = list(
-        map(lambda lonlat: value_at_lonlat(lonlat, elevation, "elev"), 
+        map(lambda lonlat: value_at_lonlat(lonlat, elevation_ds, "elev"),
             watershed_lonlats)
     )
     
     #  Compute area of each cell in watershed
 
-    area = get_time_invariant_variable_dataset(sesh, ensemble_name, "area")
-    if not compatible_grids(flow_direction, area):
+    area_ds = get_time_invariant_variable_dataset(sesh, ensemble_name, "area")
+    if not compatible_grids(flow_direction_ds, area_ds):
         raise Exception("Flow direction and area do not have the same grid")
 
     areas = list(
-        map(lambda lonlat: value_at_lonlat(lonlat, area, "area"),
+        map(lambda lonlat: value_at_lonlat(lonlat, area_ds, "area"),
             watershed_lonlats)
     )
 
@@ -100,26 +101,26 @@ def watershed(sesh, station, ensemble_name):
 
     #  calculate geoJSON shape
 
-    shape = geoJSON_shape(watershed_lonlats, flow_direction)
+    shape = geoJSON_shape(watershed_lonlats, flow_direction_ds)
     
     # Compose response
 
     response = {
         'elevation': {
-            'units': elevation.variables['elev'].units,
+            'units': elevation_ds.variables['elev'].units,
             'minimum': min(elevations),
             'maximum': max(elevations),
         },
         'area': {
-            'units': area.variables['area'].units,
+            'units': area_ds.variables['area'].units,
             'value': sum(areas),
         },
         'hypsometric_curve': {
             'bin_width': h_bin_width,
             'x_bin_centers': h_bin_centres,
             'y_values': h_cumulative_areas,
-            'x_units': elevation.variables['elev'].units,
-            'y_units': area.variables['area'].units,
+            'x_units': elevation_ds.variables['elev'].units,
+            'y_units': area_ds.variables['area'].units,
         },
         'shape': {
             **shape,
@@ -130,9 +131,9 @@ def watershed(sesh, station, ensemble_name):
         },
     }
 
-    elevation.close()
-    flow_direction.close()
-    area.close()
+    elevation_ds.close()
+    flow_direction_ds.close()
+    area_ds.close()
 
     return response
 
