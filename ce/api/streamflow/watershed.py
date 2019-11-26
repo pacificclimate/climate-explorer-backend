@@ -283,9 +283,7 @@ def value_at_lonlat(lonlat, nc, var):
 
 def hypsometry(elevations, areas, num_bins=None):
     """
-    Computes a hypsometric curve from the given elevations and areas. If the
-    number of elevation bins is not specified, the square root of the number
-    of elevations is used.
+    Computes a hypsometric curve as a histogram of areas by elevation.
 
     :param elevations: list of elevations; location is not specified but
         must be consistent with locations of areas

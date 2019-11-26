@@ -48,3 +48,4 @@ def test_hypsometry(elevations, areas, num_bins, expected):
     assert bin_centres == e_bin_centres
     assert len(cumulative_areas) == num_bins
     assert cumulative_areas == e_cum_areas
+    assert sum(cumulative_areas) == sum(areas)
