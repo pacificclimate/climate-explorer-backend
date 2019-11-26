@@ -58,11 +58,14 @@ def watershed(sesh, station, ensemble_name):
 
     start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
 
-    VIC_direction_matrix = build_VIC_direction_matrix(flow_direction_ds)
+    direction_matrix = VIC_direction_matrix(
+        nc_dimension_step(flow_direction_ds, 'lat'),
+        nc_dimension_step(flow_direction_ds, 'lon')
+    )
     watershed_xys = build_watershed(
         start_xy, 
         flow_direction_ds.variables['flow_direction'],
-        VIC_direction_matrix
+        direction_matrix
     )
     watershed_lonlats = list(
         map(lambda xy: xy_to_lonlat(xy, flow_direction_ds), watershed_xys)
@@ -218,6 +221,40 @@ def compatible_grids(nc1, nc2):
         abs(nc_dimension_step(nc1, "lat")) == abs(nc_dimension_step(nc2, "lat")))
 
 
+def VIC_direction_matrix(lat_step, lon_step):
+    """Return a VIC direction matrix, which is a matrix indexed by the VIC
+    streamflow direction codes 0...9, with the value at index i indicating
+    the offsets from the data index (x, y) in a streamflow file required to
+    step in that streamflow direction.
+    The offsets must account for the sign of the step in the lat and lon
+    dimensions in the streamflow file.
+    For example, in a streamflow file with lat and lon both increasing with
+    increasing index, the offset to step northeast is [1, 1].
+
+    Note that argument order is latlon, not lonlat.
+    """
+    base = [
+        [ 0,  0],   # filler - 0 is not used in the encoding
+        [ 1,  0],   # 1 = north
+        [ 1,  1],   # 2 = northeast
+        [ 0,  1],   # 3 = east
+        [-1,  1],   # 4 = southeast
+        [-1,  0],   # 5 = south
+        [-1, -1],   # 6 = southwest
+        [ 0, -1],   # 7 = west
+        [ 1, -1],   # 8 = northwest
+        [ 0,  0],   # 9 = outlet
+    ]
+    lat_dir = int(math.copysign(1, lat_step))
+    lon_dir = int(math.copysign(1, lon_step))
+    # TODO: Make this a tuple of tuples (immutable)
+    return [
+        [lat_dir * lat_base, lon_dir * lon_base]
+        for lat_base, lon_base in base
+    ]
+
+
+# TODO: Remove
 def build_VIC_direction_matrix(flow_direction):
     '''Constructs mapping between RVIC's routing encoding (1 = North,
     2 = Northeast, etc) and the data layout in the flow direction file.
