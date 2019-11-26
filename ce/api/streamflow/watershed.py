@@ -282,6 +282,26 @@ def value_at_lonlat(lonlat, nc, var):
 
 
 def hypsometry(elevations, areas, num_bins=None):
+    """
+    Computes a hypsometric curve from the given elevations and areas. If the
+    number of elevation bins is not specified, the square root of the number
+    of elevations is used.
+
+    :param elevations: list of elevations; location is not specified but
+        must be consistent with locations of areas
+    :param areas: list of areas; location is not specified but
+        must be consistent with locations of elevations
+    :param num_bins: number of elevation bins; if None, the square root of
+        the number of elevations is used
+    :return: tuple (bin_width, bin_centres, cumulative_areas)
+        bin_width: width of each elevation bin
+        bin_centres: list of centre values of each elevation bin;
+            elevation bin `i` spans semi-open interval
+            [bin_centres[i] - bin_width, bin_centres[i] + bin_width)
+        cumulative_areas: list of total areas in each elevation bin;
+            indexed same as bin_centres
+    """
+
     if len(elevations) != len(areas):
         raise IndexError(
             'elevations ({}) and areas ({}) do not have same lengths'.format(
