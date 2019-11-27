@@ -174,7 +174,7 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
             # - it's actually in the flow_direction variable's extent
             # - it's not masked
             if (i != 0 or j != 0) and \
-                valid_netcdf_variable_index(index, routing) and \
+                is_valid_nc_var_index(index, routing) and \
                 not routing[index[0]][index[1]] is np.ma.masked:
                 source_flow = int(routing[index[0]][index[1]])
                 # if the flow direction from the possible source grid
@@ -189,12 +189,9 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
     return watershed
 
 
-def valid_netcdf_variable_index(index, var):
+def is_valid_nc_var_index(index, var):
     '''True if this variable has an item (masked or not) at this index'''
-    for i in range(len(index)):
-        if index[i] < 0 or index[i] >= var.shape[i]:
-            return False
-    return True
+    return all(0 <= i < n for i, n in zip(index, var.shape))
 
 
 def lonlat_to_xy(coords, nc):
