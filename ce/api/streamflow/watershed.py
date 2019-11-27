@@ -181,7 +181,7 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
                 # points back to 0,0, the mouth, then this source drains
                 # into the mouth and is part of the watershed,  as are
                 # any further squares that drain into it.
-                if(add_tuples(direction_map[source_flow], (i, j)) == (0, 0)):
+                if add_tuples(direction_map[source_flow], (i, j)) == (0, 0):
                     watershed.extend(build_watershed(
                         index, routing, direction_map, max_depth, depth + 1
                     ))
@@ -254,44 +254,11 @@ def VIC_direction_matrix(lat_step, lon_step):
     ]
 
 
-# TODO: Remove
-def build_VIC_direction_matrix(flow_direction):
-    '''Constructs mapping between RVIC's routing encoding (1 = North,
-    2 = Northeast, etc) and the data layout in the flow direction file.
-    Returns coordinates in latlong (data index) order.'''
-
-    def dimension_direction(nc, dim):
-        '''returns the sign (+1/-1) of the change between subsequent values
-        in a 1-dimensional netCDF variable (assumes monotonicity)'''
-        increment = nc_dimension_step(nc, dim)
-        return int(increment / abs(increment))
-    # determine the data index directions corresponding to *increasing*
-    # lat and lon
-    lat_dir = dimension_direction(flow_direction, "lat")
-    lon_dir = dimension_direction(flow_direction, "lon")
-
-    # use those directions to build a mapping saying which way to go
-    # in the data index for each of RVIC's defined direction codes.
-
-    directions = [[0, 0]]  # filler - 0 is not used in the encoding
-    directions.append([lat_dir, 0])  # 1 = north
-    directions.append([lat_dir, lon_dir])  # 2 = northeast
-    directions.append([0, lon_dir])  # 3 = east
-    directions.append([-1 * lat_dir, lon_dir])  # 4 = southeast
-    directions.append([-1 * lat_dir, 0])  # 5 = south
-    directions.append([-1 * lat_dir, -1 * lon_dir])  # 6 = southwest
-    directions.append([0, -1 * lat_dir])  # 7 = west
-    directions.append([lat_dir, -1 * lon_dir])  # 8 = northwest
-    directions.append([0, 0])  # 9 = outlet
-    return directions
-
-
 def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     '''This function locates and opens a time-invariant dataset.
     These datasets contain things like elevation or area of a grid cell -
     they're independent of time and there should be only one per ensemble.
     If more or less than one is found in the ensemble, it raises an error.'''
-    # TODO: Should these be filtered for being time-invariant?
     query = (
         sesh.query(distinct(DataFile.filename).label('filename'))
         .join(
@@ -356,36 +323,6 @@ def hypsometry(elevations, areas, num_bins=None):
         cumulative_areas[bin] += area
 
     return bin_width, bin_centres, cumulative_areas
-
-
-# TODO: Remove
-def bin_values(values):
-    '''Accepts a list of (elevation, area) tuples.
-    returns a histogram dictionary of how much area is at each elevation. 
-    For N values, sqrt(N) bins will be created.'''
-
-    num_bins = math.ceil(math.sqrt(len(values)))
-
-    area = []
-    bins = []
-    mn = min(values, key = lambda t: t[0])[0] - 5
-    mx = max(values, key = lambda t: t[0])[0] + 5
-    width = (mx - mn) / num_bins
-    center = mn + (width / 2)
-    for i in range(num_bins):
-        area.append(0)
-        bins.append(center)
-        center += width
-
-    for t in values:
-        bin = math.floor((t[0] - mn) / width)
-        area[bin] = area[bin] + t[1]
-    hist = {
-        "bin_width": width,
-        "x_bin_centers": bins,
-        "y_values": area
-    }
-    return hist
 
 
 def geoJSON_shape(points, nc):
