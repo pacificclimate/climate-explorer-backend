@@ -1,10 +1,12 @@
-import math
+import numpy
+from itertools import product
 import pytest
 from sqlalchemy.orm.exc import NoResultFound
 from ce.api.streamflow.watershed import \
     get_time_invariant_variable_dataset, \
     hypsometry, \
-    VIC_direction_matrix
+    VIC_direction_matrix, \
+    build_watershed
 
 @pytest.mark.parametrize('variable, exception', (
     ('bargle', NoResultFound),  # does not exist
@@ -78,3 +80,129 @@ def test_VIC_direction_matrix(lat_step, lon_step, northeast):
         for j in range(2):
             assert dm[i][j] == -dm[((i+3) % 8) + 1][j], \
                 'i = {}, j = {}'.format(i,j)
+
+# build_watershed test
+
+direction_map = (
+    ( 0,  0),   # filler - 0 is not used in the encoding
+    ( 1,  0),   # 1 = north
+    ( 1,  1),   # 2 = northeast
+    ( 0,  1),   # 3 = east
+    (-1,  1),   # 4 = southeast
+    (-1,  0),   # 5 = south
+    (-1, -1),   # 6 = southwest
+    ( 0, -1),   # 7 = west
+    ( 1, -1),   # 8 = northwest
+    ( 0,  0),   # 9 = outlet    
+)
+
+N = 1
+NE = 2
+E = 3
+SE = 4
+S = 5
+SW = 6
+W = 7
+NW = 8
+O = 9
+
+
+def routing(a, rev=True):
+    """Return VIC routing array constructed from an array-like object a.
+    Convenient for layout of routing maps, where the longitude index increases
+    northward/upward, the reverse of array/tuple literals.
+    """
+    if rev:
+        a = tuple(reversed(a))
+    return numpy.array(a)
+
+
+# Fully connected routing arrays: All cells connect to the mouth
+
+routing_fc_3x3 = routing((
+    ( S,  S, SW),
+    ( S, SW,  W),
+    ( O,  W,  W),
+))
+
+# Linear ccw spiral; distal point at (1,2)
+routing_fc_4x4 = routing((
+    ( S, W, W, W),
+    ( S, S, W, N),
+    ( S, S, N, N),
+    ( O, E, E, N),
+))
+
+# Partially connected routing arrays: Not all cells connect to the mouth
+
+# Nortwesternmost cell does not connect to mouth
+routing_pc_3x3 = routing((
+    ( S,  S,  N),
+    ( S, SW,  W),
+    ( O,  W,  W),
+))
+
+
+# Routing arrays with loops
+
+# Simplest and apparently most common loop
+routing_loop_1x2 = routing((
+    (E, W),
+))
+
+# Loop covering all cells in 2x2
+routing_loop_2x2_quad = routing((
+    (E, S),
+    (N, W),
+))
+
+# Loop covering only 3 cells in 2x2
+routing_loop_2x2_tri = routing((
+    (E,  S),
+    (S, NW),
+))
+
+
+def index_set(m, n):
+    """Return the set of all indices of an m x n matrix"""
+    def tuplify(x): return x if type(x) == tuple else (x,)
+    return set(product(range(*tuplify(m)), range(*tuplify(n))))
+
+
+@pytest.mark.parametrize(
+    'mouth, routing, direction_map, max_depth, expected', (
+        # Trivial case
+        (None, None, None, 0, {None}),
+        
+        # Fully connected watersheds
+        ((0, 0), routing_fc_3x3, direction_map, 10, index_set(3, 3)),
+        ((1, 1), routing_fc_3x3, direction_map, 10, index_set((1,3), (1,3))),
+        ((0, 0), routing_fc_4x4, direction_map, 20, index_set(4, 4)),
+        ((1, 0), routing_fc_4x4, direction_map, 20, index_set(4, 4) - {(0, 0)}),
+
+        # Partly connected watersheds
+        ((0, 0), routing_pc_3x3, direction_map, 10,
+         index_set(3, 3) - {(2, 2)}),
+        ((1, 1), routing_pc_3x3, direction_map, 10,
+         index_set((1,3), (1,3)) - {(2, 2)}),
+
+        # Watersheds with loops
+        ((0, 0), routing_loop_1x2, direction_map, 10, index_set(1, 2)),
+        ((0, 1), routing_loop_1x2, direction_map, 10, index_set(1, 2)),
+        ((0, 0), routing_loop_2x2_quad, direction_map, 10, index_set(2, 2)),
+        ((1, 1), routing_loop_2x2_quad, direction_map, 10, index_set(2, 2)),
+        ((0, 0), routing_loop_2x2_tri, direction_map, 10, {(0, 0)}),
+        ((1, 1), routing_loop_2x2_tri, direction_map, 10,
+         index_set(2, 2) - {(0, 0)}),
+
+        # Recursion depth limit tests
+        ((0, 0), routing_fc_4x4, direction_map, 14,
+         index_set(4, 4) - {(1, 2)}),
+        ((0, 0), routing_fc_4x4, direction_map, 13,
+         index_set(4, 4) - {(1, 2), (2, 2)}),
+    ))
+def test_build_watershed(
+        mouth, routing, direction_map, max_depth, expected
+):
+    watershed = build_watershed(mouth, routing, direction_map, max_depth)
+    assert set(watershed) == expected

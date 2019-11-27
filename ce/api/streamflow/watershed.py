@@ -141,47 +141,50 @@ def watershed(sesh, station, ensemble_name):
     return response
 
 
-def build_watershed(mouth, routing, direction_map, depth=0):
+def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
     '''Depth-first recursive
     Arguments:
        routing: a netCDF variable representing water flow
-       mouth: an xy index representing the starting location
+       target: an xy index representing the location of interest:
+        what cells drain into this cell?
        direction_map: maps RVIC's direction codes to movement in data index
-       depth: recursion depth, for breaking out of loops.
-    Returns a set of xy tuples representing the data indexes of locations
+       depth: recursion depth, for breaking out of loops
+       max_depth: break out of recursion at this depth
+    Returns a list of xy tuples representing the data indexes of locations
     that drain into mouth, including mouth itself.
-    RVIC flow direction data occaisionally contains loops: two grid squares,
+    TODO: Return a set not a list. Check users of the result of this function.
+    RVIC flow direction data occasionally contains loops: two grid squares,
     each of which is marked as draining into the other - it always occurs
     along coastlines. Therefore recursion is limited to 200 cells deep.
     This may need to be increased if we start doing larger watersheds.
     '''
     watershed = []
-    watershed.append(mouth)
-    if depth > 200:
+    watershed.append(target)
+    if depth >= max_depth:
         return watershed
     # iterate through the nine cells around the mouth (including the mouth)
     # and check to see whether each one's flow_direction value points
     # toward the mouth.
     for i in [-1, 0, 1]:
         for j in [-1, 0, 1]:
-            upstream = add_tuples(mouth, (i, j))  # xy index of possible upstream cell
+            # xy index of possible upstream cell
+            index = add_tuples(target, (i, j))
             # there are three constraints for a possible upstream cell:
             # - it's not the mouth (relative 0,0)
             # - it's actually in the flow_direction variable's extent
             # - it's not masked
             if (i != 0 or j != 0) and \
-                valid_netcdf_variable_index(upstream, routing) and \
-                not routing[upstream[0]][upstream[1]] is np.ma.masked:
-                source_flow = int(routing[upstream[0]][upstream[1]])
+                valid_netcdf_variable_index(index, routing) and \
+                not routing[index[0]][index[1]] is np.ma.masked:
+                source_flow = int(routing[index[0]][index[1]])
                 # if the flow direction from the possible source grid
                 # points back to 0,0, the mouth, then this source drains
                 # into the mouth and is part of the watershed,  as are
                 # any further squares that drain into it.
                 if(add_tuples(direction_map[source_flow], (i, j)) == (0, 0)):
-                    watershed.extend(build_watershed(upstream,
-                                                     routing,
-                                                     direction_map,
-                                                     depth + 1))
+                    watershed.extend(build_watershed(
+                        index, routing, direction_map, max_depth, depth + 1
+                    ))
 
     return watershed
 
@@ -189,7 +192,7 @@ def build_watershed(mouth, routing, direction_map, depth=0):
 def valid_netcdf_variable_index(index, var):
     '''True if this variable has an item (masked or not) at this index'''
     for i in range(len(index)):
-        if index[i] < 0 or index[i] > var.shape[i]:
+        if index[i] < 0 or index[i] >= var.shape[i]:
             return False
     return True
 
