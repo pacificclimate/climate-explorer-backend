@@ -207,4 +207,4 @@ def test_build_watershed(
         mouth, routing, direction_map, max_depth, expected
 ):
     watershed = build_watershed(mouth, routing, direction_map, max_depth)
-    assert set(watershed) == expected
+    assert watershed == expected

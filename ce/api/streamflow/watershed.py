@@ -67,6 +67,7 @@ def watershed(sesh, station, ensemble_name):
         flow_direction_ds.variables['flow_direction'],
         direction_matrix
     )
+    # TODO: watershed_lonlats as set?
     watershed_lonlats = list(
         map(lambda xy: xy_to_lonlat(xy, flow_direction_ds), watershed_xys)
     )
@@ -152,14 +153,12 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
        max_depth: break out of recursion at this depth
     Returns a list of xy tuples representing the data indexes of locations
     that drain into mouth, including mouth itself.
-    TODO: Return a set not a list. Check users of the result of this function.
     RVIC flow direction data occasionally contains loops: two grid squares,
     each of which is marked as draining into the other - it always occurs
     along coastlines. Therefore recursion is limited to 200 cells deep.
     This may need to be increased if we start doing larger watersheds.
     '''
-    watershed = []
-    watershed.append(target)
+    watershed = {target}
     if depth >= max_depth:
         return watershed
     # iterate through the nine cells around the mouth (including the mouth)
@@ -183,9 +182,9 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
                 # into the mouth and is part of the watershed,  as are
                 # any further squares that drain into it.
                 if vec_add(direction_map[source_flow], (i, j)) == (0, 0):
-                    watershed.extend(build_watershed(
+                    watershed = watershed | build_watershed(
                         index, routing, direction_map, max_depth, depth + 1
-                    ))
+                    )
 
     return watershed
 
