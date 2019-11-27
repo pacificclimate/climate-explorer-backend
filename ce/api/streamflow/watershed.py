@@ -233,25 +233,24 @@ def VIC_direction_matrix(lat_step, lon_step):
 
     Note that argument order is latlon, not lonlat.
     """
-    base = [
-        [ 0,  0],   # filler - 0 is not used in the encoding
-        [ 1,  0],   # 1 = north
-        [ 1,  1],   # 2 = northeast
-        [ 0,  1],   # 3 = east
-        [-1,  1],   # 4 = southeast
-        [-1,  0],   # 5 = south
-        [-1, -1],   # 6 = southwest
-        [ 0, -1],   # 7 = west
-        [ 1, -1],   # 8 = northwest
-        [ 0,  0],   # 9 = outlet
-    ]
+    base = (
+        ( 0,  0),   # filler - 0 is not used in the encoding
+        ( 1,  0),   # 1 = north
+        ( 1,  1),   # 2 = northeast
+        ( 0,  1),   # 3 = east
+        (-1,  1),   # 4 = southeast
+        (-1,  0),   # 5 = south
+        (-1, -1),   # 6 = southwest
+        ( 0, -1),   # 7 = west
+        ( 1, -1),   # 8 = northwest
+        ( 0,  0),   # 9 = outlet
+    )
     lat_dir = int(math.copysign(1, lat_step))
     lon_dir = int(math.copysign(1, lon_step))
-    # TODO: Make this a tuple of tuples (immutable)
-    return [
-        [lat_dir * lat_base, lon_dir * lon_base]
+    return tuple(
+        (lat_dir * lat_base, lon_dir * lon_base)
         for lat_base, lon_base in base
-    ]
+    )
 
 
 def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
