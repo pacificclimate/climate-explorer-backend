@@ -107,12 +107,14 @@ NW = 8
 O = 9
 
 
-def routing(a, rev=True):
-    """Return VIC routing array constructed from an array-like object a.
-    Convenient for layout of routing maps, where the longitude index increases
-    northward/upward, the reverse of array/tuple literals.
+def routing(a, rev_rows=True):
+    """Return a VIC routing array constructed from an array-like object `a`.
+
+    Argument `rev` is convenient for layout of routing maps, where the
+    longitude index (row) increases northward/upward, the reverse of
+    array/tuple literal layout in text.
     """
-    if rev:
+    if rev_rows:
         a = tuple(reversed(a))
     return numpy.array(a)
 
