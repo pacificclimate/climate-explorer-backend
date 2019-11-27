@@ -211,7 +211,8 @@ def populateddb(cleandb):
         run=run3
     )
     df_ti_flow_direction = make_data_file(
-        unique_id='flow-direction_peace'
+        unique_id='flow-direction_peace',
+        run=run1
     )
 
     data_files = [
