@@ -168,20 +168,21 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
     for i in [-1, 0, 1]:
         for j in [-1, 0, 1]:
             # xy index of possible upstream cell
-            index = add_tuples(target, (i, j))
+            index = vec_add(target, (i, j))
             # there are three constraints for a possible upstream cell:
             # - it's not the mouth (relative 0,0)
             # - it's actually in the flow_direction variable's extent
             # - it's not masked
             if (i != 0 or j != 0) and \
-                is_valid_nc_var_index(index, routing) and \
+                is_valid_index(index, routing.shape) and \
                 not routing[index[0]][index[1]] is np.ma.masked:
+
                 source_flow = int(routing[index[0]][index[1]])
                 # if the flow direction from the possible source grid
                 # points back to 0,0, the mouth, then this source drains
                 # into the mouth and is part of the watershed,  as are
                 # any further squares that drain into it.
-                if add_tuples(direction_map[source_flow], (i, j)) == (0, 0):
+                if vec_add(direction_map[source_flow], (i, j)) == (0, 0):
                     watershed.extend(build_watershed(
                         index, routing, direction_map, max_depth, depth + 1
                     ))
@@ -189,9 +190,9 @@ def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
     return watershed
 
 
-def is_valid_nc_var_index(index, var):
-    '''True if this variable has an item (masked or not) at this index'''
-    return all(0 <= i < n for i, n in zip(index, var.shape))
+def is_valid_index(index, shape):
+    """True if index is in valid range for an array of given shape"""
+    return all(0 <= i < n for i, n in zip(index, shape))
 
 
 def lonlat_to_xy(coords, nc):
@@ -274,7 +275,7 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     return Dataset(file.filename, 'r')
 
 
-def add_tuples(a, b):
+def vec_add(a, b):
     '''numpy-style addition for builtin tuples: (1,1)+(2,3) = (3,4)'''
     return tuple(map(operator.add, a, b))
 
