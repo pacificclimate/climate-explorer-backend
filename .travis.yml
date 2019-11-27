@@ -2,7 +2,7 @@ language: python
 dist: trusty
 sudo: false
 python:
-  - 3.4
+  - 3.6
 addons:
   apt:
     packages:
