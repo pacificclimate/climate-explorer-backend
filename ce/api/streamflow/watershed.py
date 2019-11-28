@@ -36,8 +36,7 @@ import math
 from sqlalchemy import distinct
 from sqlalchemy.orm.exc import NoResultFound
 
-from ce.api.util import WKT_point_to_lonlat
-from ce.api.geospatial import geojson_feature, outline
+from ce.api.geospatial import geojson_feature, outline, WKT_point_to_lonlat
 import modelmeta as mm
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables

@@ -9,7 +9,7 @@ from numpy.ma import MaskedArray
 from dateutil.parser import parse
 from netCDF4 import Dataset
 
-from ce.api.util import get_array, mean_datetime, WKT_point_to_lonlat
+from ce.api.util import get_array, mean_datetime
 
 
 @pytest.fixture(params=(
@@ -56,23 +56,3 @@ utc = timezone.utc
 def test_mean_datetime(input_, output):
     x = [ parse(t).replace(tzinfo=utc) for t in input_ ]
     assert mean_datetime(x) == parse(output).replace(tzinfo=utc)
-
-
-@pytest.mark.parametrize('text, result', (
-        ('blerg', None),
-        ('POINT', None),
-        ('POINT(,)', None),
-        ('POINT(99,)', None),
-        ('POINT(,99)', None),
-        ('POINT(99 99)', (99, 99)),
-        ('POINT(99.9 99.9)', (99.9, 99.9)),
-        ('POINT(0 0)', (0, 0)),
-        ('POINT(-99 99)', (-99, 99)),
-        ('POINT(-99 -99)', (-99, -99)),
-))
-def test_WKT_point_to_lonlat(text, result):
-    if type(result) == tuple:
-        assert WKT_point_to_lonlat(text) == result
-    else:
-        with pytest.raises(ValueError, match='Cannot parse'):
-            WKT_point_to_lonlat(text)

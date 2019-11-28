@@ -1,3 +1,4 @@
+import re
 import shapely
 from shapely.geometry import Polygon, mapping
 from shapely.ops import cascaded_union
@@ -26,3 +27,15 @@ def outline(centres, height, width):
         shapely.geometry.box(x - dx, y - dy, x + dx, y + dy)
         for x, y in centres
     ])
+
+
+def WKT_point_to_lonlat(text):
+    pattern = re.compile(
+        r'POINT\s*\(([+-]?[0-9]+\.?[0-9]*)\s+([+-]?[0-9]+\.?[0-9]*)\)'
+    )
+    match = re.match(pattern, text)
+    if not match:
+        raise ValueError('Cannot parse {} as a WKT point'.format(text))
+    lon = float(match.group(1))
+    lat = float(match.group(2))
+    return lon, lat

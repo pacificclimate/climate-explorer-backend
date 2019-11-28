@@ -1,6 +1,6 @@
 import pytest
 from shapely.geometry import Polygon
-from ce.api.geospatial import geojson_feature, outline
+from ce.api.geospatial import geojson_feature, outline, WKT_point_to_lonlat
 
 
 coordinates = ((0, 0), (0, 1), (1, 1), (0, 0))
@@ -68,3 +68,23 @@ def test_geojson_feature(thing, kwargs, expected):
 def test_outline(centres, height, width, expected):
     ol = outline(centres, height, width)
     assert ol.equals(Polygon(expected))
+
+
+@pytest.mark.parametrize('text, result', (
+        ('blerg', None),
+        ('POINT', None),
+        ('POINT(,)', None),
+        ('POINT(99,)', None),
+        ('POINT(,99)', None),
+        ('POINT(99 99)', (99, 99)),
+        ('POINT(99.9 99.9)', (99.9, 99.9)),
+        ('POINT(0 0)', (0, 0)),
+        ('POINT(-99 99)', (-99, 99)),
+        ('POINT(-99 -99)', (-99, -99)),
+))
+def test_WKT_point_to_lonlat(text, result):
+    if type(result) == tuple:
+        assert WKT_point_to_lonlat(text) == result
+    else:
+        with pytest.raises(ValueError, match='Cannot parse'):
+            WKT_point_to_lonlat(text)
