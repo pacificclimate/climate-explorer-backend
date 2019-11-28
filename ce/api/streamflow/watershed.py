@@ -28,8 +28,6 @@ dimension order.
 import json
 import re
 from netCDF4 import Dataset
-from shapely.geometry import Polygon, mapping
-from shapely.ops import cascaded_union
 import operator
 import numpy as np
 import os
@@ -39,6 +37,7 @@ from sqlalchemy import distinct
 from sqlalchemy.orm.exc import NoResultFound
 
 from ce.api.util import WKT_point_to_lonlat
+from ce.api.geospatial import geojson_feature, outline
 import modelmeta as mm
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
@@ -56,18 +55,21 @@ def watershed(sesh, station, ensemble_name):
         sesh, ensemble_name, 'flow_direction'
     )
 
-    start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
+    lat_step = nc_dimension_step(flow_direction_ds, 'lat')
+    lon_step = nc_dimension_step(flow_direction_ds, 'lon')
+    direction_matrix = VIC_direction_matrix(lat_step, lon_step)
 
-    direction_matrix = VIC_direction_matrix(
-        nc_dimension_step(flow_direction_ds, 'lat'),
-        nc_dimension_step(flow_direction_ds, 'lon')
-    )
+    start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
     watershed_xys = build_watershed(
         start_xy, 
         flow_direction_ds.variables['flow_direction'],
         direction_matrix
     )
-    # TODO: watershed_lonlats as set?
+
+    # `watershed_lonlats`, `elevations`, and `areas` must all be ordered
+    # collections (not sets) because it is required (at minimum) that the
+    # coordinates (lonlats) for `elevations[i]` and `areas[i]` be equal for
+    # all `i`.
     watershed_lonlats = list(
         map(lambda xy: xy_to_lonlat(xy, flow_direction_ds), watershed_xys)
     )
@@ -103,9 +105,12 @@ def watershed(sesh, station, ensemble_name):
     h_bin_width, h_bin_centres, h_cumulative_areas = \
         hypsometry(elevations, areas)
 
-    #  calculate geoJSON shape
+    # Compute outline of watershed as a GeoJSON feature
 
-    shape = geoJSON_shape(watershed_lonlats, flow_direction_ds)
+    geojson_outline = geojson_feature(
+        outline(watershed_lonlats, lat_step, lon_step),
+        properties=dict(mouth=dict(longitude=lon, latitude=lat))
+    )
     
     # Compose response
 
@@ -126,8 +131,8 @@ def watershed(sesh, station, ensemble_name):
             'x_units': elevation_ds.variables['elev'].units,
             'y_units': area_ds.variables['area'].units,
         },
-        'shape': {
-            **shape,
+        'outline': {
+            **geojson_outline,
             'properties': {
                 'mouth_longitude': lon, 
                 'mouth_latitude': lat
@@ -322,29 +327,3 @@ def hypsometry(elevations, areas, num_bins=None):
         cumulative_areas[bin] += area
 
     return bin_width, bin_centres, cumulative_areas
-
-
-def geoJSON_shape(points, nc):
-    '''Accepts a set of lon-lat points and a netCDF files containing a
-    corresponding grid. Returns a geoJSON object representing the union
-    of the grid squares centered at the points. Doesn't do anything clever,
-    just takes the union of a while bunch of squares. Quite slow. Debugging use
-    only, probably.'''
-    width = nc_dimension_step(nc, "lon")
-    height = nc_dimension_step(nc, "lat")
-
-    def grid_square_from_point(point, width, height):
-        '''makes shapely Polygon representing grid square centered at point'''
-        corners = []
-        corners.append((point[0] + width / 2, point[1] - height / 2))
-        corners.append((point[0] + width / 2, point[1] + height / 2))
-        corners.append((point[0] - width / 2, point[1] + height / 2))
-        corners.append((point[0] - width / 2, point[1] - height / 2))
-        return Polygon(corners)
-
-    squares = list(map(lambda p: grid_square_from_point(p, width, height),
-                       points))
-    return {
-        'type': 'Feature',
-        'geometry': mapping(cascaded_union(squares))
-    }
