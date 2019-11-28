@@ -4,9 +4,8 @@ import pytest
 from sqlalchemy.orm.exc import NoResultFound
 from ce.api.streamflow.watershed import \
     get_time_invariant_variable_dataset, \
-    hypsometry, \
-    VIC_direction_matrix, \
-    build_watershed
+    hypsometry, VIC_direction_matrix, build_watershed
+
 
 @pytest.mark.parametrize('variable, exception', (
     ('bargle', NoResultFound),  # does not exist
@@ -202,7 +201,8 @@ def index_set(m, n):
          index_set(4, 4) - {(1, 2)}),
         ((0, 0), routing_fc_4x4, direction_map, 13,
          index_set(4, 4) - {(1, 2), (2, 2)}),
-    ))
+    )
+)
 def test_build_watershed(
         mouth, routing, direction_map, max_depth, expected
 ):

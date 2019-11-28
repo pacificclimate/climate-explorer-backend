@@ -25,19 +25,14 @@ spatial tuple to a data index tuple and vice versa, also switch the
 dimension order.
 '''
 
-import json
-import re
 from netCDF4 import Dataset
 import operator
 import numpy as np
-import os
 import math
 
 from sqlalchemy import distinct
-from sqlalchemy.orm.exc import NoResultFound
 
 from ce.api.geospatial import geojson_feature, outline, WKT_point_to_lonlat
-import modelmeta as mm
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
