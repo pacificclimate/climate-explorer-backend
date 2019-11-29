@@ -1,6 +1,8 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from itertools import product
+import operator
 import re
 
 import numpy as np
@@ -153,3 +155,32 @@ def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
         query = query.filter(mm.TimeSet.time_resolution == timescale)
 
     return ( r[0] for r in query.all() )
+
+
+def index_set(m, n):
+    """Return the set of all indices of a matrix with row and column index sets
+    defined by `m` and `n`, respectively.
+    `m` and `n` can be any valid argument vectors for `range`. For ease of use,
+    non-tuple args are turned into singlet tuples."""
+    def tuplify(x): return x if type(x) == tuple else (x,)
+    return set(product(range(*tuplify(m)), range(*tuplify(n))))
+
+
+def is_valid_index(index, shape):
+    """True if index is in valid range for an array of given shape"""
+    return all(0 <= i < n for i, n in zip(index, shape))
+
+
+def vec_add(a, b):
+    '''numpy-style addition for builtin tuples: (1,1)+(2,3) = (3,4)'''
+    return tuple(map(operator.add, a, b))
+
+
+offsets = index_set((-1,2), (-1,2)) - {(0,0)}
+
+
+def neighbours(cell):
+    """Return all neighbours of `cell`: all cells with an x or y offset
+    of +/-1"""
+    return (vec_add(cell, offset) for offset in offsets)
+

@@ -1,11 +1,10 @@
 import numpy
-from itertools import product
 import pytest
 from sqlalchemy.orm.exc import NoResultFound
 from ce.api.streamflow.watershed import \
     get_time_invariant_variable_dataset, \
     hypsometry, VIC_direction_matrix, build_watershed
-
+from ce.api.util import index_set
 
 @pytest.mark.parametrize('variable, exception', (
     ('bargle', NoResultFound),  # does not exist
@@ -164,42 +163,37 @@ routing_loop_2x2_tri = routing((
 ))
 
 
-def index_set(m, n):
-    """Return the set of all indices of an m x n matrix"""
-    def tuplify(x): return x if type(x) == tuple else (x,)
-    return set(product(range(*tuplify(m)), range(*tuplify(n))))
-
-
 @pytest.mark.parametrize(
     'mouth, routing, direction_map, max_depth, expected', (
         # Trivial case
-        (None, None, None, 0, {None}),
+        (None, None, None, 0, {}),
         
         # Fully connected watersheds
-        ((0, 0), routing_fc_3x3, direction_map, 10, index_set(3, 3)),
-        ((1, 1), routing_fc_3x3, direction_map, 10, index_set((1,3), (1,3))),
-        ((0, 0), routing_fc_4x4, direction_map, 20, index_set(4, 4)),
-        ((1, 0), routing_fc_4x4, direction_map, 20, index_set(4, 4) - {(0, 0)}),
+        ((0, 0), routing_fc_3x3, direction_map, None, index_set(3, 3)),
+        ((1, 1), routing_fc_3x3, direction_map, None, index_set((1,3), (1,3))),
+        ((0, 0), routing_fc_4x4, direction_map, None, index_set(4, 4)),
+        ((1, 0), routing_fc_4x4, direction_map, None, index_set(4, 4) - {(0, 0)}),
 
         # Partly connected watersheds
-        ((0, 0), routing_pc_3x3, direction_map, 10,
+        ((0, 0), routing_pc_3x3, direction_map, None,
          index_set(3, 3) - {(2, 2)}),
-        ((1, 1), routing_pc_3x3, direction_map, 10,
+        ((1, 1), routing_pc_3x3, direction_map, None,
          index_set((1,3), (1,3)) - {(2, 2)}),
 
         # Watersheds with loops
-        ((0, 0), routing_loop_1x2, direction_map, 10, index_set(1, 2)),
-        ((0, 1), routing_loop_1x2, direction_map, 10, index_set(1, 2)),
-        ((0, 0), routing_loop_2x2_quad, direction_map, 10, index_set(2, 2)),
-        ((1, 1), routing_loop_2x2_quad, direction_map, 10, index_set(2, 2)),
-        ((0, 0), routing_loop_2x2_tri, direction_map, 10, {(0, 0)}),
-        ((1, 1), routing_loop_2x2_tri, direction_map, 10,
+        ((0, 0), routing_loop_1x2, direction_map, None, index_set(1, 2)),
+        ((0, 1), routing_loop_1x2, direction_map, None, index_set(1, 2)),
+        ((0, 0), routing_loop_2x2_quad, direction_map, None, index_set(2, 2)),
+        ((1, 1), routing_loop_2x2_quad, direction_map, None, index_set(2, 2)),
+        ((0, 0), routing_loop_2x2_tri, direction_map, None, {(0, 0)}),
+        ((1, 1), routing_loop_2x2_tri, direction_map, None,
          index_set(2, 2) - {(0, 0)}),
 
-        # Recursion depth limit tests
-        ((0, 0), routing_fc_4x4, direction_map, 14,
+        # Recursion depth limit tests; need a depth of >= 16 to get all 4x4
+        # cells
+        ((0, 0), routing_fc_4x4, direction_map, 15,  # Lose 1
          index_set(4, 4) - {(1, 2)}),
-        ((0, 0), routing_fc_4x4, direction_map, 13,
+        ((0, 0), routing_fc_4x4, direction_map, 14,  # Lose 2
          index_set(4, 4) - {(1, 2), (2, 2)}),
     )
 )

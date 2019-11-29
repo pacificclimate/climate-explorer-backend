@@ -26,7 +26,6 @@ dimension order.
 '''
 
 from netCDF4 import Dataset
-import operator
 import numpy as np
 import math
 
@@ -34,6 +33,7 @@ from sqlalchemy import distinct
 
 from ce.api.geospatial import \
     geojson_feature, outline_cell_rect, outline_point_buff, WKT_point_to_lonlat
+from ce.api.util import is_valid_index, vec_add, neighbours
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
@@ -150,56 +150,66 @@ def watershed(sesh, station, ensemble_name):
     return response
 
 
-def build_watershed(target, routing, direction_map, max_depth=200, depth=0):
-    '''Depth-first recursive
-    Arguments:
-       routing: a netCDF variable representing water flow
-       target: an xy index representing the location of interest:
-        what cells drain into this cell?
-       direction_map: maps RVIC's direction codes to movement in data index
-       depth: recursion depth, for breaking out of loops
-       max_depth: break out of recursion at this depth
-    Returns a list of xy tuples representing the data indexes of locations
-    that drain into mouth, including mouth itself.
-    RVIC flow direction data occasionally contains loops: two grid squares,
-    each of which is marked as draining into the other - it always occurs
-    along coastlines. Therefore recursion is limited to 200 cells deep.
-    This may need to be increased if we start doing larger watersheds.
-    '''
-    watershed = {target}
-    if depth >= max_depth:
-        return watershed
-    # iterate through the nine cells around the mouth (including the mouth)
-    # and check to see whether each one's flow_direction value points
-    # toward the mouth.
-    for i in [-1, 0, 1]:
-        for j in [-1, 0, 1]:
-            # xy index of possible upstream cell
-            index = vec_add(target, (i, j))
-            # there are three constraints for a possible upstream cell:
-            # - it's not the mouth (relative 0,0)
-            # - it's actually in the flow_direction variable's extent
-            # - it's not masked
-            if (i != 0 or j != 0) and \
-                is_valid_index(index, routing.shape) and \
-                not routing[index[0]][index[1]] is np.ma.masked:
+def build_watershed(target, routing, direction_map, max_depth=None):
+    """
+    Return set of all cells (including target) that drain into `target`.
 
-                source_flow = int(routing[index[0]][index[1]])
-                # if the flow direction from the possible source grid
-                # points back to 0,0, the mouth, then this source drains
-                # into the mouth and is part of the watershed,  as are
-                # any further squares that drain into it.
-                if vec_add(direction_map[source_flow], (i, j)) == (0, 0):
-                    watershed = watershed | build_watershed(
-                        index, routing, direction_map, max_depth, depth + 1
-                    )
+    :param target: An xy index representing the cell of interest.
+    :param routing: A numpy array representing water flow using VIC direction
+        codes (0 - 9). These codes may be integers or floats.
+    :param direction_map: Maps VIC direction codes into offsets in cell indices.
+        Necessary because, depending on whether lon and lat dimensions
+        increase or decrease with increasing index, a move north or east is
+        represented by an offset of +1 or -1, respectively.
+    :param max_depth: Do not recurse through cell neighbour relationships
+        deeper than `max_depth`. Prevents getting stuck in cycles in the routing
+        array. Value of `None` uses maximum possible depth of recursion, which
+        is the size of the routing map. See notes below.
+    :return: Set of cells (cell indices) that drain into `target`.
 
-    return watershed
+    Algorithm is operator closure of "upstream" over cell neighbours.
 
+    Notes:
 
-def is_valid_index(index, shape):
-    """True if index is in valid range for an array of given shape"""
-    return all(0 <= i < n for i, n in zip(index, shape))
+    - In this function, a cell is represented by an (x, y) index pair.
+
+    - Routing graphs can and in practice do contain cycles. Typical cycles in a
+    VIC routing graph are only of length 2, but the size of any connected
+    component (cyclic or acyclic) of the routing graph can be as large as the
+    graph itself. Therefore `max_depth` must be large enough for that case.
+
+    - Depth limiting is an easy, if slightly computationally costly way
+    to detect cycles. It's probably better than the harder but more efficient
+    direct cycle detection.
+    """
+
+    if max_depth is None:
+        max_depth = routing.size
+
+    def is_upstream(neighbour, cell):
+        """Return a boolean indicating whether `neighbour` is upstream of `cell`
+        according to the routing matrix and direction map"""
+        # Eliminate invalid cases
+        if not is_valid_index(neighbour, routing.shape):
+            return False
+        neighbour_routing = routing[neighbour]
+        if neighbour_routing is np.ma.masked:
+            return False
+        # `neighbour` is upstream if its routing points back at `cell`
+        return vec_add(neighbour, direction_map[int(neighbour_routing)]) == cell
+
+    def upstream(cell, depth=0):
+        """Return all cells upstream of `cell`.
+        This is the closure of upstream over cell neighbours.
+        """
+        if depth >= max_depth:
+            return {}
+        return {cell}.union(
+            *(upstream(neighbour, depth+1) for neighbour in neighbours(cell)
+              if is_upstream(neighbour, cell))
+        )
+
+    return upstream(target)
 
 
 def lonlat_to_xy(coords, nc):
@@ -280,11 +290,6 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
 
     file = query.one()  # Raises exception if n != 1 results found
     return Dataset(file.filename, 'r')
-
-
-def vec_add(a, b):
-    '''numpy-style addition for builtin tuples: (1,1)+(2,3) = (3,4)'''
-    return tuple(map(operator.add, a, b))
 
 
 def value_at_lonlat(lonlat, nc, var):
