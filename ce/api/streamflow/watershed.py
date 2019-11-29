@@ -67,65 +67,62 @@ def watershed(sesh, station, ensemble_name):
     # collections (not sets) because it is required (at minimum) that the
     # coordinates (lonlats) for `elevations[i]` and `areas[i]` be equal for
     # all `i`.
-    watershed_lonlats = list(
-        map(lambda xy: xy_to_lonlat(xy, flow_direction_ds), watershed_xys)
-    )
+    watershed_lonlats = \
+        [xy_to_lonlat(xy, flow_direction_ds) for xy in watershed_xys]
 
-    # TODO: DRY up the following two computations
+    def get_values_at_lonlats(variable_name):
+        with get_time_invariant_variable_dataset(
+                sesh, ensemble_name, variable_name) as dataset:
+            if not compatible_grids(flow_direction_ds, dataset):
+                raise ValueError(
+                    'Flow direction and {} do not have the same grid'
+                        .format(variable_name)
+                )
+            return (
+                [value_at_lonlat(lonlat, dataset, variable_name)
+                    for lonlat in watershed_lonlats],
+                dataset.variables[variable_name].units
+            )
 
     #  Compute elevations at each lonlat of watershed
-    
-    elevation_ds = \
-        get_time_invariant_variable_dataset(sesh, ensemble_name, 'elev')
-    if not compatible_grids(flow_direction_ds, elevation_ds):
-        raise ValueError(
-            'Flow direction and elevation do not have the same grid')
-    
-    elevations = list(
-        map(lambda lonlat: value_at_lonlat(lonlat, elevation_ds, "elev"),
-            watershed_lonlats)
-    )
+    elevations, elevation_units = get_values_at_lonlats('elev')
     
     #  Compute area of each cell in watershed
-
-    area_ds = get_time_invariant_variable_dataset(sesh, ensemble_name, "area")
-    if not compatible_grids(flow_direction_ds, area_ds):
-        raise Exception("Flow direction and area do not have the same grid")
-
-    areas = list(
-        map(lambda lonlat: value_at_lonlat(lonlat, area_ds, "area"),
-            watershed_lonlats)
-    )
+    areas, area_units = get_values_at_lonlats('area')
 
     # Compute the elevation/area curve
-
     h_bin_width, h_bin_centres, h_cumulative_areas = \
         hypsometry(elevations, areas)
 
     # Compute outline of watershed as a GeoJSON feature
-
     outline = outline_cell_rect(watershed_lonlats, lat_step, lon_step)
 
     # Compose response
 
     response = {
         'elevation': {
-            'units': elevation_ds.variables['elev'].units,
-            'minimum': min(elevations), 'maximum': max(elevations),
+            'units': elevation_units,
+            'minimum': min(elevations),
+            'maximum': max(elevations),
         },
         'area': {
-            'units': area_ds.variables['area'].units, 'value': sum(areas),
+            'units': area_units,
+            'value': sum(areas),
         },
         'hypsometric_curve': {
-            'bin_width': h_bin_width, 'x_bin_centers': h_bin_centres,
+            'bin_width': h_bin_width,
+            'x_bin_centers': h_bin_centres,
             'y_values': h_cumulative_areas,
-            'x_units': elevation_ds.variables['elev'].units,
-            'y_units': area_ds.variables['area'].units,
+            'x_units': elevation_units,
+            'y_units': area_units,
         },
         'shape': geojson_feature(
             outline,
             properties={
-                'mouth': { 'longitude': lon, 'latitude': lat },
+                'mouth': {
+                    'longitude': lon,
+                    'latitude': lat
+                },
                 'area': outline.area,
             },
         ),
@@ -137,9 +134,7 @@ def watershed(sesh, station, ensemble_name):
         }
     }
 
-    elevation_ds.close()
     flow_direction_ds.close()
-    area_ds.close()
 
     return response
 
@@ -156,7 +151,7 @@ def build_watershed(target, routing, direction_map, debug=False):
         increase or decrease with increasing index, a move north or east is
         represented by an offset of +1 or -1, respectively.
         TODO: Compute this internally?
-    @:param: debug: Boolean indicating whether this function should compute
+    :param debug: Boolean indicating whether this function should compute
         and return debug information.
     :return: Set of cells (cell indices) that drain into `target`.
 
