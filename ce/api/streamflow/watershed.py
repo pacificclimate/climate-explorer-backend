@@ -150,7 +150,7 @@ def watershed(sesh, station, ensemble_name):
     return response
 
 
-def build_watershed(target, routing, direction_map, max_depth=None):
+def build_watershed(target, routing, direction_map):
     """
     Return set of all cells (including target) that drain into `target`.
 
@@ -161,10 +161,6 @@ def build_watershed(target, routing, direction_map, max_depth=None):
         Necessary because, depending on whether lon and lat dimensions
         increase or decrease with increasing index, a move north or east is
         represented by an offset of +1 or -1, respectively.
-    :param max_depth: Do not recurse through cell neighbour relationships
-        deeper than `max_depth`. Prevents getting stuck in cycles in the routing
-        array. Value of `None` uses maximum possible depth of recursion, which
-        is the size of the routing map. See notes below.
     :return: Set of cells (cell indices) that drain into `target`.
 
     Algorithm is operator closure of "upstream" over cell neighbours.
@@ -173,18 +169,13 @@ def build_watershed(target, routing, direction_map, max_depth=None):
 
     - In this function, a cell is represented by an (x, y) index pair.
 
-    - Routing graphs can and in practice do contain cycles. Typical cycles in a
-    VIC routing graph are only of length 2, but the size of any connected
-    component (cyclic or acyclic) of the routing graph can be as large as the
-    graph itself. Therefore `max_depth` must be large enough for that case.
-
-    - Depth limiting is an easy, if slightly computationally costly way
-    to detect cycles. It's probably better than the harder but more efficient
-    direct cycle detection.
+    - Routing graphs can and in practice do contain cycles. Variable `visited`
+    is used to determine whether a cell has already been visited during the
+    traversal of the routing graph, i.e., whether we are cycling, and if so
+    not to repeat that subgraph.
     """
 
-    if max_depth is None:
-        max_depth = routing.size
+    visited = set()
 
     def is_upstream(neighbour, cell):
         """Return a boolean indicating whether `neighbour` is upstream of `cell`
@@ -202,11 +193,11 @@ def build_watershed(target, routing, direction_map, max_depth=None):
         """Return all cells upstream of `cell`.
         This is the closure of upstream over cell neighbours.
         """
-        if depth >= max_depth:
-            return {}
+        nonlocal visited
+        visited |= {cell}
         return {cell}.union(
             *(upstream(neighbour, depth+1) for neighbour in neighbours(cell)
-              if is_upstream(neighbour, cell))
+              if neighbour not in visited and is_upstream(neighbour, cell))
         )
 
     return upstream(target)
