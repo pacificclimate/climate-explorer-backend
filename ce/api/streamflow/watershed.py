@@ -28,6 +28,7 @@ dimension order.
 from netCDF4 import Dataset
 import numpy as np
 import math
+import time
 
 from sqlalchemy import distinct
 
@@ -55,10 +56,11 @@ def watershed(sesh, station, ensemble_name):
     direction_matrix = VIC_direction_matrix(lat_step, lon_step)
 
     start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
-    watershed_xys = build_watershed(
+    watershed_xys, watershed_debug = build_watershed(
         start_xy, 
         flow_direction_ds.variables['flow_direction'],
-        direction_matrix
+        direction_matrix,
+        debug=True
     )
 
     # `watershed_lonlats`, `elevations`, and `areas` must all be ordered
@@ -102,9 +104,7 @@ def watershed(sesh, station, ensemble_name):
 
     # Compute outline of watershed as a GeoJSON feature
 
-    outline_rect = outline_cell_rect(watershed_lonlats, lat_step, lon_step)
-    outline_rect2 = outline_point_buff(watershed_lonlats, lat_step, lon_step, 1)
-    outline_circ = outline_point_buff(watershed_lonlats, lat_step, lon_step)
+    outline = outline_cell_rect(watershed_lonlats, lat_step, lon_step)
 
     # Compose response
 
@@ -112,35 +112,29 @@ def watershed(sesh, station, ensemble_name):
         'elevation': {
             'units': elevation_ds.variables['elev'].units,
             'minimum': min(elevations), 'maximum': max(elevations),
-        }, 'area': {
+        },
+        'area': {
             'units': area_ds.variables['area'].units, 'value': sum(areas),
-        }, 'hypsometric_curve': {
+        },
+        'hypsometric_curve': {
             'bin_width': h_bin_width, 'x_bin_centers': h_bin_centres,
             'y_values': h_cumulative_areas,
             'x_units': elevation_ds.variables['elev'].units,
             'y_units': area_ds.variables['area'].units,
         },
-        'outline_rect': geojson_feature(
-            outline_rect,
+        'shape': geojson_feature(
+            outline,
             properties={
                 'mouth': { 'longitude': lon, 'latitude': lat },
-                'area': outline_rect.area,
+                'area': outline.area,
             },
         ),
-        'outline_rect2': geojson_feature(
-            outline_rect2,
-            properties={
-                'mouth': { 'longitude': lon, 'latitude': lat },
-                'area': outline_rect2.area,
-            },
-        ),
-        'outline_circ': geojson_feature(
-            outline_circ,
-            properties={
-                'mouth': { 'longitude': lon, 'latitude': lat },
-                'area': outline_circ.area,
-            },
-        )
+        'debug/test': {
+            'watershed': {
+                'cell_count': len(watershed_xys),
+                **watershed_debug
+            }
+        }
     }
 
     elevation_ds.close()
@@ -150,7 +144,7 @@ def watershed(sesh, station, ensemble_name):
     return response
 
 
-def build_watershed(target, routing, direction_map):
+def build_watershed(target, routing, direction_map, debug=False):
     """
     Return set of all cells (including target) that drain into `target`.
 
@@ -161,6 +155,9 @@ def build_watershed(target, routing, direction_map):
         Necessary because, depending on whether lon and lat dimensions
         increase or decrease with increasing index, a move north or east is
         represented by an offset of +1 or -1, respectively.
+        TODO: Compute this internally?
+    @:param: debug: Boolean indicating whether this function should compute
+        and return debug information.
     :return: Set of cells (cell indices) that drain into `target`.
 
     Algorithm is operator closure of "upstream" over cell neighbours.
@@ -174,6 +171,8 @@ def build_watershed(target, routing, direction_map):
     traversal of the routing graph, i.e., whether we are cycling, and if so
     not to repeat that subgraph.
     """
+    if debug:
+        start_time = time.time()
 
     visited = set()
 
@@ -200,6 +199,8 @@ def build_watershed(target, routing, direction_map):
               if neighbour not in visited and is_upstream(neighbour, cell))
         )
 
+    if debug:
+        return upstream(target), {'time': time.time() - start_time}
     return upstream(target)
 
 
