@@ -1,29 +1,18 @@
-'''module for requesting information on the watershed that drains
+"""module for requesting information on the watershed that drains
 to a specified point.
 
-Arguments:
-  * station, a WKT-formatted point
-  * ensemble_name, the modelmeta ensemble containing the watershed data
-      (an elevation netCDF, an area netCDF, a flow direction netCDF)
-
-Returns a JSON object with the following attributes:
-    area: area of the watershed, in square meters
-    elevation: minimum and maximum elevations
-    shape: a geoJSON object representing the lat-long contour
-               of the watershed
-    hypsometric_curve: a histogram of the watershed
-
-CAUTION: This API juggles two sets of coordinates: spatial coordinates, and
+CAUTION: This code juggles two sets of coordinates: spatial coordinates, and
 data indexes. Spatial coordinates (such as the WKT parameter input, or the
 geoJSON output) are lon-lat order. But inside the netCDF files, data is
 arranged in lat-lon order.
 
-Spatial coordinates are named lat and lon. Data coordinates are named x and y.
+Spatial coordinates are named lat and lon. Data indexes are named x and y,
+and correspond to lat and lon.
 
 The functions lonlat_to_xy() and xy_to_lonlat(), which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order.
-'''
+"""
 
 from netCDF4 import Dataset
 import numpy as np
@@ -40,13 +29,28 @@ from modelmeta import \
 
 
 def watershed(sesh, station, ensemble_name):
-    '''Documentation goes here --- what is the format?'''
-    # Get the watershed, represented as a list of points
+    """Returns information describing the watershed that drains to a specified
+    point.
 
-    lon, lat = WKT_point_to_lonlat(station)
+    :param sesh: (sqlalchemy.orm.session.Session) A database Session object
+    :param station: Location of drainage point, WKT POINT format
+    :param ensemble_name: Name of the ensemble containing data files backing
+        providing data for this request.
+    :return: dict representation for JSON response object with the following
+        attributes:
+            area: Area of the watershed
+            elevation: Minimum and maximum elevations
+            shape: A GeoJSON object representing the outline of the watershed;
+                a concave hull of the cell rectangles.
+            hypsometric_curve: Elevation-area histogram of the watershed
+    """
+
+    lon, lat = station_lonlat = WKT_point_to_lonlat(station)
     
     # Compute lonlats of watershed whose mouth is at `station`
 
+    # TODO: Use a context manager here. To do so elegantly will require some
+    #   refactoring of how and where flow_direction_ds is used.
     flow_direction_ds = get_time_invariant_variable_dataset(
         sesh, ensemble_name, 'flow_direction'
     )
@@ -55,9 +59,9 @@ def watershed(sesh, station, ensemble_name):
     lon_step = nc_dimension_step(flow_direction_ds, 'lon')
     direction_matrix = VIC_direction_matrix(lat_step, lon_step)
 
-    start_xy = lonlat_to_xy([lon, lat], flow_direction_ds)
+    station_xy = lonlat_to_xy(station_lonlat, flow_direction_ds)
     watershed_xys, watershed_debug = build_watershed(
-        start_xy, 
+        station_xy,
         flow_direction_ds.variables['flow_direction'],
         direction_matrix,
         debug=True
@@ -119,6 +123,7 @@ def watershed(sesh, station, ensemble_name):
         'shape': geojson_feature(
             outline,
             properties={
+                # Represent as GeoJSON?
                 'mouth': {
                     'longitude': lon,
                     'latitude': lat
@@ -173,7 +178,7 @@ def build_watershed(target, routing, direction_map, debug=False):
 
     def is_upstream(neighbour, cell):
         """Return a boolean indicating whether `neighbour` is upstream of `cell`
-        according to the routing matrix and direction map"""
+        according to the routing matrix and direction map."""
         # Eliminate invalid cases
         if not is_valid_index(neighbour, routing.shape):
             return False
@@ -183,14 +188,14 @@ def build_watershed(target, routing, direction_map, debug=False):
         # `neighbour` is upstream if its routing points back at `cell`
         return vec_add(neighbour, direction_map[int(neighbour_routing)]) == cell
 
-    def upstream(cell, depth=0):
+    def upstream(cell):
         """Return all cells upstream of `cell`.
         This is the closure of upstream over cell neighbours.
         """
         nonlocal visited
         visited |= {cell}
         return {cell}.union(
-            *(upstream(neighbour, depth+1) for neighbour in neighbours(cell)
+            *(upstream(neighbour) for neighbour in neighbours(cell)
               if neighbour not in visited and is_upstream(neighbour, cell))
         )
 
@@ -200,43 +205,55 @@ def build_watershed(target, routing, direction_map, debug=False):
 
 
 def lonlat_to_xy(coords, nc):
-    '''returns the x-y data index for a given lon-lat coordinate,
+    """Returns the (x, y) data index for a given lon-lat coordinate,
     switching the order of the coordinates. Does *not* check whether
-    the returned index is actually within the file's extent.'''
+    the returned index is actually within the file's extent."""
     x = (coords[1] - nc.variables["lat"][0]) / nc_dimension_step(nc, "lat")
     y = (coords[0] - nc.variables["lon"][0]) / nc_dimension_step(nc, "lon")
     return (int(round(x)), int(round(y)))
 
 
 def xy_to_lonlat(coords, nc):
-    '''returns the lon-lat coordinate for a given xy data index,
-    switching the order of the coordinates.'''
+    """Returns the lon-lat coordinate for a given xy data index,
+    switching the order of the coordinates."""
     return (nc.variables["lon"][coords[1]], nc.variables["lat"][coords[0]])
 
 
 def nc_dimension_step(nc, dimension):
-    '''for a regularly spaced variable (like lat, lon, or time),
-    returns the interval between steps. Assumes all steps same size.'''
+    """Returns the interval between steps for a regularly spaced variable
+    (e.g., lat, lon, time) in a netcdf file. Assumes all steps same size."""
     return nc.variables[dimension][1] - nc.variables[dimension][0]
 
+
 def compatible_grids(nc1, nc2):
-    '''checks whether the two netCDF files have the same size grid.
-    Does not check spatial extent.'''
-    return (abs(nc_dimension_step(nc1, "lon")) == abs(nc_dimension_step(nc2, "lon")) and
-        abs(nc_dimension_step(nc1, "lat")) == abs(nc_dimension_step(nc2, "lat")))
+    """Checks whether the two netCDF files have the same size grid.
+    Does not check spatial extent."""
+    return (
+        abs(nc_dimension_step(nc1, "lon")) ==
+        abs(nc_dimension_step(nc2, "lon")) and
+        abs(nc_dimension_step(nc1, "lat")) ==
+        abs(nc_dimension_step(nc2, "lat"))
+    )
 
 
 def VIC_direction_matrix(lat_step, lon_step):
-    """Return a VIC direction matrix, which is a matrix indexed by the VIC
-    streamflow direction codes 0...9, with the value at index i indicating
-    the offsets from the data index (x, y) in a streamflow file required to
+    """ Return a VIC direction matrix, which is a matrix indexed by the VIC
+    streamflow direction codes 0...9, with the value at index `i` indicating
+    the offsets from the data index in a streamflow file required to
     step in that streamflow direction.
+
+    :param lat_step: Difference between two successive latitudes in streamflow
+        file. (Only) sign matters.
+    :param lon_step: Difference between two successive longitudes in streamflow
+        file. (Only) sign matters.
+    :return: tuple of offset pairs
+
     The offsets must account for the sign of the step in the lat and lon
     dimensions in the streamflow file.
     For example, in a streamflow file with lat and lon both increasing with
     increasing index, the offset to step northeast is [1, 1].
 
-    Note that argument order is latlon, not lonlat.
+    Note that argument order is (lat, lon), not (lon, lat).
     """
     base = (
         ( 0,  0),   # filler - 0 is not used in the encoding
@@ -259,10 +276,17 @@ def VIC_direction_matrix(lat_step, lon_step):
 
 
 def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
-    '''This function locates and opens a time-invariant dataset.
+    """Locates and opens a time-invariant dataset.
     These datasets contain things like elevation or area of a grid cell -
     they're independent of time and there should be only one per ensemble.
-    If more or less than one is found in the ensemble, it raises an error.'''
+    If more or less than one is found in the ensemble, it raises an error
+
+    :param sesh: (sqlalchemy.orm.session.Session) A database Session object
+    :param ensemble_name: Name of the ensemble containing data files
+    :param variable: Name of *variable* inside dataset. This is not the
+        dataset filename or unique id.
+    :return: (netcdf.Dataset) netcdf Dataset object representing the file.
+    """
     query = (
         sesh.query(distinct(DataFile.filename).label('filename'))
         .join(
@@ -280,7 +304,7 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
 
 
 def value_at_lonlat(lonlat, nc, var):
-    '''value of a 2d netcdf variable at a particular lonlat coordinate'''
+    """Return value of a 2D netcdf variable at a given lonlat coordinate"""
     return float(nc.variables[var][lonlat_to_xy(lonlat, nc)])
 
 
