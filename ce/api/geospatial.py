@@ -1,6 +1,7 @@
+import math
 import re
 import shapely
-from shapely.geometry import Polygon, mapping
+from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import cascaded_union
 
 
@@ -17,7 +18,7 @@ def geojson_feature(thing, **kwargs):
     }
 
 
-def outline(centres, height, width):
+def outline_cell_rect(centres, height, width):
     """Returns a shapely geometry object, normally a Polygon, that is the
     outline, i.e., the concave hull, of the cells with given centres, height,
     and width."""
@@ -27,6 +28,12 @@ def outline(centres, height, width):
         shapely.geometry.box(x - dx, y - dy, x + dx, y + dy)
         for x, y in centres
     ])
+
+
+def outline_point_buff(centres, height, width, resolution=16):
+    radius = math.sqrt(height**2 + width**2) / 2
+    cells = [Point(c).buffer(radius, resolution) for c in centres]
+    return cascaded_union(cells)
 
 
 def WKT_point_to_lonlat(text):

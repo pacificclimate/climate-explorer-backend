@@ -32,7 +32,8 @@ import math
 
 from sqlalchemy import distinct
 
-from ce.api.geospatial import geojson_feature, outline, WKT_point_to_lonlat
+from ce.api.geospatial import \
+    geojson_feature, outline_cell_rect, outline_point_buff, WKT_point_to_lonlat
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
@@ -101,37 +102,45 @@ def watershed(sesh, station, ensemble_name):
 
     # Compute outline of watershed as a GeoJSON feature
 
-    geojson_outline = geojson_feature(
-        outline(watershed_lonlats, lat_step, lon_step),
-        properties=dict(mouth=dict(longitude=lon, latitude=lat))
-    )
-    
+    outline_rect = outline_cell_rect(watershed_lonlats, lat_step, lon_step)
+    outline_rect2 = outline_point_buff(watershed_lonlats, lat_step, lon_step, 1)
+    outline_circ = outline_point_buff(watershed_lonlats, lat_step, lon_step)
+
     # Compose response
 
     response = {
         'elevation': {
             'units': elevation_ds.variables['elev'].units,
-            'minimum': min(elevations),
-            'maximum': max(elevations),
-        },
-        'area': {
-            'units': area_ds.variables['area'].units,
-            'value': sum(areas),
-        },
-        'hypsometric_curve': {
-            'bin_width': h_bin_width,
-            'x_bin_centers': h_bin_centres,
+            'minimum': min(elevations), 'maximum': max(elevations),
+        }, 'area': {
+            'units': area_ds.variables['area'].units, 'value': sum(areas),
+        }, 'hypsometric_curve': {
+            'bin_width': h_bin_width, 'x_bin_centers': h_bin_centres,
             'y_values': h_cumulative_areas,
             'x_units': elevation_ds.variables['elev'].units,
             'y_units': area_ds.variables['area'].units,
         },
-        'outline': {
-            **geojson_outline,
-            'properties': {
-                'mouth_longitude': lon, 
-                'mouth_latitude': lat
+        'outline_rect': geojson_feature(
+            outline_rect,
+            properties={
+                'mouth': { 'longitude': lon, 'latitude': lat },
+                'area': outline_rect.area,
             },
-        },
+        ),
+        'outline_rect2': geojson_feature(
+            outline_rect2,
+            properties={
+                'mouth': { 'longitude': lon, 'latitude': lat },
+                'area': outline_rect2.area,
+            },
+        ),
+        'outline_circ': geojson_feature(
+            outline_circ,
+            properties={
+                'mouth': { 'longitude': lon, 'latitude': lat },
+                'area': outline_circ.area,
+            },
+        )
     }
 
     elevation_ds.close()
@@ -297,7 +306,7 @@ def hypsometry(elevations, areas, num_bins=None):
         bin_width: width of each elevation bin
         bin_centres: list of centre values of each elevation bin;
             elevation bin `i` spans semi-open interval
-            [bin_centres[i] - bin_width, bin_centres[i] + bin_width)
+            [bin_centres[i] - bin_width/2, bin_centres[i] + bin_width/2)
         cumulative_areas: list of total areas in each elevation bin;
             indexed same as bin_centres
     """

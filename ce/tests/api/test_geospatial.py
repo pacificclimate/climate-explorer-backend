@@ -1,6 +1,6 @@
 import pytest
 from shapely.geometry import Polygon
-from ce.api.geospatial import geojson_feature, outline, WKT_point_to_lonlat
+from ce.api.geospatial import geojson_feature, outline_cell_rect, WKT_point_to_lonlat
 
 
 coordinates = ((0, 0), (0, 1), (1, 1), (0, 0))
@@ -66,7 +66,7 @@ def test_geojson_feature(thing, kwargs, expected):
 
 ))
 def test_outline(centres, height, width, expected):
-    ol = outline(centres, height, width)
+    ol = outline_cell_rect(centres, height, width)
     assert ol.equals(Polygon(expected))
 
 
