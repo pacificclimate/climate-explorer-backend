@@ -95,7 +95,7 @@ def watershed(sesh, station, ensemble_name):
     areas, area_units = get_values_at_lonlats('area')
 
     # Compute the elevation/area curve
-    h_bin_width, h_bin_centres, h_cumulative_areas = \
+    elevation_bin_width, elevation_bin_centres, cumulative_areas = \
         hypsometry(elevations, areas)
 
     # Compute outline of watershed as a GeoJSON feature
@@ -114,11 +114,11 @@ def watershed(sesh, station, ensemble_name):
             'value': sum(areas),
         },
         'hypsometric_curve': {
-            'bin_width': h_bin_width,
-            'x_bin_centers': h_bin_centres,
-            'y_values': h_cumulative_areas,
-            'x_units': elevation_units,
-            'y_units': area_units,
+            'elevation_bin_width': elevation_bin_width,
+            'elevation_bin_centers': elevation_bin_centres,
+            'cumulative_areas': cumulative_areas,
+            'elevation_units': elevation_units,
+            'area_units': area_units,
         },
         'shape': geojson_feature(
             outline,
@@ -127,8 +127,7 @@ def watershed(sesh, station, ensemble_name):
                 'mouth': {
                     'longitude': lon,
                     'latitude': lat
-                },
-                'area': outline.area,
+                }
             },
         ),
         'debug/test': {
