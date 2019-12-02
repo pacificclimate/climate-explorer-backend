@@ -12,19 +12,23 @@ import modelmeta as mm
 
 from ce.api.geo import wkt_to_masked_array
 
+
 def get_files_from_run_variable(run, variable):
     return [file_ for file_ in run.files if variable in
                 [dfv.netcdf_variable_name for dfv in file_.data_file_variables]
            ]
 
+
 def get_units_from_netcdf_file(nc, variable):
     return nc.variables[variable].units
+
 
 def get_units_from_file_object(file_, varname):
     for dfv in file_.data_file_variables:
         if dfv.netcdf_variable_name == varname:
             return dfv.variable_alias.units
     raise Exception("Variable {} is not indexed for file {}".format(varname, file_.filename))
+
 
 def get_units_from_run_object(run, varname):
     files = get_files_from_run_variable(run, varname)
@@ -35,11 +39,13 @@ def get_units_from_run_object(run, varname):
 
     return units.pop()
 
+
 def get_grid_from_netcdf_file(nc):
     return {
         'latitudes': np.ndarray.tolist(nc.variables['lat'][:]),
         'longitudes': np.ndarray.tolist(nc.variables['lon'][:])
     }
+
 
 @contextmanager
 def open_nc(fname):
@@ -77,6 +83,7 @@ def get_array(nc, fname, time, area, variable):
 
     return a
 
+
 # FIXME: Assumes 3d data... doesn't support levels
 #Reduces a 3-dimensional array to a two-dimensional array by
 #returning the timeidxth slice, IFF time is defined and time
@@ -90,6 +97,7 @@ def time_slice_array(a, timeidx, nc, fname, variable):
         a = a[timeidx,:,:]
     return a
 
+
 def mean_datetime(datetimes):
     timestamps = [
         dt.replace(tzinfo=timezone.utc).timestamp()
@@ -98,8 +106,10 @@ def mean_datetime(datetimes):
     mean = np.mean(timestamps)
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
+
 def validate_cell_method(cell_method):
     return cell_method in ('mean', 'standard_deviation')
+
 
 def find_matching_cell_methods(cell_methods, target_method):
     def filter_on_method(cell_method, target_method):
@@ -125,6 +135,7 @@ def find_matching_cell_methods(cell_methods, target_method):
     else:
         return [cell_method for cell_method in cell_methods
                 if filter_on_method(cell_method, target_method)]
+
 
 def search_for_unique_ids(sesh, ensemble_name='ce', model='', emission='',
                           variable='', time=0, timescale='', cell_method='mean'):
@@ -172,15 +183,14 @@ def is_valid_index(index, shape):
 
 
 def vec_add(a, b):
-    '''numpy-style addition for builtin tuples: (1,1)+(2,3) = (3,4)'''
+    """numpy-style addition for builtin tuples: (1,1)+(2,3) = (3,4)"""
     return tuple(map(operator.add, a, b))
 
 
-offsets = index_set((-1,2), (-1,2)) - {(0,0)}
-
+neighbour_offsets = index_set((-1, 2), (-1, 2)) - {(0, 0)}
 
 def neighbours(cell):
     """Return all neighbours of `cell`: all cells with an x or y offset
     of +/-1"""
-    return (vec_add(cell, offset) for offset in offsets)
+    return (vec_add(cell, offset) for offset in neighbour_offsets)
 
