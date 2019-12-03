@@ -153,7 +153,7 @@ def watershed(sesh, station, ensemble_name):
                         'for which we have data')
 
 
-def worker(station_lonlat, flow_direction, elevation, area):
+def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
     """Compute the watershed endpoint response.
 
     This function exists to make these computations more easily testable.
@@ -173,6 +173,14 @@ def worker(station_lonlat, flow_direction, elevation, area):
                 a concave hull of the cell rectangles.
             hypsometric_curve: Elevation-area histogram of the watershed
     """
+    if hypso_params is None:
+        # Default parameters cover total range of BC elevations from
+        # sea level to highest point, Mt. Fairweather, at 4,663 m.
+        hypso_params = {
+            'bin_start': 0,
+            'bin_width': 100,
+            'num_bins': 46,
+        }
     if not flow_direction.is_compatible(elevation):
         raise ValueError(
             'Flow direction and elevation do not have compatible grids')
@@ -207,8 +215,7 @@ def worker(station_lonlat, flow_direction, elevation, area):
     ws_areas = area.get_values_at_lonlats(watershed_lonlats)
 
     # Compute the elevation/area curve
-    elevation_bin_width, elevation_bin_centres, cumulative_areas = \
-        hypsometry(ws_elevations, ws_areas)
+    cumulative_areas = hypsometry(ws_elevations, ws_areas, **hypso_params)
 
     # Compute outline of watershed as a GeoJSON feature
     outline = outline_cell_rect(
@@ -225,13 +232,14 @@ def worker(station_lonlat, flow_direction, elevation, area):
             'value': sum(ws_areas),
         },
         'hypsometric_curve': {
-            'elevation_bin_width': elevation_bin_width,
-            'elevation_bin_centers': elevation_bin_centres,
+            'elevation_bin_start': hypso_params['bin_start'],
+            'elevation_bin_width': hypso_params['bin_width'],
+            'elevation_num_bins': hypso_params['num_bins'],
             'cumulative_areas': cumulative_areas,
             'elevation_units': elevation.units,
             'area_units': area.units,
         },
-        'shape': geojson_feature(
+        'boundary': geojson_feature(
             outline,
             properties={
                 # Represent as GeoJSON?
@@ -377,7 +385,7 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     return Dataset(file.filename, 'r')
 
 
-def hypsometry(elevations, areas, num_bins=None):
+def hypsometry(elevations, areas, bin_start=0, bin_width=100, num_bins=46):
     """
     Computes a hypsometric curve as a histogram of areas by elevation.
 
@@ -385,15 +393,15 @@ def hypsometry(elevations, areas, num_bins=None):
         must be consistent with locations of areas
     :param areas: list of areas; location is not specified but
         must be consistent with locations of elevations
-    :param num_bins: number of elevation bins; if None, the square root of
-        the number of elevations is used
-    :return: tuple (bin_width, bin_centres, cumulative_areas)
-        bin_width: width of each elevation bin
-        bin_centres: list of centre values of each elevation bin;
-            elevation bin `i` spans semi-open interval
-            [bin_centres[i] - bin_width/2, bin_centres[i] + bin_width/2)
-        cumulative_areas: list of total areas in each elevation bin;
+    :param bin_start: lowest elevation; lower bound of elevation bin 0
+    :param bin_width: width of elevation bins
+    :param num_bins: number of elevation bins
+    :return: list of total areas in each elevation bin;
             indexed same as bin_centres
+
+    Binning is "clipped": Any elevation below bin_start is placed in bin 0;
+    any elevation above (bin_start + num_bins * bin_width) is placed in bin
+    (num_bins - 1).
     """
 
     if len(elevations) != len(areas):
@@ -401,17 +409,13 @@ def hypsometry(elevations, areas, num_bins=None):
             'elevations ({}) and areas ({}) do not have same lengths'.format(
                 len(elevations), len(areas)))
 
-    if num_bins is None:
-        num_bins = math.ceil(math.sqrt(len(elevations)))
-    bin_min = min(elevations) - 5
-    bin_max = max(elevations) + 5
-    bin_width = (bin_max - bin_min) / num_bins
-
-    bin_centres = [bin_min + (i + 0.5) * bin_width for i in range(num_bins)]
-
     cumulative_areas = [0] * num_bins
+
+    def clip(index):
+        return max(0, min(num_bins-1, index))
+
     for elevation, area in zip(elevations, areas):
-        bin = math.floor((elevation - bin_min) / bin_width)
+        bin = clip(math.floor((elevation - bin_start) / bin_width))
         cumulative_areas[bin] += area
 
-    return bin_width, bin_centres, cumulative_areas
+    return cumulative_areas
