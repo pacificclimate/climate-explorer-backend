@@ -29,6 +29,14 @@ from modelmeta import \
 
 # TODO: Move to utils?
 class DataGrid():
+    """Represents the contents of a gridded dataset that are relevant
+    to the watershed endpoint. The existence of this class has two motivations:
+
+    - Factor out common operations on datasets (e.g., convert between lonlat
+        and xy coordinates).
+    - Make it much simpler to construct test data for the `worker` function.
+    """
+
     def __init__(self, longitudes, latitudes, values, units=None):
         self.longitudes = longitudes
         self.latitudes = latitudes
@@ -39,7 +47,8 @@ class DataGrid():
 
     @staticmethod
     def from_nc_dataset(dataset, variable_name):
-        """Factory method"""
+        """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
+        with standard contents and returns it as a `DataGrid`."""
         return DataGrid(
             dataset.variables['lon'],
             dataset.variables['lat'],
@@ -48,6 +57,9 @@ class DataGrid():
         )
 
     def is_compatible(self, other):
+        """Return a boolean indicating whether this `DataGrid` and another are
+        compatible. Compatible means that their lon and lat grids have the same
+        step size."""
         return math.isclose(self.lon_step, other.lon_step) and \
                math.isclose(self.lat_step, other.lat_step)
 
@@ -70,12 +82,27 @@ class DataGrid():
         return self.longitudes[xy[1]], self.latitudes[xy[0]]
 
     def get_values_at_lonlats(self, lonlats):
+        """Map an iterable of lonlats to a list of values at those lonlats"""
         return [
             float(self.values[self.lonlat_to_xy(lonlat)]) for lonlat in lonlats
         ]
 
 
 def watershed(sesh, station, ensemble_name):
+    """Return information describing the watershed that drains to a specified
+    point.
+
+    :param sesh: (sqlalchemy.orm.session.Session) A database Session object
+    :param station: (string) Location of drainage point, WKT POINT format
+    :param ensemble_name: (string) Name of the ensemble containing data files backing
+        providing data for this request.
+    :return: (dict) representation for JSON response object. See function
+        `worker` for details.
+
+    This function is primarily responsible for finding the relevant data files
+    and converting their contents to `DataGrid` objects for consumption by
+    `worker`, which as its name suggests, does most of the work.
+    """
     station_lonlat = WKT_point_to_lonlat(station)
 
     with get_time_invariant_variable_dataset(
@@ -96,7 +123,12 @@ def watershed(sesh, station, ensemble_name):
 
 
 def worker(station_lonlat, flow_direction, elevation, area):
-    """
+    """Compute the watershed endpoint response.
+
+    This function exists to make these computations more easily testable.
+    (Specifically, data *files* are not required, only the relevant contents
+    of those files passed as `DataGrid` objects. `DataGrid`s are much easier to
+    construct for tests.)
 
     :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
     :param flow_direction: (DataGrid) Flow direction grid
