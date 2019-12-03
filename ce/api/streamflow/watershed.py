@@ -247,38 +247,6 @@ def build_watershed(target, routing, direction_map, debug=False):
     return upstream(target)
 
 
-def lonlat_to_xy(coords, nc):
-    """Returns the (x, y) data index for a given lon-lat coordinate,
-    switching the order of the coordinates. Does *not* check whether
-    the returned index is actually within the file's extent."""
-    x = (coords[1] - nc.variables["lat"][0]) / nc_dimension_step(nc, "lat")
-    y = (coords[0] - nc.variables["lon"][0]) / nc_dimension_step(nc, "lon")
-    return (int(round(x)), int(round(y)))
-
-
-def xy_to_lonlat(coords, nc):
-    """Returns the lon-lat coordinate for a given xy data index,
-    switching the order of the coordinates."""
-    return (nc.variables["lon"][coords[1]], nc.variables["lat"][coords[0]])
-
-
-def nc_dimension_step(nc, dimension):
-    """Returns the interval between steps for a regularly spaced variable
-    (e.g., lat, lon, time) in a netcdf file. Assumes all steps same size."""
-    return nc.variables[dimension][1] - nc.variables[dimension][0]
-
-
-def compatible_grids(nc1, nc2):
-    """Checks whether the two netCDF files have the same size grid.
-    Does not check spatial extent."""
-    return (
-        abs(nc_dimension_step(nc1, "lon")) ==
-        abs(nc_dimension_step(nc2, "lon")) and
-        abs(nc_dimension_step(nc1, "lat")) ==
-        abs(nc_dimension_step(nc2, "lat"))
-    )
-
-
 def VIC_direction_matrix(lat_step, lon_step):
     """ Return a VIC direction matrix, which is a matrix indexed by the VIC
     streamflow direction codes 0...9, with the value at index `i` indicating
@@ -344,11 +312,6 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
 
     file = query.one()  # Raises exception if n != 1 results found
     return Dataset(file.filename, 'r')
-
-
-def value_at_lonlat(lonlat, nc, var):
-    """Return value of a 2D netcdf variable at a given lonlat coordinate"""
-    return float(nc.variables[var][lonlat_to_xy(lonlat, nc)])
 
 
 def hypsometry(elevations, areas, num_bins=None):
