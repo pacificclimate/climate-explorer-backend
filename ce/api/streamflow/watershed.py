@@ -18,6 +18,7 @@ import numpy as np
 import math
 import time
 
+from flask import abort
 from sqlalchemy import distinct
 
 from ce.api.geospatial import \
@@ -27,8 +28,31 @@ from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
 
-# TODO: Move to utils?
-class DataGrid():
+# TODO: Move DataGrid and its exceptions to separate module
+
+class DataGridError(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class DataGridIndexError(DataGridError):
+    """Exception for attempt to incorrectly index a data grid. This is more
+    stringent than a simple IndexError.
+
+    Attributes:
+        index: offending index
+        shape: offended grid shape
+        message: explanation of the error, generated from params
+    """
+
+    def __init__(self, index, shape):
+        self.index = index
+        self.shape = shape
+        self.message = 'Index {} is not valid for a grid of shape {}'\
+            .format(index, shape)
+
+
+class DataGrid:
     """Represents the contents of a gridded dataset that are relevant
     to the watershed endpoint. The existence of this class has two motivations:
 
@@ -63,6 +87,10 @@ class DataGrid():
         return math.isclose(self.lon_step, other.lon_step) and \
                math.isclose(self.lat_step, other.lat_step)
 
+    def check_valid_index(self, index):
+        if not is_valid_index(index, self.values.shape):
+            raise DataGridIndexError(index, self.values.shape)
+
     def lonlat_to_xy(self, lonlat):
         """Returns the (x, y) data index for a given lon-lat coordinate,
         switching the order of the coordinates. Checks that the index is
@@ -70,15 +98,13 @@ class DataGrid():
         which are valid but wrong in this application."""
         x = int(round((lonlat[1] - self.latitudes[0]) / self.lat_step))
         y = int(round((lonlat[0] - self.longitudes[0]) / self.lon_step))
-        if not is_valid_index((x, y), self.values.shape):
-            raise ValueError('Foobar!')
+        self.check_valid_index((x, y))
         return x, y
 
     def xy_to_lonlat(self, xy):
         """Returns the lon-lat coordinate for a given xy data index,
         switching the order of the coordinates."""
-        if not is_valid_index(xy, self.values.shape):
-            raise ValueError('Foobar!')
+        self.check_valid_index(xy)
         return self.longitudes[xy[1]], self.latitudes[xy[0]]
 
     def get_values_at_lonlats(self, lonlats):
@@ -114,12 +140,17 @@ def watershed(sesh, station, ensemble_name):
             with get_time_invariant_variable_dataset(
                 sesh, ensemble_name, 'area'
             ) as area_ds:
-                return worker(
-                    station_lonlat,
-                    flow_direction=DataGrid.from_nc_dataset(flow_direction_ds, 'flow_direction'),
-                    elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
-                    area=DataGrid.from_nc_dataset(area_ds, 'area'),
-                )
+                try:
+                    return worker(
+                        station_lonlat,
+                        flow_direction=DataGrid.from_nc_dataset(flow_direction_ds, 'flow_direction'),
+                        elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
+                        area=DataGrid.from_nc_dataset(area_ds, 'area'),
+                    )
+                except DataGridIndexError:
+                    abort(404, description=
+                        'Station lon-lat coordinates are not within the area '
+                        'for which we have data')
 
 
 def worker(station_lonlat, flow_direction, elevation, area):
