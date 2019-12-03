@@ -1,7 +1,7 @@
 import pytest
 import numpy
 from ce.api.streamflow.watershed import DataGrid
-from ce.tests.api.streamflow.watershed.helpers import np_array, \
+from test_utils import np_array, \
     N, NE, E, SE, S, SW, W, NW, O
 
 

@@ -1,3 +1,4 @@
+import sys, os
 import py.path
 import tempfile
 from datetime import datetime
@@ -12,6 +13,9 @@ from flask_sqlalchemy import SQLAlchemy
 from netCDF4 import Dataset
 
 from ce import get_app
+
+# Add helpers directory to pythonpath: See https://stackoverflow.com/a/33515264
+sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
 
 
 # From http://stackoverflow.com/questions/25525202/py-test-temporary-folder-for-the-session-scope

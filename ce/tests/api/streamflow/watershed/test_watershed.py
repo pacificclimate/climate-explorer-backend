@@ -1,7 +1,6 @@
 import pytest
 from ce.api.streamflow.watershed import worker
-from ce.tests.api.streamflow.watershed.helpers import \
-    check_dict_subset, is_dict_subset
+from test_utils import check_dict_subset, is_dict_subset
 
 
 @pytest.mark.parametrize('lon, lat, expected', (

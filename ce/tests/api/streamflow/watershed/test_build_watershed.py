@@ -2,7 +2,7 @@ import numpy
 import pytest
 from ce.api.streamflow.watershed import build_watershed
 from ce.api.util import index_set
-from ce.tests.api.streamflow.watershed.helpers import np_array, direction_map, \
+from test_utils import np_array, direction_map, \
     N, NE, E, SE, S, SW, W, NW, O
 
 
