@@ -13,7 +13,6 @@ The functions lonlat_to_xy() and xy_to_lonlat(), which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order.
 """
-
 from netCDF4 import Dataset
 import numpy as np
 import math
@@ -28,14 +27,81 @@ from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
 
-def watershed(sesh, station, ensemble_name):
-    """Returns information describing the watershed that drains to a specified
-    point.
+# TODO: Move to utils?
+class DataGrid():
+    def __init__(self, longitudes, latitudes, values, units=None):
+        self.longitudes = longitudes
+        self.latitudes = latitudes
+        self.values = values
+        self.units = units
+        self.lon_step = longitudes[1] - longitudes[0]
+        self.lat_step = latitudes[1] - latitudes[0]
 
-    :param sesh: (sqlalchemy.orm.session.Session) A database Session object
-    :param station: Location of drainage point, WKT POINT format
-    :param ensemble_name: Name of the ensemble containing data files backing
-        providing data for this request.
+    @staticmethod
+    def from_nc_dataset(dataset, variable_name):
+        """Factory method"""
+        return DataGrid(
+            dataset.variables['lon'],
+            dataset.variables['lat'],
+            dataset.variables[variable_name],
+            dataset.variables[variable_name].units,
+        )
+
+    def is_compatible(self, other):
+        return math.isclose(self.lon_step, other.lon_step) and \
+               math.isclose(self.lat_step, other.lat_step)
+
+    def lonlat_to_xy(self, lonlat):
+        """Returns the (x, y) data index for a given lon-lat coordinate,
+        switching the order of the coordinates. Checks that the index is
+        valid for the grid; we must at minimum exclude negative index values,
+        which are valid but wrong in this application."""
+        x = int(round((lonlat[1] - self.latitudes[0]) / self.lat_step))
+        y = int(round((lonlat[0] - self.longitudes[0]) / self.lon_step))
+        if not is_valid_index((x, y), self.values.shape):
+            raise ValueError('Foobar!')
+        return x, y
+
+    def xy_to_lonlat(self, xy):
+        """Returns the lon-lat coordinate for a given xy data index,
+        switching the order of the coordinates."""
+        if not is_valid_index(xy, self.values.shape):
+            raise ValueError('Foobar!')
+        return self.longitudes[xy[1]], self.latitudes[xy[0]]
+
+    def get_values_at_lonlats(self, lonlats):
+        return [
+            float(self.values[self.lonlat_to_xy(lonlat)]) for lonlat in lonlats
+        ]
+
+
+def watershed(sesh, station, ensemble_name):
+    station_lonlat = WKT_point_to_lonlat(station)
+
+    with get_time_invariant_variable_dataset(
+        sesh, ensemble_name, 'flow_direction'
+    ) as flow_direction_ds:
+        with get_time_invariant_variable_dataset(
+            sesh, ensemble_name, 'elev'
+        ) as elevation_ds:
+            with get_time_invariant_variable_dataset(
+                sesh, ensemble_name, 'area'
+            ) as area_ds:
+                return worker(
+                    station_lonlat,
+                    flow_direction=DataGrid.from_nc_dataset(flow_direction_ds, 'flow_direction'),
+                    elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
+                    area=DataGrid.from_nc_dataset(area_ds, 'area'),
+                )
+
+
+def worker(station_lonlat, flow_direction, elevation, area):
+    """
+
+    :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
+    :param flow_direction: (DataGrid) Flow direction grid
+    :param elevation: (DataGrid) Elevation grid
+    :param area: (DataGrid) Area grid
     :return: dict representation for JSON response object with the following
         attributes:
             area: Area of the watershed
@@ -44,25 +110,22 @@ def watershed(sesh, station, ensemble_name):
                 a concave hull of the cell rectangles.
             hypsometric_curve: Elevation-area histogram of the watershed
     """
+    if not flow_direction.is_compatible(elevation):
+        raise ValueError(
+            'Flow direction and elevation do not have compatible grids')
+    if not flow_direction.is_compatible(area):
+        raise ValueError(
+            'Flow direction and area do not have compatible grids')
 
-    lon, lat = station_lonlat = WKT_point_to_lonlat(station)
-    
     # Compute lonlats of watershed whose mouth is at `station`
-
-    # TODO: Use a context manager here. To do so elegantly will require some
-    #   refactoring of how and where flow_direction_ds is used.
-    flow_direction_ds = get_time_invariant_variable_dataset(
-        sesh, ensemble_name, 'flow_direction'
+    # TODO: Refactor to accept a DataGrid?
+    direction_matrix = VIC_direction_matrix(
+        flow_direction.lat_step, flow_direction.lon_step
     )
 
-    lat_step = nc_dimension_step(flow_direction_ds, 'lat')
-    lon_step = nc_dimension_step(flow_direction_ds, 'lon')
-    direction_matrix = VIC_direction_matrix(lat_step, lon_step)
-
-    station_xy = lonlat_to_xy(station_lonlat, flow_direction_ds)
     watershed_xys, watershed_debug = build_watershed(
-        station_xy,
-        flow_direction_ds.variables['flow_direction'],
+        flow_direction.lonlat_to_xy(station_lonlat),
+        flow_direction.values,
         direction_matrix,
         debug=True
     )
@@ -72,61 +135,46 @@ def watershed(sesh, station, ensemble_name):
     # coordinates (lonlats) for `elevations[i]` and `areas[i]` be equal for
     # all `i`.
     watershed_lonlats = \
-        [xy_to_lonlat(xy, flow_direction_ds) for xy in watershed_xys]
-
-    def get_values_at_lonlats(variable_name):
-        with get_time_invariant_variable_dataset(
-                sesh, ensemble_name, variable_name) as dataset:
-            if not compatible_grids(flow_direction_ds, dataset):
-                raise ValueError(
-                    'Flow direction and {} do not have the same grid'
-                        .format(variable_name)
-                )
-            return (
-                [value_at_lonlat(lonlat, dataset, variable_name)
-                    for lonlat in watershed_lonlats],
-                dataset.variables[variable_name].units
-            )
+        [flow_direction.xy_to_lonlat(xy) for xy in watershed_xys]
 
     #  Compute elevations at each lonlat of watershed
-    elevations, elevation_units = get_values_at_lonlats('elev')
-    
+    ws_elevations = elevation.get_values_at_lonlats(watershed_lonlats)
+
     #  Compute area of each cell in watershed
-    areas, area_units = get_values_at_lonlats('area')
+    ws_areas = area.get_values_at_lonlats(watershed_lonlats)
 
     # Compute the elevation/area curve
     elevation_bin_width, elevation_bin_centres, cumulative_areas = \
-        hypsometry(elevations, areas)
+        hypsometry(ws_elevations, ws_areas)
 
     # Compute outline of watershed as a GeoJSON feature
-    outline = outline_cell_rect(watershed_lonlats, lat_step, lon_step)
+    outline = outline_cell_rect(
+        watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step)
 
-    # Compose response
-
-    response = {
+    return {
         'elevation': {
-            'units': elevation_units,
-            'minimum': min(elevations),
-            'maximum': max(elevations),
+            'units': elevation.units,
+            'minimum': min(ws_elevations),
+            'maximum': max(ws_elevations),
         },
         'area': {
-            'units': area_units,
-            'value': sum(areas),
+            'units': area.units,
+            'value': sum(ws_areas),
         },
         'hypsometric_curve': {
             'elevation_bin_width': elevation_bin_width,
             'elevation_bin_centers': elevation_bin_centres,
             'cumulative_areas': cumulative_areas,
-            'elevation_units': elevation_units,
-            'area_units': area_units,
+            'elevation_units': elevation.units,
+            'area_units': area.units,
         },
         'shape': geojson_feature(
             outline,
             properties={
                 # Represent as GeoJSON?
                 'mouth': {
-                    'longitude': lon,
-                    'latitude': lat
+                    'longitude': station_lonlat[0],
+                    'latitude': station_lonlat[1]
                 }
             },
         ),
@@ -137,10 +185,6 @@ def watershed(sesh, station, ensemble_name):
             }
         }
     }
-
-    flow_direction_ds.close()
-
-    return response
 
 
 def build_watershed(target, routing, direction_map, debug=False):
