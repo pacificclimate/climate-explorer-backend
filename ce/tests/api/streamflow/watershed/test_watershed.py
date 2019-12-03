@@ -15,11 +15,14 @@ from test_utils import check_dict_subset, is_dict_subset
             'value': 7,
         },
         'hypsometric_curve': {
-            # TODO: more here
+            'elevation_bin_start': 0,
+            'elevation_bin_width': 100,
+            'elevation_num_bins': 46,
+            # 'cumulative_areas': ???,
             'elevation_units': 'm',
             'area_units': 'm2'
         },
-        'shape': {
+        'boundary': {
             # TODO: more here
             'type': 'Feature',
             'properties': {
@@ -47,11 +50,14 @@ from test_utils import check_dict_subset, is_dict_subset
             'value': 6,
         },
         'hypsometric_curve': {
-            # TODO: more here
+            'elevation_bin_start': 0,
+            'elevation_bin_width': 100,
+            'elevation_num_bins': 46,
+            # 'cumulative_areas': ???,
             'elevation_units': 'm',
             'area_units': 'm2'
         },
-        'shape': {
+        'boundary': {
             # TODO: more here
             'type': 'Feature',
             'properties': {
@@ -79,11 +85,14 @@ from test_utils import check_dict_subset, is_dict_subset
             'value': 3,
         },
         'hypsometric_curve': {
-            # TODO: more here
+            'elevation_bin_start': 0,
+            'elevation_bin_width': 100,
+            'elevation_num_bins': 46,
+            # 'cumulative_areas': ???,
             'elevation_units': 'm',
             'area_units': 'm2'
         },
-        'shape': {
+        'boundary': {
             # TODO: more here
             'type': 'Feature',
             'properties': {
