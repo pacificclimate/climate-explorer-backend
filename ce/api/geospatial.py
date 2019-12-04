@@ -1,8 +1,19 @@
-import math
-import re
-import shapely
-from shapely.geometry import Point, Polygon, mapping
+import shapely.wkt
+from shapely.geometry import Point, mapping
 from shapely.ops import cascaded_union
+
+
+class GeospatialError(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class GeospatialTypeError(GeospatialError):
+    """Exception for an invalid geospatial datatype used in some context.
+    So far that context is just "expecting a point" (as opposed, say, to a
+    polygon.
+    """
+    pass
 
 
 def geojson_feature(thing, **kwargs):
@@ -30,13 +41,10 @@ def outline_cell_rect(centres, height, width):
         for x, y in centres
     ])
 
+
 def WKT_point_to_lonlat(text):
-    pattern = re.compile(
-        r'POINT\s*\(([+-]?[0-9]+\.?[0-9]*)\s+([+-]?[0-9]+\.?[0-9]*)\)'
-    )
-    match = re.match(pattern, text)
-    if not match:
-        raise ValueError('Cannot parse {} as a WKT point'.format(text))
-    lon = float(match.group(1))
-    lat = float(match.group(2))
-    return lon, lat
+    p = shapely.wkt.loads(text)
+    if type(p) != shapely.geometry.Point:
+        raise GeospatialTypeError(
+            'Expected a Point but got a {}'.format(type(p).__name__))
+    return p.x, p.y

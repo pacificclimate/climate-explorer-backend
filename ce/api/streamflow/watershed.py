@@ -20,9 +20,10 @@ import time
 
 from flask import abort
 from sqlalchemy import distinct
+from shapely.errors import WKTReadingError
 
 from ce.api.geospatial import \
-    geojson_feature, outline_cell_rect, outline_point_buff, WKT_point_to_lonlat
+    geojson_feature, outline_cell_rect, WKT_point_to_lonlat, GeospatialTypeError
 from ce.api.util import is_valid_index, vec_add, neighbours
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
@@ -151,6 +152,12 @@ def watershed(sesh, station, ensemble_name):
                     abort(404, description=
                         'Station lon-lat coordinates are not within the area '
                         'for which we have data')
+                except WKTReadingError:
+                    abort(400, description=
+                        'Station lon-lat coordinates are not valid WKT syntax')
+                except GeospatialTypeError as e:
+                    abort(400, description=
+                        'station parameter: {}'.format(e.message))
 
 
 def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):

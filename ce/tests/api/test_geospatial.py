@@ -1,6 +1,8 @@
 import pytest
+from shapely.errors import WKTReadingError
 from shapely.geometry import Polygon
-from ce.api.geospatial import geojson_feature, outline_cell_rect, WKT_point_to_lonlat
+from ce.api.geospatial import \
+    geojson_feature, outline_cell_rect, WKT_point_to_lonlat, GeospatialTypeError
 
 
 coordinates = ((0, 0), (0, 1), (1, 1), (0, 0))
@@ -71,20 +73,21 @@ def test_outline(centres, height, width, expected):
 
 
 @pytest.mark.parametrize('text, result', (
-        ('blerg', None),
-        ('POINT', None),
-        ('POINT(,)', None),
-        ('POINT(99,)', None),
-        ('POINT(,99)', None),
-        ('POINT(99 99)', (99, 99)),
-        ('POINT(99.9 99.9)', (99.9, 99.9)),
-        ('POINT(0 0)', (0, 0)),
-        ('POINT(-99 99)', (-99, 99)),
-        ('POINT(-99 -99)', (-99, -99)),
+        ('blerg', WKTReadingError),
+        ('POINT', WKTReadingError),
+        ('POINT(,)', WKTReadingError),
+        ('POINT(99,)', WKTReadingError),
+        ('POINT(,99)', WKTReadingError),
+        ('POLYGON ((0 2, 0 0, 1 1, 0 2))', GeospatialTypeError),
+        ('POINT(1 -2)', (1, -2)),
 ))
 def test_WKT_point_to_lonlat(text, result):
     if type(result) == tuple:
         assert WKT_point_to_lonlat(text) == result
     else:
-        with pytest.raises(ValueError, match='Cannot parse'):
-            WKT_point_to_lonlat(text)
+        with pytest.raises(result):
+            try:
+                WKT_point_to_lonlat(text)
+            except Exception as e:
+                print('####', e)
+                raise e
