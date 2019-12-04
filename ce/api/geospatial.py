@@ -30,17 +30,6 @@ def outline_cell_rect(centres, height, width):
         for x, y in centres
     ])
 
-
-def outline_point_buff(centres, height, width, resolution=16):
-    """Returns a shapely geometry object, normally a Polygon, that is the
-    outline, i.e., the concave hull, of the cells with given centres, height,
-    and width. Uses a slightly more complicated buffer (as in buffered shape)
-     algorithm. See shapely docs."""
-    radius = math.sqrt(height**2 + width**2) / 2
-    cells = [Point(c).buffer(radius, resolution) for c in centres]
-    return cascaded_union(cells)
-
-
 def WKT_point_to_lonlat(text):
     pattern = re.compile(
         r'POINT\s*\(([+-]?[0-9]+\.?[0-9]*)\s+([+-]?[0-9]+\.?[0-9]*)\)'
