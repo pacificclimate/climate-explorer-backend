@@ -6,12 +6,13 @@ data indexes. Spatial coordinates (such as the WKT parameter input, or the
 geoJSON output) are lon-lat order. But inside the netCDF files, data is
 arranged in lat-lon order.
 
-Spatial coordinates are named lat and lon. Data indexes are named x and y,
-and correspond to lat and lon.
+Spatial coordinates variables are named lat and lon. Data indexes variables
+are named x and y, and correspond, in the data file arrangement, to x <-> lat
+and y <-> lon, the opposite of the usual geographic convention.
 
-The functions lonlat_to_xy() and xy_to_lonlat(), which translate from a
+Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
-dimension order.
+dimension order accordingly.
 """
 from netCDF4 import Dataset
 import numpy as np
