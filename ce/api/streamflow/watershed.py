@@ -21,6 +21,7 @@ import time
 
 from flask import abort
 from sqlalchemy import distinct
+from shapely.geometry import Point
 from shapely.errors import WKTReadingError
 
 from ce.api.geospatial import \
@@ -252,11 +253,11 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         'boundary': geojson_feature(
             outline,
             properties={
-                # Represent as GeoJSON?
-                'mouth': {
-                    'longitude': station_lonlat[0],
-                    'latitude': station_lonlat[1]
-                }
+                'mouth': geojson_feature(
+                    Point(
+                        flow_direction.xy_to_lonlat(
+                            flow_direction.lonlat_to_xy(station_lonlat))),
+                )
             },
         ),
         'debug/test': {

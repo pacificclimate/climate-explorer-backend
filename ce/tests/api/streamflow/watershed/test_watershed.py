@@ -27,8 +27,11 @@ from test_utils import check_dict_subset, is_dict_subset
             'type': 'Feature',
             'properties': {
                 'mouth': {
-                    'longitude': 0.11,
-                    'latitude': 50.25
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': (0.1, 50.2)
+                    }
                 }
             }
         },
@@ -62,8 +65,11 @@ from test_utils import check_dict_subset, is_dict_subset
             'type': 'Feature',
             'properties': {
                 'mouth': {
-                    'longitude': 0.19,
-                    'latitude': 50.47
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': (0.2, 50.4)
+                    }
                 }
             }
         },
@@ -97,8 +103,11 @@ from test_utils import check_dict_subset, is_dict_subset
             'type': 'Feature',
             'properties': {
                 'mouth': {
-                    'longitude': 0.3,
-                    'latitude': 50.2
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': (0.3, 50.2)
+                    }
                 }
             }
         },
