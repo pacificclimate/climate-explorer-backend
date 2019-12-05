@@ -180,7 +180,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         'debug/test': {
             'watershed': {
                 'cell_count': len(watershed_xys),
-                'time': watershed_time,
+                'time': watershed_time.elapsed,
             }
         }
     }
