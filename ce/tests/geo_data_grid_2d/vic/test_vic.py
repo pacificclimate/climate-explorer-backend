@@ -1,4 +1,72 @@
 import pytest
+from ce.geo_data_grid_2d.vic import VicDataGrid
+
+@pytest.mark.parametrize('grid_1_args, grid_2_args, expected', [
+    # Compatible cases
+
+    # Identical grids
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        True
+    ),
+    # Offset longitudes, coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(2, 3), latitudes=(0, 2)),
+        True
+    ),
+    # Offset latitudes, coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(0, 1), latitudes=(4, 6)),
+        True
+    ),
+    # Offset longitudes and latitudes, coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(2, 3), latitudes=(4, 6)),
+        True
+    ),
+
+    # Incompatible cases
+
+    # Different longitude step size
+    (
+            dict(longitudes=(0, 1), latitudes=(0, 2)),
+            dict(longitudes=(0, 2), latitudes=(0, 2)),
+            False
+    ),
+    # Different latitude step size
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(0, 1), latitudes=(0, 1)),
+        False
+    ),
+    # Same step size, offset longitudes, not coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(2.1, 3.1), latitudes=(0, 2)),
+        False
+    ),
+    # Same step size, offset latitudes, not coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(0, 1), latitudes=(4.1, 6.1)),
+        False
+    ),
+    # Same step size, offset longitudes and latitudes, not coinciding
+    (
+        dict(longitudes=(0, 1), latitudes=(0, 2)),
+        dict(longitudes=(2.1, 3.1), latitudes=(4.2, 6.2)),
+        False
+    ),
+])
+def test_is_compatible(grid_1_args, grid_2_args, expected):
+    grid_1 = VicDataGrid(**grid_1_args, values=None)
+    grid_2 = VicDataGrid(**grid_2_args, values=None)
+    assert grid_1.is_compatible(grid_2) == expected
+
 
 
 @pytest.mark.parametrize('lon, y', (
@@ -38,10 +106,5 @@ def test_xy_to_lonlat(x, y, lon, lat, vic_data_grid_1):
 def test_get_values_at_lonlats(vic_data_grid_1):
     assert vic_data_grid_1.get_values_at_lonlats(((0.1, 50.2), (0.2, 50.4), (0.3, 50.8))) == \
            [0, 4, 11]
-
-
-def test_is_compatible(vic_data_grid_1, vic_data_grid_2, vic_data_grid_3):
-    assert vic_data_grid_1.is_compatible(vic_data_grid_2)
-    assert not vic_data_grid_1.is_compatible(vic_data_grid_3)
 
 

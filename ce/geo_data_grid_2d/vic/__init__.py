@@ -25,11 +25,29 @@ class VicDataGrid(GeoDataGrid2D):
 
     def is_compatible(self, other):
         """Return a boolean indicating whether this `VicDataGrid` and
-        another are compatible. Compatible means that their lon and lat grids
-        have the same step size."""
-        # Note assumption of uniform step sizes
-        return math.isclose(self.lon_step, other.lon_step) and \
-               math.isclose(self.lat_step, other.lat_step)
+        another are compatible. Compatible means that self and other lon and
+        lat coordinate sets potentially coincide; specifically :
+
+        1. self and other lon and lat coordinates have the same step size
+           magnitude (not necessarily sign)
+        2. self and other lon and lat coordinates, where they overlap spatially,
+           have same values
+
+        Condition (2) reduces to the condition that the difference between the
+        start values of self and other lon and lat coordinates are an integer
+        multiple of the (common) step size.
+        """
+        def is_int(value):
+            return math.isclose(value - round(value), 0)
+
+        return (
+            math.isclose(self.lon_step, other.lon_step) and
+            math.isclose(self.lat_step, other.lat_step) and
+            is_int((self.longitudes[0] - other.longitudes[0]) /
+                   self.lon_step) and
+            is_int((self.latitudes[0] - other.latitudes[0]) /
+                   self.lat_step)
+        )
 
     def lonlat_to_xy(self, lonlat):
         """Returns the (x, y) data index for a given lon-lat coordinate,
