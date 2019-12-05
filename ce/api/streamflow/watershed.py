@@ -27,94 +27,10 @@ from shapely.errors import WKTReadingError
 from ce.api.geospatial import \
     geojson_feature, outline_cell_rect, WKT_point_to_lonlat, GeospatialTypeError
 from ce.api.util import is_valid_index, vec_add, neighbours
+from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
+from ce.geo_data_grid_2d.vic import VicDataGrid
 from modelmeta import \
     DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
-
-
-# TODO: Move DataGrid and its exceptions to separate module
-
-class DataGridError(Exception):
-    """Base class for exceptions in this module."""
-    pass
-
-
-class DataGridIndexError(DataGridError):
-    """Exception for attempt to incorrectly index a data grid. This is more
-    stringent than a simple IndexError.
-
-    Attributes:
-        index: offending index
-        shape: offended grid shape
-        message: explanation of the error, generated from params
-    """
-
-    def __init__(self, index, shape):
-        self.index = index
-        self.shape = shape
-        self.message = 'Index {} is not valid for a grid of shape {}'\
-            .format(index, shape)
-
-
-class DataGrid:
-    """Represents the contents of a gridded dataset that are relevant
-    to the watershed endpoint. The existence of this class has two motivations:
-
-    - Factor out common operations on datasets (e.g., convert between lonlat
-        and xy coordinates).
-    - Make it much simpler to construct test data for the `worker` function.
-    """
-
-    def __init__(self, longitudes, latitudes, values, units=None):
-        self.longitudes = longitudes
-        self.latitudes = latitudes
-        self.values = values
-        self.units = units
-        self.lon_step = longitudes[1] - longitudes[0]
-        self.lat_step = latitudes[1] - latitudes[0]
-
-    @staticmethod
-    def from_nc_dataset(dataset, variable_name):
-        """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
-        with standard contents and returns it as a `DataGrid`."""
-        return DataGrid(
-            dataset.variables['lon'],
-            dataset.variables['lat'],
-            dataset.variables[variable_name],
-            dataset.variables[variable_name].units,
-        )
-
-    def is_compatible(self, other):
-        """Return a boolean indicating whether this `DataGrid` and another are
-        compatible. Compatible means that their lon and lat grids have the same
-        step size."""
-        return math.isclose(self.lon_step, other.lon_step) and \
-               math.isclose(self.lat_step, other.lat_step)
-
-    def check_valid_index(self, index):
-        if not is_valid_index(index, self.values.shape):
-            raise DataGridIndexError(index, self.values.shape)
-
-    def lonlat_to_xy(self, lonlat):
-        """Returns the (x, y) data index for a given lon-lat coordinate,
-        switching the order of the coordinates. Checks that the index is
-        valid for the grid; we must at minimum exclude negative index values,
-        which are valid but wrong in this application."""
-        x = int(round((lonlat[1] - self.latitudes[0]) / self.lat_step))
-        y = int(round((lonlat[0] - self.longitudes[0]) / self.lon_step))
-        self.check_valid_index((x, y))
-        return x, y
-
-    def xy_to_lonlat(self, xy):
-        """Returns the lon-lat coordinate for a given xy data index,
-        switching the order of the coordinates."""
-        self.check_valid_index(xy)
-        return self.longitudes[xy[1]], self.latitudes[xy[0]]
-
-    def get_values_at_lonlats(self, lonlats):
-        """Map an iterable of lonlats to a list of values at those lonlats"""
-        return [
-            float(self.values[self.lonlat_to_xy(lonlat)]) for lonlat in lonlats
-        ]
 
 
 def watershed(sesh, station, ensemble_name):
@@ -129,7 +45,7 @@ def watershed(sesh, station, ensemble_name):
         `worker` for details.
 
     This function is primarily responsible for finding the relevant data files
-    and converting their contents to `DataGrid` objects for consumption by
+    and converting their contents to `VicDataGrid` objects for consumption by
     `worker`, which as its name suggests, does most of the work.
     """
     station_lonlat = WKT_point_to_lonlat(station)
@@ -147,12 +63,12 @@ def watershed(sesh, station, ensemble_name):
         try:
             return worker(
                 station_lonlat,
-                flow_direction=DataGrid.from_nc_dataset(
+                flow_direction=VicDataGrid.from_nc_dataset(
                     flow_direction_ds, 'flow_direction'),
-                elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
-                area=DataGrid.from_nc_dataset(area_ds, 'area'),
+                elevation=VicDataGrid.from_nc_dataset(elevation_ds, 'elev'),
+                area=VicDataGrid.from_nc_dataset(area_ds, 'area'),
             )
-        except DataGridIndexError:
+        except GeoDataGrid2DIndexError:
             abort(404, description=
                 'Station lon-lat coordinates are not within the area '
                 'for which we have data')
@@ -169,13 +85,13 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
 
     This function exists to make these computations more easily testable.
     (Specifically, data *files* are not required, only the relevant contents
-    of those files passed as `DataGrid` objects. `DataGrid`s are much easier to
+    of those files passed as `VicDataGrid` objects. `VicDataGrid`s are much easier to
     construct for tests.)
 
     :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
-    :param flow_direction: (DataGrid) Flow direction grid
-    :param elevation: (DataGrid) Elevation grid
-    :param area: (DataGrid) Area grid
+    :param flow_direction: (VicDataGrid) Flow direction grid
+    :param elevation: (VicDataGrid) Elevation grid
+    :param area: (VicDataGrid) Area grid
     :return: dict representation for JSON response object with the following
         attributes:
             area: Area of the watershed
@@ -200,7 +116,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             'Flow direction and area do not have compatible grids')
 
     # Compute lonlats of watershed whose mouth is at `station`
-    # TODO: Refactor to accept a DataGrid?
+    # TODO: Refactor to accept a VicDataGrid?
     direction_matrix = VIC_direction_matrix(
         flow_direction.lat_step, flow_direction.lon_step
     )

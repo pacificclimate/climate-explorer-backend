@@ -27,7 +27,7 @@ routing_fc_4x4 = np_array((
 
 # Partially connected routing arrays: Not all cells connect to the mouth
 
-# Nortwesternmost cell does not connect to mouth
+# Norteasternmost cell does not connect to mouth
 routing_pc_3x3 = np_array((
     ( S,  S,  N),
     ( S, SW,  W),
