@@ -35,11 +35,11 @@ class GeoDataGrid2D:
         self.values = values
         self.units = units
 
-    @staticmethod
-    def from_nc_dataset(dataset, variable_name):
+    @classmethod
+    def from_nc_dataset(cls, dataset, variable_name):
         """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
         with standard contents and returns it as a `DataGrid`."""
-        return GeoDataGrid2D(
+        return cls(
             dataset.variables['lon'],
             dataset.variables['lat'],
             dataset.variables[variable_name],
