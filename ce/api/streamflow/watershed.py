@@ -133,32 +133,34 @@ def watershed(sesh, station, ensemble_name):
     """
     station_lonlat = WKT_point_to_lonlat(station)
 
-    with get_time_invariant_variable_dataset(
-        sesh, ensemble_name, 'flow_direction'
-    ) as flow_direction_ds:
-        with get_time_invariant_variable_dataset(
-            sesh, ensemble_name, 'elev'
-        ) as elevation_ds:
-            with get_time_invariant_variable_dataset(
+    with \
+            get_time_invariant_variable_dataset(
+                sesh, ensemble_name, 'flow_direction'
+            ) as flow_direction_ds, \
+            get_time_invariant_variable_dataset(
+                sesh, ensemble_name, 'elev'
+            ) as elevation_ds, \
+            get_time_invariant_variable_dataset(
                 sesh, ensemble_name, 'area'
             ) as area_ds:
-                try:
-                    return worker(
-                        station_lonlat,
-                        flow_direction=DataGrid.from_nc_dataset(flow_direction_ds, 'flow_direction'),
-                        elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
-                        area=DataGrid.from_nc_dataset(area_ds, 'area'),
-                    )
-                except DataGridIndexError:
-                    abort(404, description=
-                        'Station lon-lat coordinates are not within the area '
-                        'for which we have data')
-                except WKTReadingError:
-                    abort(400, description=
-                        'Station lon-lat coordinates are not valid WKT syntax')
-                except GeospatialTypeError as e:
-                    abort(400, description=
-                        'station parameter: {}'.format(e.message))
+        try:
+            return worker(
+                station_lonlat,
+                flow_direction=DataGrid.from_nc_dataset(
+                    flow_direction_ds, 'flow_direction'),
+                elevation=DataGrid.from_nc_dataset(elevation_ds, 'elev'),
+                area=DataGrid.from_nc_dataset(area_ds, 'area'),
+            )
+        except DataGridIndexError:
+            abort(404, description=
+                'Station lon-lat coordinates are not within the area '
+                'for which we have data')
+        except WKTReadingError:
+            abort(400, description=
+                'Station lon-lat coordinates are not valid WKT syntax')
+        except GeospatialTypeError as e:
+            abort(400, description=
+                'station parameter: {}'.format(e.message))
 
 
 def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
