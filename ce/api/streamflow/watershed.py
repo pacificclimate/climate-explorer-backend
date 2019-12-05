@@ -17,7 +17,7 @@ dimension order accordingly.
 from netCDF4 import Dataset
 import numpy as np
 import math
-import time
+from contexttimer import Timer
 
 from flask import abort
 from sqlalchemy import distinct
@@ -205,12 +205,13 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         flow_direction.lat_step, flow_direction.lon_step
     )
 
-    watershed_xys, watershed_debug = build_watershed(
-        flow_direction.lonlat_to_xy(station_lonlat),
-        flow_direction.values,
-        direction_matrix,
-        debug=True
-    )
+    with Timer() as watershed_time:
+        watershed_xys = build_watershed(
+            flow_direction.lonlat_to_xy(station_lonlat),
+            flow_direction.values,
+            direction_matrix,
+            debug=True
+        )
 
     # `watershed_lonlats`, `elevations`, and `areas` must all be ordered
     # collections (not sets) because it is required (at minimum) that the
@@ -263,7 +264,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         'debug/test': {
             'watershed': {
                 'cell_count': len(watershed_xys),
-                **watershed_debug
+                'time': watershed_time,
             }
         }
     }
@@ -296,9 +297,6 @@ def build_watershed(target, routing, direction_map, debug=False):
     traversal of the routing graph, i.e., whether we are cycling, and if so
     not to repeat that subgraph.
     """
-    if debug:
-        start_time = time.time()
-
     visited = set()
 
     def is_upstream(neighbour, cell):
@@ -324,8 +322,6 @@ def build_watershed(target, routing, direction_map, debug=False):
               if neighbour not in visited and is_upstream(neighbour, cell))
         )
 
-    if debug:
-        return upstream(target), {'time': time.time() - start_time}
     return upstream(target)
 
 
