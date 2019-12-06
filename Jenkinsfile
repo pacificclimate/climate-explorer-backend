@@ -118,7 +118,6 @@ def clean_local_image(image_name) {
 node {
     stage('Code Collection') {
         checkout scm
-        sh 'git fetch'
     }
 
     // Run the Python test suite
@@ -130,6 +129,7 @@ node {
 
     stage('Re-collect Code') {
         checkout scm
+        sh 'git fetch'
     }
 
     // Define image items
