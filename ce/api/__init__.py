@@ -21,6 +21,7 @@ from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
+from ce.api.streamflow.watershed import watershed
 
 methods = {
     'stats': stats,
@@ -31,7 +32,8 @@ methods = {
     'multimeta': multimeta,
     'timeseries': timeseries,
     'lister': lister,
-    'grid': grid
+    'grid': grid,
+    'watershed': watershed
 }
 
 __all__ = list(methods.keys()) + ['call']
