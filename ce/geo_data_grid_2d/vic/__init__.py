@@ -1,5 +1,17 @@
 import math
-from ce.geo_data_grid_2d import GeoDataGrid2D
+import numpy
+from ce.geo_data_grid_2d import GeoDataGrid2D, GeoDataGrid2DError
+
+
+class VicDataGridError(GeoDataGrid2DError):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class VicDataGridNonuniformCoordinateError(VicDataGridError):
+    """Exception for attempt to use a dataset with a coordinate variable
+    that violates the uniformity assumption."""
+    pass
 
 
 class VicDataGrid(GeoDataGrid2D):
@@ -19,9 +31,22 @@ class VicDataGrid(GeoDataGrid2D):
 
     def __init__(self, longitudes, latitudes, values, units=None):
         super().__init__(longitudes, latitudes, values, units)
-        # Note assumption of uniform step sizes
-        self.lon_step = longitudes[1] - longitudes[0]
-        self.lat_step = latitudes[1] - latitudes[0]
+
+        def step(coordinate, name):
+            """Compute step size and check that it is uniform.
+            Raise an exception if it is not.
+            """
+            diffs = numpy.diff(coordinate)
+            step = diffs[0]
+            if not numpy.all(numpy.isclose(diffs, step)):
+                raise VicDataGridNonuniformCoordinateError(
+                    '{} coordinate does not have uniform step size'
+                        .format(name)
+                )
+            return step
+
+        self.lon_step = step(longitudes, 'longitude')
+        self.lat_step = step(latitudes, 'latitudes')
 
     def is_compatible(self, other):
         """Return a boolean indicating whether this `VicDataGrid` and

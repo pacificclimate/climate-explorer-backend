@@ -1,5 +1,34 @@
+import inspect
 import pytest
-from ce.geo_data_grid_2d.vic import VicDataGrid
+from ce.geo_data_grid_2d.vic import \
+    VicDataGrid, VicDataGridNonuniformCoordinateError
+
+
+@pytest.mark.parametrize('args, expected', [
+    # Uniform coordinate steps
+    (
+        dict(longitudes=(0, 1, 2), latitudes=(0, 2, 4)),
+        (1, 2),
+    ),
+    # Nonuniform longitude steps
+    (
+        dict(longitudes=(0, 1, 3), latitudes=(0, 2, 4)),
+        VicDataGridNonuniformCoordinateError,
+    ),
+    # Nonuniform latitude steps
+    (
+        dict(longitudes=(0, 1, 2), latitudes=(0, 2, 3)),
+        VicDataGridNonuniformCoordinateError,
+    ),
+])
+def test_coordinates(args, expected):
+    if inspect.isclass(expected) and issubclass(expected, Exception):
+        with pytest.raises(expected):
+            grid = VicDataGrid(**args, values=None)
+    else:
+        grid = VicDataGrid(**args, values=None)
+        assert grid.lon_step, grid.lat_step == expected
+
 
 @pytest.mark.parametrize('grid_1_args, grid_2_args, expected', [
     # Compatible cases
