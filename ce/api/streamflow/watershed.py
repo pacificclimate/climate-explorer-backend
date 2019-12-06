@@ -48,7 +48,16 @@ def watershed(sesh, station, ensemble_name):
     and converting their contents to `VicDataGrid` objects for consumption by
     `worker`, which as its name suggests, does most of the work.
     """
-    station_lonlat = WKT_point_to_lonlat(station)
+    try:
+        station_lonlat = WKT_point_to_lonlat(station)
+    except WKTReadingError:
+        abort(400, description=
+            'Station lon-lat coordinates are not valid WKT syntax')
+        return
+    except GeospatialTypeError as e:
+        print('##### GeospatialTypeError')
+        abort(400, description=
+        'Station must be a WKT POINT: {}'.format(e.message))
 
     with \
             get_time_invariant_variable_dataset(
@@ -71,13 +80,7 @@ def watershed(sesh, station, ensemble_name):
         except GeoDataGrid2DIndexError:
             abort(404, description=
                 'Station lon-lat coordinates are not within the area '
-                'for which we have data')
-        except WKTReadingError:
-            abort(400, description=
-                'Station lon-lat coordinates are not valid WKT syntax')
-        except GeospatialTypeError as e:
-            abort(400, description=
-                'station parameter: {}'.format(e.message))
+                'for which we have data.')
 
 
 def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):

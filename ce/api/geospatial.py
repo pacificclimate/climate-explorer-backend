@@ -13,7 +13,10 @@ class GeospatialTypeError(GeospatialError):
     So far that context is just "expecting a point" (as opposed, say, to a
     polygon.
     """
-    pass
+    def __init__(self, obj):
+        self.obj = obj
+        self.message = 'Expected a Point but got a {}'\
+            .format(type(obj).__name__)
 
 
 def geojson_feature(thing, **kwargs):
@@ -45,6 +48,5 @@ def outline_cell_rect(centres, height, width):
 def WKT_point_to_lonlat(text):
     p = shapely.wkt.loads(text)
     if type(p) != shapely.geometry.Point:
-        raise GeospatialTypeError(
-            'Expected a Point but got a {}'.format(type(p).__name__))
+        raise GeospatialTypeError(p)
     return p.x, p.y

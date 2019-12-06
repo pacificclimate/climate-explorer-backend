@@ -11,7 +11,11 @@ class VicDataGridError(GeoDataGrid2DError):
 class VicDataGridNonuniformCoordinateError(VicDataGridError):
     """Exception for attempt to use a dataset with a coordinate variable
     that violates the uniformity assumption."""
-    pass
+    def __init__(self, coord_name):
+        self.coord_name = coord_name
+        self.message = \
+            '{} coordinate does not have uniform step size'.format(coord_name)
+
 
 
 class VicDataGrid(GeoDataGrid2D):
@@ -39,10 +43,7 @@ class VicDataGrid(GeoDataGrid2D):
             diffs = numpy.diff(coordinate)
             step = diffs[0]
             if not numpy.all(numpy.isclose(diffs, step)):
-                raise VicDataGridNonuniformCoordinateError(
-                    '{} coordinate does not have uniform step size'
-                        .format(name)
-                )
+                raise VicDataGridNonuniformCoordinateError(name)
             return step
 
         self.lon_step = step(longitudes, 'longitude')
