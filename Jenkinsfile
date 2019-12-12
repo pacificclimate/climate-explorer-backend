@@ -164,7 +164,7 @@ node {
     }
 
     // Define image items
-    def image_name = BASE_REGISTRY + 'cliamte-explorer-frontend'
+    def image_name = BASE_REGISTRY + 'climate-explorer-backend'
     def image
     def tags
 
