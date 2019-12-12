@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * Does the necessary Python installations then runs the test suite.
  */
@@ -17,6 +18,18 @@ def run_tests() {
                 sh 'py.test -v'
             }
         }
+=======
+@Library('pcic-pipeline-library')_
+
+
+node {
+    stage('Code Collection') {
+        codeCollection()
+    }
+
+    stage('Python Test Suite') {
+        runPythonTestSuite('pcic/geospatial-python', ['requirements.txt'], ['-v'])
+>>>>>>> Use library functions
     }
 }
 
@@ -127,6 +140,7 @@ node {
         cleanWs()
     }
 
+<<<<<<< HEAD
     stage('Re-collect Code') {
         checkout scm
         sh 'git fetch'
@@ -144,13 +158,35 @@ node {
 
     stage('Publish Image') {
         published_tags = publish_image(image)
+=======
+    stage('Recollect Code') {
+        codeCollection()
+    }
+
+    // Define image items
+    def image_name = BASE_REGISTRY + 'cliamte-explorer-frontend'
+    def image
+    def tags
+
+    stage('Build Image') {
+        image = buildDockerImage(image_name)
+    }
+
+    stage('Publish Image') {
+        tags = getPublishingTags()
+        publishDockerImage(image, tags, 'PCIC_DOCKERHUB_CREDS')
+>>>>>>> Use library functions
     }
 
     // Only conduct security scan on branches filed as pull requests
     if(BRANCH_NAME.contains('PR')) {
         stage('Security Scan') {
             // Use one of our published tags to identify the image to be scanned
+<<<<<<< HEAD
             scan_name = image_name + ':' + published_tags[0]
+=======
+            String scan_name = image_name + ':' + tags[0]
+>>>>>>> Use library functions
 
             writeFile file: 'anchore_images', text: scan_name
             anchore name: 'anchore_images', engineRetries: '700'
@@ -158,7 +194,11 @@ node {
     }
 
     stage('Clean Local Image') {
+<<<<<<< HEAD
         clean_local_image(image_name)
+=======
+        removeDockerImage(image_name)
+>>>>>>> Use library functions
     }
 
     stage('Clean Workspace') {
