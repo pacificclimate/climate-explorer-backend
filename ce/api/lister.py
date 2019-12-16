@@ -8,14 +8,17 @@ def lister(sesh, ensemble_name='ce_files', model=None):
     '''
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         ensemble (str): Some named ensemble
+        
         model (str): Short name for some climate model (e.g "CGCM3")
 
     Returns:
         list of all unique_ids within that ensemble and/or model.
 
-        For example:
-            ensemble = default, model = PRISM (assuming PRISM group is in 'ce' ensemble)
+        For example, given ensemble = default, model = PRISM
+        (assuming PRISM files are in 'ce_files' ensemble)::
+
             [
                 tmax_monClim_PRISM_historical_run1_198101-201012,
                 tmin_monClim_PRISM_historical_run1_198101-201012,

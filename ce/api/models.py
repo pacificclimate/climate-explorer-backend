@@ -9,13 +9,12 @@ def models(sesh, ensemble_name='ce_files'):
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object
 
-    Returns list of all models available:
+    Returns list of all models available::
 
-    [
-    model_short_name1,
-    model_short_name2,
-    ...
-    ]
+        [
+        model_short_name1,
+        model_short_name2,
+        ]
     '''
 
     ensemble = sesh.query(Ensemble).filter(Ensemble.name == ensemble_name).first()

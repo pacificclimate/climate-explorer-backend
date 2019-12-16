@@ -18,6 +18,7 @@ def metadata(sesh, model_id):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         model_id (str): Unique id which is a key to the data file requested
 
     Returns:

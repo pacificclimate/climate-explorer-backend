@@ -16,8 +16,11 @@ def timeseries(sesh, id_, area, variable):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         id_ (str): Unique id which is a key to the data file requested
+        
         area (str): WKT polygon of selected area
+        
         variable (str): Short name of the variable to be returned
 
     Returns:
