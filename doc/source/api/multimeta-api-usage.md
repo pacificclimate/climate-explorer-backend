@@ -1,0 +1,3 @@
+This API endpoint provides a list of all the datasets available in a given ensemble. Datasets are identified with a unique identification string. Additional metadata describing the contents of each dataset is provided.
+
+This endpoint is intended to provide an overview of all available datasets to enable a caller to decide which datasets are of further interest for numerical data or mapping. It does not return detailed temporal metadata or any spatial metadata; see the `grid` and `metadata` endpoints for more detailed metadata about temporal or spatial extent of a dataset.

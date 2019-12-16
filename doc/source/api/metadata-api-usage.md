@@ -1,0 +1,1 @@
+This endpoint returns detailed metadata on a single file. In addition to returning attributes describing the data in the file, it returns a list of all timestamps available within the file. This allows a user to request a map image from the map server corresponding to a specific timestamp.

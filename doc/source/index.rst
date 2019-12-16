@@ -3,19 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to climate-explorer-backend's documentation!
-====================================================
+PCIC Climate Explorer Backend Documentation
+============================================
+
+This backend serves climate raster data and metadata to the 
+`PCIC Climate Explorer (PCEX) <https://services.pacificclimate.org/pcex/app/#/data/climo/ce_files>`_
+and other applications.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
    
-   
-API Documentation
-=================
-.. automodule:: ce.api
-   :members:
-
+   overview
+   workflow
+   api/api-index
 
 
 Indices and tables

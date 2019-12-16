@@ -1,0 +1,3 @@
+This endpoint returns a list of unique identification strings corresponding to all available datafiles. 
+
+It is not currently used by the PCEX frontend; it has been superceded by the `multimeta` endpoint. Like `lister`, `multimeta` returns a list of `unique_id` strings associated with all available files in an ensemble, but `multimeta` additionally returns metadata attributes describing the contents of each file. For most applications, it is probably more efficient to call `multimeta` than to call `lister` and then make a seperate query to get metadata describing each individual dataset to determine which ones are of interest.
