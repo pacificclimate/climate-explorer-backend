@@ -1,6 +1,6 @@
-This API endpoint provides contextual information about the watershed that drains to the point specified by the parameters. 
+This API endpoint provides contextual information about the watershed that drains to the point specified by the parameters. It is intended to clarify and provide context for data about streamflow in watershed.
 
-Every grid cell is defined as flowing into a single other grid cell, so this data is most reliable for larger watersheds representing at least ten grid cells, and completely inappropriate for creeks or culverts smaller than a single grid cell. At small scales, streamflow variations within grid cells, not captured by this dataset, play too large a role.
+Every grid cell is defined as flowing into a single other grid cell, so this data is most reliable for larger watersheds representing at least ten grid cells, and completely inappropriate for creeks or culverts smaller than a single grid cell. At small scales, streamflow variations within grid cells, not capturable by a gridded dataset, play too large a role.
 
 ## Hypometric curve
 The `hypsometric_curve` object defines a histogram of area by elevation. 

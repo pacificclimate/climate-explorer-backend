@@ -17,11 +17,3 @@ and other applications.
    overview
    workflow
    api/api-index
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

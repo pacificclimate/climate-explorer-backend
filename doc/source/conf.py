@@ -16,7 +16,6 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath('../../ce'))
-# sys.path.append('/home/lzeman/Code/ceb-sphinx/climate-explorer-backend/ce')
 
 # -- Project information -----------------------------------------------------
 
