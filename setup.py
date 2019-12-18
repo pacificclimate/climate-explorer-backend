@@ -1,7 +1,11 @@
 import os
 from setuptools import setup, find_packages
-from sphinx.setup_command import BuildDoc
+from warnings import warn
 
+try:
+    from sphinx.setup_command import BuildDoc
+except ImportError:
+    warn("Could not import sphinx. You won't be able to build the docs")
 
 def recursive_list(pkg_dir, basedir):
     def find():

@@ -28,7 +28,8 @@ before_install:
   - "pip install --global-option=build_ext --global-option='-I$GDALINST/include' --global-option='-L$GDALINST/lib' --global-option='-R$GDALINST/lib' GDAL==$GDAL_MINOR_VERSION"
 install:
   - pip install -I pytest>=3.0.0
-  - pip install -r requirements.txt .
+  - pip install -r requirements.txt
   - pip install .
 script:
+  - python setup.py build_sphinx 
   - py.test -v ce/tests
