@@ -1,5 +1,6 @@
 import os
 from setuptools import setup, find_packages
+from sphinx.setup_command import BuildDoc
 
 
 def recursive_list(pkg_dir, basedir):
@@ -40,5 +41,15 @@ setup(
     package_data={
         'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static'),
     },
+    cmdclass = {
+        'build_sphinx': BuildDoc
+        },
+    command_options={
+        'build_sphinx': {
+            'project': ('setup.py', "ce"),
+            'version': ('setup.py', __version__),
+            'source_dir': ('setup.py', 'doc/source')
+            }
+        },
     zip_safe=False
 )

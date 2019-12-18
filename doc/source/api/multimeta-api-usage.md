@@ -10,7 +10,7 @@ This endpoint is intended to provide an overview of all available datasets to en
 * `variables`: A list of variables in this dataset, with name and a short description. Variables are the numerical quantities being measured or projected, such as maximum temperature, precipitation, or derived indices.
 * `ensemble_member`: A model may be run multiple times with different initialization conditions; data from these runs is distinguished by the ensemble_member attribute
 * `timescale`: The temporal resolution of the data. `monthly`, `seasonal`, or `yearly`
-* `multi_year_mean`: Whether or not this datafile is a climatological mean. Climatological means 
+* `multi_year_mean`: Whether or not this datafile is a climatological aggregate. In a climatological aggregate dataset, the value at each timestamp represents a combination of values at that timestamp across multiple years. For example, a 1961-1990 climatological mean would have one value for January that represented the mean value of January 1961, January 1962, etc. 
 * `start_date`: The start of the temporal interval described by this dataset 
 * `end_date`: The end of the temporal interval described by this dataset
 * `modtime`: The most recent data this dataset was updated. Useful for determining whether to cache data.

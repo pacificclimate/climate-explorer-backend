@@ -6,7 +6,7 @@
 PCIC Climate Explorer Backend Documentation
 ============================================
 
-This backend serves climate raster data and metadata to the 
+This backend serves climate data and metadata to the 
 `PCIC Climate Explorer (PCEX) <https://services.pacificclimate.org/pcex/app/#/data/climo/ce_files>`_
 and other applications.
 

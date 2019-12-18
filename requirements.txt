@@ -12,7 +12,6 @@ contexttimer==0.3.3
 
 # For documentation
 sphinx
-recommonmark
 m2r
 
 # For testing

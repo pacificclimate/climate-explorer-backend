@@ -33,6 +33,17 @@ $ source venv/bin/activate
 (venv)$ pip install -e .
 ```
 
+### Building the Documentation
+
+Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation. 
+
+```
+pip install -e .
+pyenv/bin/python setup.py build_sphinx
+```
+
+HTML documentation will then be available in the `doc/build/html` directory.
+
 ### Running the dev server
 
 A development server can be run locally by using the Flask command line interface documented [here](http://flask.pocoo.org/docs/0.12/cli/). In general, you need to set one environment variable FLASK_APP=ce.wsgi:app and can optionally set FLASK_DEBUG=1 for live code reloading.

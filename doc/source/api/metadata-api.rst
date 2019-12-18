@@ -10,8 +10,8 @@ metadata
 
 .. warning::
      Parameter names for this endpoint are not consistent with parameter names for the other
-     endpoints. Every other endpoint uses the word "model" to refer to the global climate
-     model (GCM) that produced a particular dataset.
+     endpoints. Every other endpoint uses the word "model" to refer to the General Circulation
+     Model (GCM) or Regional Climate Model (RCM) that produced a particular dataset.
      
      This endpoint uses the "model_id" parameter to reger to a dataset's unique identification
      string, which is called "id_" in every other endpoint.

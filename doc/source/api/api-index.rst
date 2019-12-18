@@ -3,7 +3,6 @@ API Documentation
 
 .. mdinclude:: api-overview.md
 
-
 .. toctree::
    :maxdepth: 1
    :caption: The backend exposes the following API endpoints:
