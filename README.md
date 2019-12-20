@@ -42,7 +42,18 @@ pip install -e .
 pyenv/bin/python setup.py build_sphinx
 ```
 
-HTML documentation will then be available in the `doc/build/html` directory.
+HTML documentation will be in the `doc/build/html` directory. 
+
+Sphinx can also generate a PDF by invoking the TeXlive toolchain, if it is installed on your machine. On Ubuntu, you will to install the following packages before sphinx can successfully create a PDF:
+* latexmk
+* texlive-latex-recommended
+* texlive-fonts-recommended
+* texlive-latex-extra
+
+You can then create a PDF from the `doc` directory with this command:
+```
+make latexpdf
+```
 
 ### Running the dev server
 
