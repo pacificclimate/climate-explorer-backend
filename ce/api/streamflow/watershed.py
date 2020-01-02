@@ -41,8 +41,16 @@ def watershed(sesh, station, ensemble_name):
     :param station: (string) Location of drainage point, WKT POINT format
     :param ensemble_name: (string) Name of the ensemble containing data files backing
         providing data for this request.
-    :return: (dict) representation for JSON response object. See function
-        `worker` for details.
+    :return: dict representation for JSON response object with the following
+        attributes:
+            area: Area of the watershed
+            
+            elevation: Minimum and maximum elevations
+            
+            shape: A GeoJSON object representing the outline of the watershed;
+                a concave hull of the cell rectangles.
+            
+            hypsometric_curve: Elevation-area histogram of the watershed
 
     This function is primarily responsible for finding the relevant data files
     and converting their contents to `VicDataGrid` objects for consumption by
@@ -95,13 +103,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
     :param flow_direction: (VicDataGrid) Flow direction grid
     :param elevation: (VicDataGrid) Elevation grid
     :param area: (VicDataGrid) Area grid
-    :return: dict representation for JSON response object with the following
-        attributes:
-            area: Area of the watershed
-            elevation: Minimum and maximum elevations
-            shape: A GeoJSON object representing the outline of the watershed;
-                a concave hull of the cell rectangles.
-            hypsometric_curve: Elevation-area histogram of the watershed
+    :return: (dict) representation for JSON response object; see watershed() for details
     """
     if hypso_params is None:
         # Default parameters cover total range of BC elevations from

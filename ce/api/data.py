@@ -20,22 +20,28 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         model (str): Short name for some climate model (e.g "CGCM3")
-        emission (str): Short name for some emission scenario (e.g.
-            "historical+rcp85")
+        
+        emission (str): Short name for some emission scenario
+            (e.g."historical+rcp85")
+        
         time (int): Timestep index (0-based) representing the time of year;
             0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
+        
         area (str): WKT polygon of selected area
+        
         variable (str): Short name of the variable to be returned
+        
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
+        
         ensemble_name (str): Name of ensemble
 
     Returns:
         dict:
-
-        Empty dictionary if there exist no files matching the provided
-        model and emissions scenario.
+            Empty dictionary if there exist no files matching the provided
+            model and emissions scenario.
 
         Otherwise returns a single dict keyed on the run id for all
         runs that match the model and emissions scenario. values are a

@@ -33,6 +33,28 @@ $ source venv/bin/activate
 (venv)$ pip install -e .
 ```
 
+### Building the Documentation
+
+Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation. 
+
+```
+pip install -e .
+pyenv/bin/python setup.py build_sphinx
+```
+
+HTML documentation will be in the `doc/build/html` directory. 
+
+Sphinx can also generate a PDF by invoking the TeXlive toolchain, if it is installed on your machine. On Ubuntu, you will to install the following packages before sphinx can successfully create a PDF:
+* latexmk
+* texlive-latex-recommended
+* texlive-fonts-recommended
+* texlive-latex-extra
+
+You can then create a PDF from the `doc` directory with this command:
+```
+make latexpdf
+```
+
 ### Running the dev server
 
 A development server can be run locally by using the Flask command line interface documented [here](http://flask.pocoo.org/docs/0.12/cli/). In general, you need to set one environment variable FLASK_APP=ce.wsgi:app and can optionally set FLASK_DEBUG=1 for live code reloading.

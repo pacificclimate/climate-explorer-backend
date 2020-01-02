@@ -23,7 +23,9 @@ def multimeta(sesh, ensemble_name='ce_files', model=''):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         ensemble (str): Some named ensemble
+        
         model (str): Short name for some climate model (e.g "CGCM3")
 
     Returns:

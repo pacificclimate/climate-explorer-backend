@@ -1,0 +1,1 @@
+This API endpoint returns statistical measures for the selected timestamp in the selected file. To access identical statistical measures for several datasets at once, see the multistat endpoint.

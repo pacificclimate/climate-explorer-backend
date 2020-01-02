@@ -25,10 +25,11 @@ def grid(sesh, id_):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
+        
         id_ (str): Unique id which is a key to the data file requested
      
     Returns:
-        dict: Empty dictionary if model_id is not found in the database.
+        dict: Empty dictionary if id_ is not found in the database.
 
         Otherwise, returns a single dict with the key of the file's
         unique_id and the value consisting of a nested dictionary with

@@ -1,6 +1,11 @@
 import os
 from setuptools import setup, find_packages
+from warnings import warn
 
+try:
+    from sphinx.setup_command import BuildDoc
+except ImportError:
+    warn("Could not import sphinx. You won't be able to build the docs")
 
 def recursive_list(pkg_dir, basedir):
     def find():
@@ -40,5 +45,15 @@ setup(
     package_data={
         'ce': ['tests/data/*.nc', 'templates/*.html'] + recursive_list('ce/', 'ce/static'),
     },
+    cmdclass = {
+        'build_sphinx': BuildDoc
+        },
+    command_options={
+        'build_sphinx': {
+            'project': ('setup.py', "ce"),
+            'version': ('setup.py', __version__),
+            'source_dir': ('setup.py', 'doc/source')
+            }
+        },
     zip_safe=False
 )

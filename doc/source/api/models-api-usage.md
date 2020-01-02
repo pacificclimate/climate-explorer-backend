@@ -1,0 +1,3 @@
+This endpoint returns a list of all models in a given ensemble. "Model" in this case usually means the Global Climate Model or Regional Climate Model that simulated the data in the dataset, though in some circumstances it may refer to a different type of model, such as an interpolation algorithm used to grid observational data or elevation data. 
+
+In PCEX, it has been superceded by the `multimeta` query, which returns a list of all datasets, with attributes describing the contents of each dataset, including the model. It's usually more convenient to just collect all the available models from the list of all available datasets.
