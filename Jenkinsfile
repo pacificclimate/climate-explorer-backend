@@ -18,8 +18,8 @@ node {
         collectCode()
     }
 
-    def imageName
     def image
+    def imageName
 
     stage('Build Image') {
         (image, imageName) = buildDockerImage('climate-explorer-backend')
