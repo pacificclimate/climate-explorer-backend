@@ -126,7 +126,7 @@ node {
     def image
 
     stage('Build Image') {
-        image = buildDockerImage('climate-explorer-backend')
+        (image, imageName) = buildDockerImage('climate-explorer-backend')
     }
 
     stage('Publish Image') {
