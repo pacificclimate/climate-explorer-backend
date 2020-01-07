@@ -29,6 +29,7 @@ node {
         publishDockerImage(image, 'PCIC_DOCKERHUB_CREDS')
     }
 
+    // Only conduct security scan on branches filed as pull requests
     if(BRANCH_NAME.contains('PR')) {
         stage('Security Scan') {
             writeFile file: 'anchore_images', text: imageName
