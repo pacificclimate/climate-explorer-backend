@@ -14,7 +14,7 @@ node {
         cleanWs()
     }
 
-    stage('Recollect Code') {
+    stage('Re-collect Code') {
         collectCode()
     }
 
