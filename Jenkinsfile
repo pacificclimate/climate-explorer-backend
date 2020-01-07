@@ -1,4 +1,4 @@
-@Library('pcic-pipeline-library@fix-mistakes-2')_
+@Library('pcic-pipeline-library')_
 
 
 node {
