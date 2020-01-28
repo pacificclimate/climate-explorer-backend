@@ -20,9 +20,10 @@ node {
 
     def image
     def imageName
+    def imageSuffix = 'climate-explorer-backend'
 
     stage('Build Image') {
-        (image, imageName) = buildDockerImage('climate-explorer-backend')
+        (image, imageName) = buildDockerImage(imageSuffix)
     }
 
     stage('Publish Image') {
@@ -32,7 +33,7 @@ node {
     // Only conduct security scan on branches filed as pull requests
     if(BRANCH_NAME.contains('PR')) {
         stage('Security Scan') {
-            writeFile file: 'anchore_images', text: imageName
+            writeFile file: 'anchore_images', text: getScanName(imageSuffix)
             anchore name: 'anchore_images', engineRetries: '700'
         }
     }
