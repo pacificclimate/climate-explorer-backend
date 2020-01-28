@@ -1,5 +1,15 @@
 # News / Release Notes
 
+## 1.2.0
+*28-January-2020*
+
+* Add support for Jenkins PRs [#104](https://github.com/pacificclimate/climate-explorer-backend/pull/104), [#107](https://github.com/pacificclimate/climate-explorer-backend/pull/107), and [#117](https://github.com/pacificclimate/climate-explorer-backend/pull/117)
+* Drop support for Python 3.5 [PR #116](https://github.com/pacificclimate/climate-explorer-backend/pull/116)
+* Add sphinx documentation of API functionality [PR #114](https://github.com/pacificclimate/climate-explorer-backend/pull/114)
+* Add watershed API endpoint to serve information about the physical hydrology of the watershed draining to a specific point [PR #108](https://github.com/pacificclimate/climate-explorer-backend/pull/108)
+* Improve efficiency of data cache [PR #102](https://github.com/pacificclimate/climate-explorer-backend/pull/102)
+* Pin netcdf4 to <1.4, avoiding a change to default array behaviour in 1.4 where all variables, even those with no masked items, as returned as MaskedArrays [PR #100](https://github.com/pacificclimate/climate-explorer-backend/pull/100)
+
 ## 1.1.1
 *15-April-2019*
 
