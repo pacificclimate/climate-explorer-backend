@@ -18,7 +18,8 @@ na_array_stats = {
     for key in ('min', 'max', 'mean', 'median', 'stdev', 'ncells')
 }
 
-def stats(sesh, id_, time, area, variable):
+def stats(sesh, id_, time, area, variable,
+          mean=None, stdev=None, min=None, max=None, median=None):
     '''Request and calculate summary statistics averaged across a region
 
     For performing regional analysis, one typically wants to summarize
@@ -88,6 +89,13 @@ def stats(sesh, id_, time, area, variable):
     else:
         time = None
 
+    # if the query has parameters requesting a specific set of statistics, do those.
+    # otherwise, do all five statistics (mean, stdev, min, max, median).
+    # 'stdev' will be renamed 'std' to match numpy's name.
+    measures = {'mean': mean, 'std': stdev, 'min': min, 'max': max, 'median': median}
+    if all(v is None for v in measures.values()):
+        measures = {m: True for m in measures}
+
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
         fname = df.filename
@@ -102,7 +110,7 @@ def stats(sesh, id_, time, area, variable):
         log.error(e)
         return {id_: na_array_stats}
 
-    stats = array_stats(array)
+    stats = array_stats(array, measures)
 
     query = sesh.query(Time.timestep).filter(Time.time_set_id == df.timeset.id)
     if time:
@@ -117,15 +125,20 @@ def stats(sesh, id_, time, area, variable):
     })
     return {id_: stats}
 
-def array_stats(array):
+def array_stats(array, measures):
     '''Return the min, max, mean, median, standard deviation and number
        of cells of a 3d data grid (numpy.ma.MaskedArray)
     '''
-    return {
-        'min': np.asscalar(np.min(array)),
-        'max': np.asscalar(np.max(array)),
-        'mean': np.asscalar(np.mean(array)),
-        'median': np.asscalar(ma.median(array)),
-        'stdev': np.asscalar(np.std(array)),
-        'ncells': array.compressed().size
-    }
+    # always return cell count
+    statobj = {'ncells': array.compressed().size}
+
+    for m in measures:
+        if measures[m] is not None:
+            statobj[m] = np.asscalar(getattr(np, m)(array))
+
+    # rename standard deviation from numpy's 'std' to expected 'stdev'
+    if 'std' in statobj:
+        statobj['stdev'] = statobj['std']
+        del statobj['std']
+
+    return statobj
