@@ -29,6 +29,12 @@ def stats(sesh, id_, time, area, variable,
 
     The stats call may only be called for a single data file and single
     variable per invocation.
+    
+    To (slightly) improve performance, if only a subset of statistics
+    are needed, the querent may optionally provide parameters
+    corresponding to the statistical subset needed (mean, stdev, min,
+    max, and/or median) may be supplied. If no subset parameters are
+    received, all five statistics will be returned.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object

@@ -17,6 +17,11 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
     It starts by searching for all of the data files for the provided
     variable and will filter according to the model and emission
     parameters.
+    
+    To (slightly) improve performance, a caller may request only a subset
+    of statistics be calculated by passing in parameters (mean, stdev,
+    min, max, median) corresponding to the statistics desired. If no
+    subset is specified, all five statistics will be calculated and returned.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object

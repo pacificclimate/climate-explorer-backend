@@ -52,3 +52,33 @@ def test_stats_bad_params(populateddb, unique_id, var):
 def test_stats_bad_id(populateddb):
     rv = stats(populateddb.session, 'id-does-not-exist', None, None, None)
     assert rv == {}
+
+@pytest.mark.parametrize('mean', ['', None])
+@pytest.mark.parametrize('median', ['', None])
+@pytest.mark.parametrize('max', ['', None])
+def test_stats_subset(populateddb, mean, median, max):
+    sesh = populateddb.session
+    unique_id = 'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230'
+    
+    #default all-statistics request for comparison
+    allstats = stats(sesh, unique_id, None, None, 'tasmax')
+    
+    #subset request
+    subset = stats(sesh, unique_id, None, None, 'tasmax', mean=mean, median=median, max=max)
+    
+    if mean is None and median is None and max is None:
+        assert allstats == subset
+    else:
+        for m in ['mean', 'median', 'max']:
+            if eval(m) is None:
+                assert m not in subset[unique_id]
+            else:
+                assert m in subset[unique_id]
+                assert allstats[unique_id][m] == subset[unique_id][m]
+            for m in ['min', 'stdev']:
+                assert m not in subset[unique_id]
+            for m in ['ncells', 'time', 'units', 'modtime']:
+                assert m in subset[unique_id]
+                assert subset[unique_id][m] == allstats[unique_id][m]
+        
+    
