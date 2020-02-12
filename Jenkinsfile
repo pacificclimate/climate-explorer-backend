@@ -31,7 +31,7 @@ node {
     }
 
     // Only conduct security scan on branches filed as pull requests
-    if(BRANCH_NAME.contains('PR')) {
+    if(BRANCH_NAME.contains('PR') || BRANCH_NAME == 'master') {
         stage('Security Scan') {
             writeFile file: 'anchore_images', text: getScanName(imageSuffix)
             anchore name: 'anchore_images', engineRetries: '700'
