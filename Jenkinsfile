@@ -19,18 +19,18 @@ node {
     }
 
     def image
-    def imageName
+    def imageName = buildImageName('climate-explorer-backend')
 
     stage('Build Image') {
-        (image, imageName) = buildDockerImage('climate-explorer-backend')
+        image = buildDockerImage(imageName)
     }
 
     stage('Publish Image') {
         publishDockerImage(image, 'PCIC_DOCKERHUB_CREDS')
     }
 
-    // Only conduct security scan on branches filed as pull requests
-    if(BRANCH_NAME.contains('PR')) {
+    // Only conduct security scan on branches filed as pull requests or if master
+    if(BRANCH_NAME.contains('PR') || BRANCH_NAME == 'master') {
         stage('Security Scan') {
             writeFile file: 'anchore_images', text: imageName
             anchore name: 'anchore_images', engineRetries: '700'
