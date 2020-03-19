@@ -13,6 +13,10 @@ import numpy as np
 def percentileanomaly(sesh, region, climatology, variable, percentile='50', 
                       baseline_model="anusplin", baseline_climatology="6190"):
     
+    # get data directory
+    region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
+    
+    
     calculate_anomaly = False
     baseline_data = {}
     
@@ -39,7 +43,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
     
     try:
         # fetch stored queries from csv
-        with open("ce/api/csv/{}.csv".format(region), "r") as stored_query_file:
+        with open("{}/{}.csv".format(region_dir, region), "r") as stored_query_file:
             queries = DictReader(stored_query_file)
             
             projected_data = {}
@@ -109,5 +113,3 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             
     except EnvironmentError:
         abort(404, description="Data for region {} not found".format(region))
-        
-    return "This is the percentileanomaly query."
