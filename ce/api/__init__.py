@@ -21,6 +21,7 @@ from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
+from ce.api.percentileanomaly import percentileanomaly
 from ce.api.streamflow.watershed import watershed
 
 methods = {
@@ -33,6 +34,7 @@ methods = {
     'timeseries': timeseries,
     'lister': lister,
     'grid': grid,
+    'percentileanomaly': percentileanomaly,
     'watershed': watershed
 }
 
