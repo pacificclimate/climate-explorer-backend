@@ -74,6 +74,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                     baseline = None
                     date_format = '%Y-%m-%d %H:%M:%S'
                     projected_date = datetime.strptime(timestamp, date_format)
+                    if not timescale in baseline_data:
+                        abort(500, "Missing baseline data: {} {} {}".format(baseline_model, baseline_climatology, timescale))
                     for t in baseline_data[timescale]:
                         baseline_date = datetime.strptime(t, date_format)
                         if baseline_date.month == projected_date.month:
@@ -103,12 +105,16 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                 'percentiles': percentiles,
                 'region': region,
                 'climatology': climatology,
-                'variable': variable, 
-                'data': projected_data
+                'variable': variable
             }
         if calculate_anomaly:
             response["baseline_model"] = baseline_model
             response["baseline_climatology"] = baseline_climatology
+            response["anomaly"] = projected_data
+            response["baseline"] = baseline_data
+        else:
+            response["data"]: projected_data
+
         return response
             
     except EnvironmentError:
