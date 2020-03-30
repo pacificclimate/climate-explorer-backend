@@ -40,7 +40,25 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             dict[key] = add_to_nested_dict({}, value, *rest)
         return dict
     
-    
+    # this function accepts a timestamp and returns a standardized value
+    # for comparison between models with different calendars.
+    # it is intended to smooth over differences of a day or two caused by calendar
+    # divergences around month length, so it will raise an error if a timestamp
+    # has an unexpected month value.
+    def canonical_timestamp(timestamp, timescale, timeidx):
+        date_format ='%Y-%m-%d %H:%M:%S'
+        dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+        if timescale == "monthly":
+            if dt.month == int(timeidx) + 1:
+                return dt.replace(day=15, hour=0, minute=0, second=0).strftime(date_format)
+        elif timescale == "seasonal":
+            if dt.month == (int(timeidx) * 3) + 1:
+                return dt.replace(day=16, hour=0, minute=0, second=0).strftime(date_format)
+        elif timescale == "yearly":
+            if dt.month == 7:
+                return dt.replace(day=2, hour=0, minute=0, second=0).strftime(date_format)
+        abort(500, "Invalid timestamp for {} {}: {}".format(timescale, timeidx, timestamp))
+
     try:
         # fetch stored queries from csv
         with open("{}/{}.csv".format(region_dir, region), "r") as stored_query_file:
@@ -50,22 +68,23 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             units = ''
             # go through stored queries, collecting all that match parameters
             for row in queries:
+                ctimestamp = canonical_timestamp(row["timestamp"], row["timescale"], row["timeidx"])
                 if row['variable'] == variable:
                     if row["units"] != units: # make sure datasets share units
                         if units == '':
                             units = row['units']
                         else:
                             abort(500, message="Incompatible units: {}, {}".format(units, row['units']))
-                    
+
                     if row['climatology'] == climatology:
                         add_to_nested_dict(projected_data, 
                                            row["mean"],
                                            row["timescale"],
-                                           row["timestamp"],
+                                           ctimestamp,
                                            row["model"])
                     elif calculate_anomaly and row['model'] == baseline_model and row['climatology'] == baseline_climatology:
-                        add_to_nested_dict(baseline_data, row['mean'], row['timescale'], row["timestamp"])
-        
+                        add_to_nested_dict(baseline_data, row['mean'], row['timescale'], ctimestamp)
+
         #calculate percentiles and anomalies
         for timescale in projected_data:
             for timestamp in projected_data[timescale]:
@@ -99,7 +118,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                 anomalies = values - baseline
                 #percentiles = np.percentile(anomalies, percentiles)                
                 projected_data[timescale][timestamp] = list(np.percentile(anomalies, percentiles))
-                
+
         response = {
                 'units': units,
                 'percentiles': percentiles,
