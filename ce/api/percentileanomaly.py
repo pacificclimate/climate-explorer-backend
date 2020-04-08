@@ -12,6 +12,97 @@ import numpy as np
 
 def percentileanomaly(sesh, region, climatology, variable, percentile='50', 
                       baseline_model="anusplin", baseline_climatology="6190"):
+    '''Request percentiles summaries of the data range of the PCIC12 ensemble
+    for a specific region.
+    
+    This call uses CSV files, one for each of the 52 defined plan2adapt regions,
+    where each row stores all the parameters and results of a call to the /stats
+    API. It is implemented this way to speed up what would otherwise be a process
+    of calling the /stats API seperately for each model in the ensemble.
+    
+    It assumes the CSV files contain all required models and no extra - it checks
+    that twelve different models are present, but not that they are the PCIC12
+    models and runs.
+    
+    Args:
+        sesh (sqlalchemy.orm.session.Session): A database Session object 
+            (not actually used, but automatically provided by the API router)
+        
+        region (string) name of one of the 52 p2a regions
+        
+        climatology (int): standard projected climo period (2020, 2050, 2080)
+        
+        variable (string): short name of variable ot be returned
+        
+        percentile (number or list of numbers): percentile value, eg 50 or
+            10,50,90 Defaults to 50th percentile
+        
+        baseline_model (string): a model to use as the baseline for anomaly
+            calculations. Defaults to the ANUSPLIN dataset
+            
+        baseline_climatology (number): a standard climatological period to use
+            for anomaly calculations. Defaults to 6190.
+            
+    Returns:
+        dict: A dictionary with attributes restating the input parameters, as
+            well as a units value. If both baseline_model and baseline_climatology
+            are not None, the dictionary will have the data attributes "anomaly"
+            and "baseline"; otherwise there will be a single data attribute called
+            "data" that returns nominal values of the variable during the projected
+            climatological period.
+            
+            A data attribute's value is a dictionary of time resolutions - monthly,
+            seasonal, annual, whichever are available for the variable in question.
+            Each time resolution attribute will have the appropriate number of 
+            timestamps (12, 4, or 1) for a climatology, referencing a list containing
+            the requested percentiles for that timestamp.
+            
+        For example::
+        
+            {
+              "units": "degC",
+              "percentiles": [ 10, 50 ],
+              "region": "bc",
+              "climatology": "2050",
+              "variable": "tasmean",
+              "baseline_model": "anusplin",
+              "baseline_climatology": "6190",
+              "anomaly": {
+                "yearly": {
+                  "2055-07-02 00:00:00": [ 2.3264379226208245, 3.2458067672088764 ]
+                },
+                "monthly": {
+                  "2055-01-15 00:00:00": [ 2.1310248585852505, 3.3104322776824766],
+                  "2055-02-15 00:00:00": [ 2.0116830378435, 2.802655705519445 ],
+                  "2055-03-15 00:00:00": [ 2.176002151962554, 2.8835552547429666 ],
+                  ...
+                },
+                "seasonal": {
+                  "2055-01-16 00:00:00": [ 2.7983318484797826, 3.3868735586218994 ],
+                  "2055-04-16 00:00:00": [ 2.3564425042040837, 3.200660500285923 ],
+                  "2055-07-16 00:00:00": [ 2.0237840492108687, 3.1990939413123547 ],
+                  ...
+                }
+              },
+              "baseline": {
+                "yearly": {
+                  "1977-07-02 00:00:00": "0.8551423608977357"
+                },
+                "monthly": {
+                  "1977-01-15 00:00:00": "-11.71985179823703",
+                  "1977-02-15 00:00:00": "-8.14627567484382",
+                  "1977-03-15 00:00:00": "-4.646276537509149",
+                  ...
+                },
+                "seasonal": {
+                  "1977-01-16 00:00:00": "-10.197912446193756",
+                  "1977-04-16 00:00:00": "0.6503344819899319",
+                  "1977-07-16 00:00:00": "11.495438686239407",
+                  ...
+                }
+              }
+            }
+    '''
     
     # get data directory
     region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
@@ -132,7 +223,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             response["anomaly"] = projected_data
             response["baseline"] = baseline_data
         else:
-            response["data"]: projected_data
+            response["data"] = projected_data
 
         return response
             
