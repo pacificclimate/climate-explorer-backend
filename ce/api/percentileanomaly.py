@@ -119,8 +119,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         calculate_anomaly = True
     elif baseline_model != '' or baseline_climatology != '':
         abort(400,
-              message=('Must supply both historical model and climatology ',
-                       'for anomaly calculation'))
+              ('Must supply both historical model and climatology ',
+               'for anomaly calculation'))
 
     # adds data to a nested dictionary, creating new key levels as needed
     def add_to_nested_dict(dict, value, *keys):
@@ -228,16 +228,14 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                 values = np.asarray([float(v) for v in projected_data[timescale][timestamp].values()])
                 if values.size < 12:
                     abort(500,
-                          ("Not all models available for {} {}. ",
-                           "Models available: {}").format(
-                               timescale, timestamp,
-                               projected_data[timescale][timestamp].keys()))
+                          "Not all models available for {} {}. Models available: {}").format(
+                               timescale, timestamp, 
+                               projected_data[timescale][timestamp].keys())
                 elif values.size > 12:
                     abort(500,
-                          ("Extraneous data for {} {}. ",
-                           "Models available: {}").format(
+                          "Extraneous data for {} {}. Models available: {}").format(
                                timescale, timestamp,
-                               projected_data[timescale][timestamp].keys()))
+                               projected_data[timescale][timestamp].keys())
                 anomalies = values - baseline
                 projected_data[timescale][timestamp] = list(
                     np.percentile(anomalies, percentiles))

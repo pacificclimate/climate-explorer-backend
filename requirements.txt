@@ -17,3 +17,4 @@ m2r==0.2.1
 # For testing
 pytest
 python-dateutil
+pytest-env
