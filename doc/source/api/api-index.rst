@@ -9,6 +9,7 @@ API Documentation
    
    data <data-api>
    grid <grid-api>
+   health <health-api>
    lister <lister-api>
    metadata <metadata-api>
    models <models-api>
