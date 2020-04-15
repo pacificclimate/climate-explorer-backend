@@ -1,5 +1,5 @@
 .. To update documentation on the percentileanomaly endpoint, update the docstring in the
-   code, or percentileanomaly-api-usage.md.
+   code, or health-api-usage.md.
 
 
 health
