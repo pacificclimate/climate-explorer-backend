@@ -7,7 +7,7 @@ import os
 
 def test_stored_data(populateddb):
     sesh = populateddb.session
-    mm = multimeta(sesh, "all_files")
+    mm = multimeta(sesh, "p2a_classic")
     # checking whether a file has been updated in the database is a little complicated, because
     # the database is rebuilt each time pytest is run. So we need to build the "stored data"
     # CSV during testing as well.
@@ -29,9 +29,16 @@ def test_stored_data(populateddb):
         mtime = datetime.strftime(mm[current_id]["modtime"], '%Y-%m-%dT%H:%M:%SZ')
         outcsv.writerow({"unique_id": current_id, "modtime": mtime})
     
+    # test summary
     h = health(sesh)["stored_regional_queries"]["test_health.csv"]
     assert h["current"] == 1
+    assert h["outdated"] == 1
+    assert h["removed"] == 1
+    
+    # test full list
+    h = health(sesh, list_files="true")["stored_regional_queries"]["test_health.csv"]
+    assert current_id in h["current"] and len(h["current"]) == 1
     assert outdated_id in h["outdated"] and len(h["outdated"]) == 1
     assert removed_id in h["removed"] and len(h["removed"]) == 1
-    
+        
     os.remove("{}/test_health.csv".format(region_dir))
