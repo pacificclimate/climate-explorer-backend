@@ -11,8 +11,8 @@ sqlalchemy==1.2.18
 contexttimer==0.3.3
 
 # For documentation
-sphinx
-m2r
+Sphinx==2.4.4
+m2r==0.2.1
 
 # For testing
 pytest
