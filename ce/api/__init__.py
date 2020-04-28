@@ -22,8 +22,11 @@ from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
 from ce.api.percentileanomaly import percentileanomaly
-from ce.api.health import health
+#from ce.api.health import health
 from ce.api.streamflow.watershed import watershed
+from ce.api.health.regions import regions
+from ce.api.health.region import region
+
 
 methods = {
     'stats': stats,
@@ -36,13 +39,16 @@ methods = {
     'lister': lister,
     'grid': grid,
     'percentileanomaly': percentileanomaly,
-    'health': health,
-    'watershed': watershed
+#    'health': health,
+    'watershed': watershed,
+    'regions': regions,
+    'region': region,
 }
 
 __all__ = list(methods.keys()) + ['call']
 
-def call(session, request_type):
+
+def call(session, request_type, item=None):
     '''Extracts request query parameters, checks for required arguments
        and delegates to helper functions to fetch the results from
        storage
@@ -50,6 +56,7 @@ def call(session, request_type):
        Args:
           session (sqlalchemy.orm.session.Session): A database Session object
           request_type(str): name of the API endpoint to call
+          item(str): name of an individual item for a REST API
 
        Returns:
           werkzeug.wrappers.Response.  A JSON encoded response object
@@ -60,8 +67,12 @@ def call(session, request_type):
     except KeyError:
         return Response("Bad Request", status=400)
 
-    # Check that required args are included in the query params
-    required_params = set(get_required_args(func)).difference(['sesh'])
+    # Check that required args are included in the query params, excluding the 
+    # REST item, if there is one
+    if item:
+        required_params = set(get_required_args(func)).difference(['sesh', 'item'])
+    else:
+        required_params = set(get_required_args(func)).difference(['sesh'])
     provided_params = set(request.args.keys())
     optional_params = set(get_keyword_args(func))
     missing = required_params.difference(provided_params)
@@ -75,10 +86,13 @@ def call(session, request_type):
     args = { key: request.args.get(key) for key in required_params }
     kwargs = { key: request.args.get(key) for key in optional_params if request.args.get(key) is not None }
     args.update(kwargs)
-    # Note: all arguments to the delgate functions are necessarily strings
+    # Note: all arguments to the delegate functions are necessarily strings
     # at this point, since they're all coming through the URL query
     # parameters
-    rv = func(session, **args)
+    if item:
+        rv = func(session, item, **args)
+    else:
+        rv = func(session, **args)
     modtime = find_modtime(rv)
     resp = Response(
         dumps(format_dates(rv)),
@@ -86,8 +100,7 @@ def call(session, request_type):
     )
     resp.last_modified = find_modtime(rv)
     return resp
-
-
+    
 # from http://stackoverflow.com/questions/196960/can-you-list-the-keyword-arguments-a-python-function-receives
 def get_required_args(func):
     args, _, _, defaults = inspect.getargspec(func)
