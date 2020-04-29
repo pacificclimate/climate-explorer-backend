@@ -1,4 +1,5 @@
-from ce.api import health
+from ce.api.health.region import region
+from ce.api.health.regions import regions
 from ce.api import multimeta
 from csv import DictWriter
 from datetime import datetime
@@ -15,7 +16,7 @@ def test_stored_data(populateddb):
     current_id="pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
     outdated_id= "tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
     region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
-    with open("{}/test_health.csv".format(region_dir), "w") as outfile:
+    with open("{}/test_region.csv".format(region_dir), "w") as outfile:
         outcsv = DictWriter(outfile, fieldnames=["unique_id", "modtime"])
         outcsv.writeheader()
     
@@ -29,16 +30,30 @@ def test_stored_data(populateddb):
         mtime = datetime.strftime(mm[current_id]["modtime"], '%Y-%m-%dT%H:%M:%SZ')
         outcsv.writerow({"unique_id": current_id, "modtime": mtime})
     
-    # test summary
-    h = health(sesh)["stored_regional_queries"]["test_health.csv"]
-    assert h["current"] == 1
-    assert h["outdated"] == 1
-    assert h["removed"] == 1
+    # test regions endpoint for status summary
+    r = list(filter(lambda x: x["region"] == "test_region", regions(sesh)))
     
-    # test full list
-    h = health(sesh, list_files="true")["stored_regional_queries"]["test_health.csv"]
-    assert current_id in h["current"] and len(h["current"]) == 1
-    assert outdated_id in h["outdated"] and len(h["outdated"]) == 1
-    assert removed_id in h["removed"] and len(h["removed"]) == 1
+    assert len(r) == 1
+    
+    assert r[0]["current"] == 1
+    assert r[0]["outdated"] == 1
+    assert r[0]["removed"] == 1
+    assert r[0]["conflicted"] == 0
+    
+    # test region endpoint for individual file details
+    r = region(sesh, "test_region")
+    assert len(r) == 3
+    
+    current = list(filter(lambda f: f["status"] == "current", r))
+    assert len(current) == 1
+    assert current[0]["unique_id"] == current_id
+
+    outdated = list(filter(lambda f: f["status"] == "outdated", r))
+    assert len(outdated) == 1
+    assert outdated[0]["unique_id"] == outdated_id
+    
+    removed = list(filter(lambda f: f["status"] == "removed", r))
+    assert len(removed) == 1
+    assert removed[0]["unique_id"] == removed_id
         
-    os.remove("{}/test_health.csv".format(region_dir))
+    os.remove("{}/test_region.csv".format(region_dir))

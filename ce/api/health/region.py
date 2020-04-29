@@ -1,4 +1,4 @@
-'''module for requesting stored query status for a specific plan2adapt region'''
+'''module for requesting stored query status for a specific p2a region'''
 import os
 from csv import DictReader
 from ce.api.multimeta import multimeta
@@ -16,12 +16,12 @@ def region(sesh, item, ensemble_name='p2a_classic', metadata=None):
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
             pointing to a modelmeta database with up-to-date information
-            
-        item (string): the canonical name of one of the 52 plan2adapt
+
+        item (string): the canonical name of one of the plan2adapt
             regions.
-        
+
         ensemble_name: a dataset ensemble to check the stored data against
-        
+
         metadata: a dictionary as returned by the multimeta function. This
             argument is to save time and allow multiple calls to this API
             to share multimeta results. Cannot be passed as a URL parameter.
@@ -37,7 +37,7 @@ def region(sesh, item, ensemble_name='p2a_classic', metadata=None):
                     "region": "bc",
                     "unique_id": "tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
                     "date": "2020-03-16T17:47:47Z",
-                    "status": "current"                
+                    "status": "current"
                 },
                 {
                     "region": "bc",
@@ -53,14 +53,13 @@ def region(sesh, item, ensemble_name='p2a_classic', metadata=None):
     if not metadata:
         metadata = multimeta(sesh, ensemble_name=ensemble_name)
 
-
     date_format = '%Y-%m-%dT%H:%M:%SZ'
 
     # open each stored query file and make sure all data is up to date
     files_checked = {}
     sq_files = []
     region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
-    
+
     try:
         with open("{}/{}.csv".format(region_dir, item),
                   "r") as region_query_file:
@@ -73,10 +72,10 @@ def region(sesh, item, ensemble_name='p2a_classic', metadata=None):
                     file_status = {
                         "region": item,
                         "unique_id": uid,
-                        "date": modtime                
+                        "date": modtime
                         }
                     if uid in files_checked and files_checked[uid] != modtime:
-                        # there is stored data from 
+                        # there is stored data from
                         # conflicting versions of this file.
                         file_status["status"] = "conflicted"
                     elif uid not in metadata:
@@ -95,6 +94,5 @@ def region(sesh, item, ensemble_name='p2a_classic', metadata=None):
                     sq_files.append(file_status)
     except EnvironmentError:
         abort(404, description="Data for region {} not found".format(item))
-        
 
     return sq_files

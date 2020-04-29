@@ -9,7 +9,6 @@ API Documentation
    
    data <data-api>
    grid <grid-api>
-   health <health-api>
    lister <lister-api>
    metadata <metadata-api>
    models <models-api>
@@ -19,3 +18,5 @@ API Documentation
    stats <stats-api>
    timeseries <timeseries-api>
    watershed <watershed-api>
+   region <region-api>
+   regions <regions-api>

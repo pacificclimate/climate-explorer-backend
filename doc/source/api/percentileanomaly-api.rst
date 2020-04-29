@@ -6,6 +6,8 @@ percentileanomaly
 =================
 .. mdinclude:: percentileanomaly-api-usage.md
 
+.. mdinclude:: p2a-regions.md
+
 .. mdinclude:: sesh-not-needed.md
 
 ------

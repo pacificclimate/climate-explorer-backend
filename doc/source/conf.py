@@ -43,7 +43,11 @@ templates_path = ['_templates']
 
 # We're using it to supress warnings on *.md files inlined with the include 
 # command, which for some reason, sphinx doesn't count as source files.
-exclude_patterns = ['api/*-usage.md', 'api/api-overview.md', 'api/sesh-not-needed.md']
+exclude_patterns = ['api/*-usage.md', 
+                    'api/api-overview.md', 
+                    'api/sesh-not-needed.md', 
+                    'api/rest-item.md',
+                    'api/p2a-regions.md']
 
 
 # -- Options for HTML output -------------------------------------------------

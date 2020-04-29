@@ -1,0 +1,1 @@
+This API is a [REST query](https://restfulapi.net/). The `item` argument of the function in specified in the path, not as a query parameter. For example, to request information on the item `foo`, use (`endpoint/foo`) not (`endpoint?item=foo`).
