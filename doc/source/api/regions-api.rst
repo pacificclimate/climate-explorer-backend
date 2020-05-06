@@ -6,6 +6,10 @@ health/regions
 ====================
 .. mdinclude:: regions-api-usage.md
 
+.. mdinclude:: p2a-regions.md
+
+.. mdinclude:: rest-item.md
+
 .. mdinclude:: sesh-not-needed.md
 
 ------

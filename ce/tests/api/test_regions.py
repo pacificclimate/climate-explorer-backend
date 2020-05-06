@@ -1,4 +1,3 @@
-from ce.api.health.region import region
 from ce.api.health.regions import regions
 from ce.api import multimeta
 from csv import DictWriter
@@ -41,7 +40,7 @@ def test_stored_data(populateddb):
     assert r[0]["conflicted"] == 0
     
     # test region endpoint for individual file details
-    r = region(sesh, "test_region")
+    r = regions(sesh, item="test_region")["files"]
     assert len(r) == 3
     
     current = list(filter(lambda f: f["status"] == "current", r))

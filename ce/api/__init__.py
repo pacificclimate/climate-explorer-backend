@@ -22,10 +22,8 @@ from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
 from ce.api.percentileanomaly import percentileanomaly
-#from ce.api.health import health
 from ce.api.streamflow.watershed import watershed
 from ce.api.health.regions import regions
-from ce.api.health.region import region
 
 
 methods = {
@@ -39,10 +37,7 @@ methods = {
     'lister': lister,
     'grid': grid,
     'percentileanomaly': percentileanomaly,
-#    'health': health,
     'watershed': watershed,
-    'regions': regions,
-    'region': region,
 }
 
 __all__ = list(methods.keys()) + ['call']
