@@ -1,8 +1,10 @@
 '''module for requesting a summary of stored region data status.'''
 import os
+import logging
 from csv import DictReader
 from ce.api.multimeta import multimeta
 from datetime import datetime
+from flask import abort, request
 
 
 def region_status(region, metadata):
@@ -55,8 +57,13 @@ def region_status(region, metadata):
 
 def summarize_region(region_name, region_files):
     'accepts a list of files, returns counts of how many have each status'
+    region_url = "{}/{}?{}".format(request.base_url, 
+                                   region_name, 
+                                   request.query_string.decode())
+        
     count = {
         "region": region_name,
+        "url": region_url,
         "current": 0,
         "outdated": 0,
         "removed": 0,
@@ -93,6 +100,7 @@ def regions(sesh, item=None, ensemble_name='p2a_classic'):
             [
                 {
                     "region": "bc",
+                    "url": "http://base_url/api/health/regions/bc",
                     "current": 100,
                     "outdated": 3,
                     "removed": 6,
@@ -126,8 +134,8 @@ def regions(sesh, item=None, ensemble_name='p2a_classic'):
             }
         
     '''
-    
-    print("item = {}".format(item))
+
+    log = logging.getLogger(__name__)
 
     # first get metadata on current datasets from the database:
     current_metadata = multimeta(sesh, ensemble_name=ensemble_name)

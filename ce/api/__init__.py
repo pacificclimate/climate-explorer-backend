@@ -38,6 +38,7 @@ methods = {
     'grid': grid,
     'percentileanomaly': percentileanomaly,
     'watershed': watershed,
+    'regions': regions
 }
 
 __all__ = list(methods.keys()) + ['call']
