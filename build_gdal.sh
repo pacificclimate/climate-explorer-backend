@@ -4,9 +4,13 @@ if [[ -z "$TRAVIS_BUILD_DIR" ]]; then
     HOME="/tmp"
 fi
 
+if [[ -z "$GDALVERSION" ]]; then
+    echo "GDALVERSION environment variable is unset. Please set it :)"
+    exit 1
+fi
+
 GDALINST=$HOME/gdalinstall
 GDALBUILD=$HOME/gdalbuild
-GDALVERSION="2.3.1"
 CPLUS_INCLUDE_PATH=$GDALINST/include
 C_INCLUDE_PATH=$GDALINST/include
 CFLAGS=-I$GDALINST/include
