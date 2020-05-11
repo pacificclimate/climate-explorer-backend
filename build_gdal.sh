@@ -14,14 +14,23 @@ GDALBUILD=$HOME/gdalbuild
 CPLUS_INCLUDE_PATH=$GDALINST/include
 C_INCLUDE_PATH=$GDALINST/include
 CFLAGS=-I$GDALINST/include
+PROJ_VERSION=6.3.2
 
 mkdir $GDALBUILD
 mkdir $GDALINST
 pushd $GDALBUILD
+
+wget https://download.osgeo.org/proj/proj-${PROJ_VERSION}.tar.gz
+tar -xzvf proj-${PROJ_VERSION}.tar.gz
+pushd proj-${PROJ_VERSION}
+./configure --prefix=${GDALINST}
+make -j2 && make install
+popd
+
 wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
 tar -xzf gdal-$GDALVERSION.tar.gz
 cd gdal-$GDALVERSION
-./configure --prefix=$GDALINST
+./configure --prefix=${GDALINST} --with-proj=${GDALINST}
 make -j2
 make install
 popd
