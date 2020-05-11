@@ -106,7 +106,12 @@ def populateddb(cleandb):
         changes='',
         description=''
     )
-    ensembles = [ens_bccaqv2, ens_bc_prism, ens_ce]
+    ens_p2a_classic = Ensemble(
+        name='p2a_classic',
+        version=1.0,
+        changes='',
+        description='')
+    ensembles = [ens_bccaqv2, ens_bc_prism, ens_ce, ens_p2a_classic]
 
     # Emissions
 
@@ -329,6 +334,7 @@ def populateddb(cleandb):
 
     for dfv in data_file_variables:
         ens_ce.data_file_variables.append(dfv)
+        ens_p2a_classic.data_file_variables.append(dfv)
 
     sesh.add_all(sesh.dirty)
 

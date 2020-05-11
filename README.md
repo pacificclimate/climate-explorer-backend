@@ -61,7 +61,9 @@ A development server can be run locally by using the Flask command line interfac
 
 Database dsn can be configured with the MDDB_DSN environment variable. Defaults to 'postgresql://httpd_meta@monsoon.pcic.uvic.ca/pcic_meta'
 
-(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname FLASK_APP=ce.wsgi:app flask run -p <port>
+The location of the precalculated regional datafiles is specified with the `REGION_DATA_DIRECTORY` environment variable.
+
+(venv)$ MDDB_DSN=postgresql://dbuser:dbpass@dbhost/dbname REGION_DATA_DIRECTORY=/storage/data/projects/comp_support/climate_explorer_data_prep/precalculated_regions/ FLASK_APP=ce.wsgi:app flask run -p <port>
 
 ### Testing
 
@@ -107,6 +109,7 @@ Finally run the climate explorer backend image as a new container.
 ```bash
 docker run -it -p whateverexternalport:8000
                -e "MDDB_DSN=postgresql://dbuser:dbpassword@host/databasename"
+               -e "REGION_DATA_DIRECTORY=/path/to/region/data"
                --volumes-from ce_data
                --name climate-explorer-backend
                climate-explorer-backend-image

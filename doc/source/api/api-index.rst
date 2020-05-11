@@ -14,6 +14,8 @@ API Documentation
    models <models-api>
    multimeta <multimeta-api>
    multistats <multistats-api>
+   percentileanomaly<percentileanomaly-api>
    stats <stats-api>
    timeseries <timeseries-api>
    watershed <watershed-api>
+   regions <regions-api>
