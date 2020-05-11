@@ -1,11 +1,11 @@
-FROM pcic/geospatial-python
+FROM pcic/geospatial-python:gdal3
 
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
-RUN pip3 install gunicorn
-RUN python3 ./setup.py install
+RUN pip3 install -i https://pypi.pacificclimate.org/simple -r docker_requirements.txt && \
+    pip3 install gunicorn && \ 
+    python3 ./setup.py install
 
 EXPOSE 8000
 
