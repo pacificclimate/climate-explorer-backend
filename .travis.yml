@@ -21,6 +21,7 @@ env:
 cache:
   directories:
     - $GDALINST
+    - $GDALBUILD
     - $HOME/.cache/pip
 before_install:
   - ./build_gdal.sh
