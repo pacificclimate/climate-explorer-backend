@@ -37,7 +37,6 @@ setup(
         'python-dateutil',
         'GDAL',
         'rasterio',
-        'pytest',
     ],
     package_dir={
         'ce': 'ce',
