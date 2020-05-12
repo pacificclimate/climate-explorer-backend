@@ -240,6 +240,34 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                 projected_data[timescale][timestamp] = list(
                     np.percentile(anomalies, percentiles))
 
+        # converts a nested dictionary to a list storing data objects
+        def convert_to_li(dict):
+            ret_li = []
+            for timescale in dict:
+                for date in dict[timescale]:
+
+                    date_format = '%Y-%m-%d %H:%M:%S'
+                    dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+                    if timescale == "monthly":
+                        dateindex = dt.month - 1
+                    elif timescale == "seasonal":
+                        dateindex = dt.month//4 + 12
+                    else:
+                        dateindex = 16
+
+                    ret_li.append({"timescale": timescale, "date": date, "values": dict[timescale][date], "dateidx": dateindex})
+
+            ret_li.sort(key=lambda e: e['dateidx']) 
+
+            for i in ret_li:
+                del i["dateidx"]
+
+            return ret_li
+
+        projected_data = convert_to_li(projected_data)
+        baseline_data = convert_to_li(baseline_data)
+
+
         response = {
                 'units': units,
                 'percentiles': percentiles,
