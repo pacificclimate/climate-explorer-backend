@@ -313,15 +313,17 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                             baseline = float(b["values"])
                         else:
                             abort(500,
-                                    ("Multiple matching baseline datasets ",
-                                    "for {} {} {} {}").format(
-                                        baseline_model,
-                                        baseline_climatology,
+                                    ("Multiple matching baseline datasets for {} {} {} {}")
+                                        .format(baseline_model, baseline_climatology, 
                                         p["timescale"], p["date"]))       
 
                 if(not baseline):
-                    abort(500, "Missing baseline data: {} {} {}".format(
-                                                baseline_model, baseline_climatology, p["timescale"]))    
+                    abort(500,
+                            ("No baseline match availabe for {} {} {} {}")
+                                .format(baseline_model,baseline_climatology, 
+                                p["timescale"], p["date"]))       
+
+
 
             else:
                 baseline = 0.0
