@@ -1,11 +1,11 @@
 import pytest
 import numpy
 from ce.geo_data_grid_2d.vic import VicDataGrid
-from test_utils import np_array, \
-    N, NE, E, SE, S, SW, W, NW, O
+from test_utils import np_array, N, E, SE, S, SW, W, O
 
 
 # Longitudes
+
 
 @pytest.fixture
 def longitudes_1():
@@ -14,6 +14,7 @@ def longitudes_1():
 
 # Latitudes
 
+
 @pytest.fixture
 def latitudes_1():
     return numpy.linspace(50.2, 50.8, num=4)
@@ -21,17 +22,13 @@ def latitudes_1():
 
 # Data grids
 
+
 @pytest.fixture
 def flow_direction_1(longitudes_1, latitudes_1):
     return VicDataGrid(
         longitudes=longitudes_1,  # len = 3
-        latitudes=latitudes_1,    # len = 4
-        values=np_array((
-            (SE,  S, SW),
-            ( W,  S,  W),
-            ( N, SW,  S),
-            ( O,  E,  E),
-        ))
+        latitudes=latitudes_1,  # len = 4
+        values=np_array(((SE, S, SW), (W, S, W), (N, SW, S), (O, E, E),)),
     )
 
 
@@ -39,14 +36,9 @@ def flow_direction_1(longitudes_1, latitudes_1):
 def elevation_1(longitudes_1, latitudes_1):
     return VicDataGrid(
         longitudes=longitudes_1,  # len = 3
-        latitudes=latitudes_1,    # len = 4
-        values=np_array((
-            (3, 4, 3),
-            (2, 2, 3),
-            (3, 1, 3),
-            (0, 3, 2),
-        )),
-        units='m'
+        latitudes=latitudes_1,  # len = 4
+        values=np_array(((3, 4, 3), (2, 2, 3), (3, 1, 3), (0, 3, 2),)),
+        units="m",
     )
 
 
@@ -54,7 +46,7 @@ def elevation_1(longitudes_1, latitudes_1):
 def area_1(longitudes_1, latitudes_1):
     return VicDataGrid(
         longitudes=longitudes_1,  # len = 3
-        latitudes=latitudes_1,    # len = 4
+        latitudes=latitudes_1,  # len = 4
         values=numpy.ones((4, 3)),
-        units='m2'
+        units="m2",
     )
