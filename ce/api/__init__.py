@@ -103,14 +103,14 @@ def call(session, request_type, item=None):
 
 # from http://stackoverflow.com/q/196960/
 def get_required_args(func):
-    args, _, _, defaults = inspect.getargspec(func)
+    args, _, _, defaults, _, _, _ = inspect.getfullargspec(func)
     if defaults:
         args = args[: -len(defaults)]
     return args  # *args and **kwargs are not required, so ignore them.
 
 
 def get_keyword_args(func):
-    args, _, _, defaults = inspect.getargspec(func)
+    args, _, _, defaults, _, _, _ = inspect.getfullargspec(func)
     if defaults:
         return args[-len(defaults):]
     else:
