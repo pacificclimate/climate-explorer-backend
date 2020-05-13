@@ -1,7 +1,7 @@
 # If we're not executing in a Travis environment, just use /tmp
 if [[ -z "$TRAVIS_BUILD_DIR" ]]; then
     TRAVIS_BUILD_DIR="/tmp"
-    #HOME="/tmp"
+    HOME="/tmp"
 fi
 
 if [[ -z "$GDALVERSION" ]]; then
@@ -16,7 +16,6 @@ C_INCLUDE_PATH=$GDALINST/include
 CFLAGS=-I$GDALINST/include
 PROJ_VERSION=6.3.2
 
-# Trivial change to test Travis's build cache
 if [[ ! -d "$GDALBUILD" ]]; then
     mkdir $GDALBUILD
 fi
