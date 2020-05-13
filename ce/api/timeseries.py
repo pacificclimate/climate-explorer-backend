@@ -67,17 +67,11 @@ def timeseries(sesh, id_, area, variable):
 
     with open_nc(file_.filename) as nc:
 
-        data = OrderedDict(
-            [
-                (
-                    timeval.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    np.asscalar(
-                        np.mean(get_array(nc, file_.filename, idx, area, variable))
-                    ),
-                )
-                for timeval, idx in ti
-            ]
-        )
+        data = OrderedDict([(
+            timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            np.mean(get_array(nc, file_.filename, idx, area, variable)).item())
+            for timeval, idx in ti
+        ])
         units = get_units_from_netcdf_file(nc, variable)
 
     return {"id": id_, "data": data, "units": units, "modtime": file_.index_time}

@@ -120,10 +120,10 @@ def array_stats(array):
        of cells of a 3d data grid (numpy.ma.MaskedArray)
     """
     return {
-        "min": np.asscalar(np.min(array)),
-        "max": np.asscalar(np.max(array)),
-        "mean": np.asscalar(np.mean(array)),
-        "median": np.asscalar(ma.median(array)),
-        "stdev": np.asscalar(np.std(array)),
-        "ncells": array.compressed().size,
+        "min": np.min(array).item(),
+        "max": np.max(array).item(),
+        "mean": np.mean(array).item(),
+        "median": ma.median(array).item(),
+        "stdev": np.std(array).item(),
+        "ncells": array.compressed().size
     }
