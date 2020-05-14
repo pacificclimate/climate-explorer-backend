@@ -1,15 +1,24 @@
-'''module for requesting data across multiple files through the API
-'''
+"""module for requesting data across multiple files through the API
+"""
 
 import numpy as np
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
-from modelmeta import DataFileVariable, EnsembleDataFileVariables, Ensemble
+from modelmeta import DataFileVariable, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
 
-def data(sesh, model, emission, time, area, variable, timescale='other',
-         ensemble_name='ce_files'):
-    '''Delegate for performing data lookups across climatological files
+
+def data(
+    sesh,
+    model,
+    emission,
+    time,
+    area,
+    variable,
+    timescale="other",
+    ensemble_name="ce_files",
+):
+    """Delegate for performing data lookups across climatological files
 
     Searches the database for all files from a given model and
     emission scenario with the indicated variable, time resolution (timescale),
@@ -20,22 +29,22 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         model (str): Short name for some climate model (e.g "CGCM3")
-        
+
         emission (str): Short name for some emission scenario
             (e.g."historical+rcp85")
-        
+
         time (int): Timestep index (0-based) representing the time of year;
             0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
-        
+
         area (str): WKT polygon of selected area
-        
+
         variable (str): Short name of the variable to be returned
-        
+
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
-        
+
         ensemble_name (str): Name of ensemble
 
     Returns:
@@ -82,14 +91,15 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
     Raises:
         Exception: If `time` parameter cannot be converted to an integer
 
-    '''
+    """
     # Validate arguments
 
     try:
         time = int(time)
     except ValueError:
-        raise Exception('time parameter "{}" not convertable to an integer.'
-                        .format(time))
+        raise Exception(
+            'time parameter "{}" not convertable to an integer.'.format(time)
+        )
 
     def get_spatially_averaged_data(data_file, time_idx):
         """
@@ -118,26 +128,20 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
         for time in timeset.times:
             if time.time_idx == time_idx:
                 return time.timestep
-        raise Exception('Timeset has no time with index value {}'
-                        .format(time_idx))
+        raise Exception("Timeset has no time with index value {}".format(time_idx))
 
     query = (
         sesh.query(DataFileVariable)
         .filter(DataFileVariable.netcdf_variable_name == variable)
-
         .join(DataFileVariable.file)
         .join(DataFile.run)
-
         .join(Run.model)
         .filter(Model.short_name == model)
-
         .join(Run.emission)
         .filter(Emission.short_name == emission)
-
         .join(DataFile.timeset)
         .filter(TimeSet.time_resolution == timescale)
-        .filter(TimeSet.multi_year_mean == True)
-
+        .filter(TimeSet.multi_year_mean)
         .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
     )
     data_file_variables = query.all()
@@ -148,17 +152,19 @@ def data(sesh, model, emission, time, area, variable, timescale='other',
             run_result = result[data_file_variable.file.run.name]
         except KeyError:
             run_result = result[data_file_variable.file.run.name] = {
-                'data': {},
-                'units': get_units_from_run_object(
-                    data_file_variable.file.run, variable),
-                'modtime': data_file_variable.file.index_time
+                "data": {},
+                "units": get_units_from_run_object(
+                    data_file_variable.file.run, variable
+                ),
+                "modtime": data_file_variable.file.index_time,
             }
-        time_key = (
-            get_time_value(data_file_variable.file.timeset, time)
-                .strftime('%Y-%m-%dT%H:%M:%SZ'))
+        time_key = get_time_value(data_file_variable.file.timeset, time).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
         value = get_spatially_averaged_data(data_file_variable.file, time)
-        run_result['data'][time_key] = value
-        run_result['modtime'] = max(run_result['modtime'],\
-                                    data_file_variable.file.index_time)
+        run_result["data"][time_key] = value
+        run_result["modtime"] = max(
+            run_result["modtime"], data_file_variable.file.index_time
+        )
 
     return result

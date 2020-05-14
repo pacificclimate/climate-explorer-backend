@@ -24,13 +24,16 @@ from sqlalchemy import distinct
 from shapely.geometry import Point
 from shapely.errors import WKTReadingError
 
-from ce.api.geospatial import \
-    geojson_feature, outline_cell_rect, WKT_point_to_lonlat, GeospatialTypeError
+from ce.api.geospatial import (
+    geojson_feature,
+    outline_cell_rect,
+    WKT_point_to_lonlat,
+    GeospatialTypeError,
+)
 from ce.api.util import is_valid_index, vec_add, neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
-from modelmeta import \
-    DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
+from modelmeta import DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
 
 
 def watershed(sesh, station, ensemble_name):
@@ -44,12 +47,12 @@ def watershed(sesh, station, ensemble_name):
     :return: dict representation for JSON response object with the following
         attributes:
             area: Area of the watershed
-            
+
             elevation: Minimum and maximum elevations
-            
+
             shape: A GeoJSON object representing the outline of the watershed;
                 a concave hull of the cell rectangles.
-            
+
             hypsometric_curve: Elevation-area histogram of the watershed
 
     This function is primarily responsible for finding the relevant data files
@@ -59,36 +62,34 @@ def watershed(sesh, station, ensemble_name):
     try:
         station_lonlat = WKT_point_to_lonlat(station)
     except WKTReadingError:
-        abort(400, description=
-            'Station lon-lat coordinates are not valid WKT syntax')
+        abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
         return
     except GeospatialTypeError as e:
-        print('##### GeospatialTypeError')
-        abort(400, description=
-        'Station must be a WKT POINT: {}'.format(e.message))
+        print("##### GeospatialTypeError")
+        abort(400, description="Station must be a WKT POINT: {}".format(e.message))
 
-    with \
-            get_time_invariant_variable_dataset(
-                sesh, ensemble_name, 'flow_direction'
-            ) as flow_direction_ds, \
-            get_time_invariant_variable_dataset(
-                sesh, ensemble_name, 'elev'
-            ) as elevation_ds, \
-            get_time_invariant_variable_dataset(
-                sesh, ensemble_name, 'area'
-            ) as area_ds:
+    with get_time_invariant_variable_dataset(
+        sesh, ensemble_name, "flow_direction"
+    ) as flow_direction_ds, get_time_invariant_variable_dataset(
+        sesh, ensemble_name, "elev"
+    ) as elevation_ds, get_time_invariant_variable_dataset(
+        sesh, ensemble_name, "area"
+    ) as area_ds:
         try:
             return worker(
                 station_lonlat,
                 flow_direction=VicDataGrid.from_nc_dataset(
-                    flow_direction_ds, 'flow_direction'),
-                elevation=VicDataGrid.from_nc_dataset(elevation_ds, 'elev'),
-                area=VicDataGrid.from_nc_dataset(area_ds, 'area'),
+                    flow_direction_ds, "flow_direction"
+                ),
+                elevation=VicDataGrid.from_nc_dataset(elevation_ds, "elev"),
+                area=VicDataGrid.from_nc_dataset(area_ds, "area"),
             )
         except GeoDataGrid2DIndexError:
-            abort(404, description=
-                'Station lon-lat coordinates are not within the area '
-                'for which we have data.')
+            abort(
+                404,
+                description="Station lon-lat coordinates are not within the area "
+                "for which we have data.",
+            )
 
 
 def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
@@ -109,16 +110,14 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         # Default parameters cover total range of BC elevations from
         # sea level to highest point, Mt. Fairweather, at 4,663 m.
         hypso_params = {
-            'bin_start': 0,
-            'bin_width': 100,
-            'num_bins': 46,
+            "bin_start": 0,
+            "bin_width": 100,
+            "num_bins": 46,
         }
     if not flow_direction.is_compatible(elevation):
-        raise ValueError(
-            'Flow direction and elevation do not have compatible grids')
+        raise ValueError("Flow direction and elevation do not have compatible grids")
     if not flow_direction.is_compatible(area):
-        raise ValueError(
-            'Flow direction and area do not have compatible grids')
+        raise ValueError("Flow direction and area do not have compatible grids")
 
     # Compute lonlats of watershed whose mouth is at `station`
     # TODO: Refactor to accept a VicDataGrid?
@@ -131,15 +130,14 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             flow_direction.lonlat_to_xy(station_lonlat),
             flow_direction.values,
             direction_matrix,
-            debug=True
+            debug=True,
         )
 
     # `watershed_lonlats`, `elevations`, and `areas` must all be ordered
     # collections (not sets) because it is required (at minimum) that the
     # coordinates (lonlats) for `elevations[i]` and `areas[i]` be equal for
     # all `i`.
-    watershed_lonlats = \
-        [flow_direction.xy_to_lonlat(xy) for xy in watershed_xys]
+    watershed_lonlats = [flow_direction.xy_to_lonlat(xy) for xy in watershed_xys]
 
     #  Compute elevations at each lonlat of watershed
     ws_elevations = elevation.get_values_at_lonlats(watershed_lonlats)
@@ -152,42 +150,42 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
 
     # Compute outline of watershed as a GeoJSON feature
     outline = outline_cell_rect(
-        watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step)
+        watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
+    )
 
     return {
-        'elevation': {
-            'units': elevation.units,
-            'minimum': min(ws_elevations),
-            'maximum': max(ws_elevations),
+        "elevation": {
+            "units": elevation.units,
+            "minimum": min(ws_elevations),
+            "maximum": max(ws_elevations),
         },
-        'area': {
-            'units': area.units,
-            'value': sum(ws_areas),
+        "area": {"units": area.units, "value": sum(ws_areas)},
+        "hypsometric_curve": {
+            "elevation_bin_start": hypso_params["bin_start"],
+            "elevation_bin_width": hypso_params["bin_width"],
+            "elevation_num_bins": hypso_params["num_bins"],
+            "cumulative_areas": cumulative_areas,
+            "elevation_units": elevation.units,
+            "area_units": area.units,
         },
-        'hypsometric_curve': {
-            'elevation_bin_start': hypso_params['bin_start'],
-            'elevation_bin_width': hypso_params['bin_width'],
-            'elevation_num_bins': hypso_params['num_bins'],
-            'cumulative_areas': cumulative_areas,
-            'elevation_units': elevation.units,
-            'area_units': area.units,
-        },
-        'boundary': geojson_feature(
+        "boundary": geojson_feature(
             outline,
             properties={
-                'mouth': geojson_feature(
+                "mouth": geojson_feature(
                     Point(
                         flow_direction.xy_to_lonlat(
-                            flow_direction.lonlat_to_xy(station_lonlat))),
+                            flow_direction.lonlat_to_xy(station_lonlat)
+                        )
+                    ),
                 )
             },
         ),
-        'debug/test': {
-            'watershed': {
-                'cell_count': len(watershed_xys),
-                'time': watershed_time.elapsed,
+        "debug/test": {
+            "watershed": {
+                "cell_count": len(watershed_xys),
+                "time": watershed_time.elapsed,
             }
-        }
+        },
     }
 
 
@@ -239,8 +237,11 @@ def build_watershed(target, routing, direction_map, debug=False):
         nonlocal visited
         visited |= {cell}
         return {cell}.union(
-            *(upstream(neighbour) for neighbour in neighbours(cell)
-              if neighbour not in visited and is_upstream(neighbour, cell))
+            *(
+                upstream(neighbour)
+                for neighbour in neighbours(cell)
+                if neighbour not in visited and is_upstream(neighbour, cell)
+            )
         )
 
     return upstream(target)
@@ -266,22 +267,21 @@ def VIC_direction_matrix(lat_step, lon_step):
     Note that argument order is (lat, lon), not (lon, lat).
     """
     base = (
-        ( 0,  0),   # filler - 0 is not used in the encoding
-        ( 1,  0),   # 1 = north
-        ( 1,  1),   # 2 = northeast
-        ( 0,  1),   # 3 = east
-        (-1,  1),   # 4 = southeast
-        (-1,  0),   # 5 = south
-        (-1, -1),   # 6 = southwest
-        ( 0, -1),   # 7 = west
-        ( 1, -1),   # 8 = northwest
-        ( 0,  0),   # 9 = outlet
+        (0, 0),  # filler - 0 is not used in the encoding
+        (1, 0),  # 1 = north
+        (1, 1),  # 2 = northeast
+        (0, 1),  # 3 = east
+        (-1, 1),  # 4 = southeast
+        (-1, 0),  # 5 = south
+        (-1, -1),  # 6 = southwest
+        (0, -1),  # 7 = west
+        (1, -1),  # 8 = northwest
+        (0, 0),  # 9 = outlet
     )
     lat_dir = int(math.copysign(1, lat_step))
     lon_dir = int(math.copysign(1, lon_step))
     return tuple(
-        (lat_dir * lat_base, lon_dir * lon_base)
-        for lat_base, lon_base in base
+        (lat_dir * lat_base, lon_dir * lon_base) for lat_base, lon_base in base
     )
 
 
@@ -298,19 +298,15 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     :return: (netcdf.Dataset) netcdf Dataset object representing the file.
     """
     query = (
-        sesh.query(distinct(DataFile.filename).label('filename'))
-        .join(
-            DataFileVariable,
-            EnsembleDataFileVariables,
-            Ensemble,
-        )
+        sesh.query(distinct(DataFile.filename).label("filename"))
+        .join(DataFileVariable, EnsembleDataFileVariables, Ensemble,)
         .filter(Ensemble.name == ensemble_name)
         .filter(DataFileVariable.netcdf_variable_name == variable)
-        .filter(DataFile.time_set_id == None)
+        .filter(DataFile.time_set_id.is_(None))
     )
 
     file = query.one()  # Raises exception if n != 1 results found
-    return Dataset(file.filename, 'r')
+    return Dataset(file.filename, "r")
 
 
 def hypsometry(elevations, areas, bin_start=0, bin_width=100, num_bins=46):
@@ -334,13 +330,15 @@ def hypsometry(elevations, areas, bin_start=0, bin_width=100, num_bins=46):
 
     if len(elevations) != len(areas):
         raise IndexError(
-            'elevations ({}) and areas ({}) do not have same lengths'.format(
-                len(elevations), len(areas)))
+            "elevations ({}) and areas ({}) do not have same lengths".format(
+                len(elevations), len(areas)
+            )
+        )
 
     cumulative_areas = [0] * num_bins
 
     def clip(index):
-        return max(0, min(num_bins-1, index))
+        return max(0, min(num_bins - 1, index))
 
     for elevation, area in zip(elevations, areas):
         bin = clip(math.floor((elevation - bin_start) / bin_width))

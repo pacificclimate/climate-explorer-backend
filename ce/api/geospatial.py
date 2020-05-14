@@ -5,6 +5,7 @@ from shapely.ops import cascaded_union
 
 class GeospatialError(Exception):
     """Base class for exceptions in this module."""
+
     pass
 
 
@@ -13,10 +14,10 @@ class GeospatialTypeError(GeospatialError):
     So far that context is just "expecting a point" (as opposed, say, to a
     polygon.
     """
+
     def __init__(self, obj):
         self.obj = obj
-        self.message = 'Expected a Point but got a {}'\
-            .format(type(obj).__name__)
+        self.message = "Expected a Point but got a {}".format(type(obj).__name__)
 
 
 def geojson_feature(thing, **kwargs):
@@ -26,8 +27,8 @@ def geojson_feature(thing, **kwargs):
     Normally this would be a component such as 'properties'.
     """
     return {
-        'type': 'Feature',
-        'geometry': mapping(thing),
+        "type": "Feature",
+        "geometry": mapping(thing),
         **kwargs,
     }
 
@@ -39,14 +40,13 @@ def outline_cell_rect(centres, height, width):
     also turns out to yield the simplest outline and do the least work."""
     dy = height / 2
     dx = width / 2
-    return cascaded_union([
-        shapely.geometry.box(x - dx, y - dy, x + dx, y + dy)
-        for x, y in centres
-    ])
+    return cascaded_union(
+        [shapely.geometry.box(x - dx, y - dy, x + dx, y + dy) for x, y in centres]
+    )
 
 
 def WKT_point_to_lonlat(text):
     p = shapely.wkt.loads(text)
-    if type(p) != shapely.geometry.Point:
+    if type(p) != Point:
         raise GeospatialTypeError(p)
     return p.x, p.y
