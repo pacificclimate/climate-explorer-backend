@@ -15,7 +15,7 @@ direction_map = (
 )
 
 # VIC direction codes
-N, NE, E, SE, S, SW, W, NW, O = range(1, 10)
+N, NE, E, SE, S, SW, W, NW, OUTLET = range(1, 10)
 
 
 def np_array(a, rev_rows=True):

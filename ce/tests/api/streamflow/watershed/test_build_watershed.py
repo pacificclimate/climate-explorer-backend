@@ -1,7 +1,7 @@
 import pytest
 from ce.api.streamflow.watershed import build_watershed
 from ce.api.util import index_set
-from test_utils import np_array, direction_map, N, E, S, SW, W, NW, O
+from test_utils import np_array, direction_map, N, E, S, SW, W, NW, OUTLET
 
 
 routing_0x0 = np_array((()))
@@ -9,15 +9,17 @@ routing_1x1 = np_array(((N,),))
 
 # Fully connected routing arrays: All cells connect to the mouth
 
-routing_fc_3x3 = np_array(((S, S, SW), (S, SW, W), (O, W, W),))
+routing_fc_3x3 = np_array(((S, S, SW), (S, SW, W), (OUTLET, W, W),))
 
 # Linear ccw spiral; distal point at (1,2)
-routing_fc_4x4 = np_array(((S, W, W, W), (S, S, W, N), (S, S, N, N), (O, E, E, N),))
+routing_fc_4x4 = np_array(
+    ((S, W, W, W), (S, S, W, N), (S, S, N, N), (OUTLET, E, E, N),)
+)
 
 # Partially connected routing arrays: Not all cells connect to the mouth
 
 # Norteasternmost cell does not connect to mouth
-routing_pc_3x3 = np_array(((S, S, N), (S, SW, W), (O, W, W),))
+routing_pc_3x3 = np_array(((S, S, N), (S, SW, W), (OUTLET, W, W),))
 
 
 # Routing arrays with loops

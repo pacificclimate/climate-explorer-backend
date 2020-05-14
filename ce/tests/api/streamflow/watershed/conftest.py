@@ -1,7 +1,7 @@
 import pytest
 import numpy
 from ce.geo_data_grid_2d.vic import VicDataGrid
-from test_utils import np_array, N, E, SE, S, SW, W, O
+from test_utils import np_array, N, E, SE, S, SW, W, OUTLET
 
 
 # Longitudes
@@ -28,7 +28,7 @@ def flow_direction_1(longitudes_1, latitudes_1):
     return VicDataGrid(
         longitudes=longitudes_1,  # len = 3
         latitudes=latitudes_1,  # len = 4
-        values=np_array(((SE, S, SW), (W, S, W), (N, SW, S), (O, E, E),)),
+        values=np_array(((SE, S, SW), (W, S, W), (N, SW, S), (OUTLET, E, E),)),
     )
 
 
