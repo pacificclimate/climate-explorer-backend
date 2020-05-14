@@ -165,7 +165,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
     region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
 
     calculate_anomaly = False
-    baseline_data = []
+    baseline_data = [{} for i in range(17)]
 
     percentiles = [float(p) for p in percentile.split(',')]
 
@@ -176,56 +176,64 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
               ('Must supply both historical model and climatology ',
                'for anomaly calculation'))
 
+    def generate_list_idx(timescale, timeidx):
+        '''
+        This function accepts a timescale and timeidx to generate
+        an index that is useful for list data structure. 
+        Index 0~11 is assigned to "monthly" timescale Jan~Dec.
+        Index 12~15 is assigned to "seasonal" timescale Winter~Fall.
+        Index 16 is assigned to "yearly" timescale.
+        '''
+        if timescale == "monthly":
+            idx = int(timeidx)
+        elif timescale == "seasonal": 
+            idx = int(timeidx) + 12
+        else:
+            idx = 16
 
+        return idx
 
-    def create_data_object(value, timescale, date, timeidx, model=None):
+    def add_to_nested_li(li, attributes, date):
+        '''
+        This function accepts a list of data objects(can be empty), 
+        attributes data and ctimestamp. The output is an updated list 
+        with an added data object/value. Unlike li.append(), this 
+        function checks if there is a data object that has the same 
+        index already in the list. If there is a duplicate, it only 
+        updates the data object by appending the new value to the 
+        object's "values" attribute. Otherwise, create a new data
+        object and add to the list.
+        '''
+
+        idx = generate_list_idx(attributes["timescale"], attributes["timeidx"])
+        
+        k = "values"
+        if k in li[idx].keys():
+            li[idx][k].append(attributes["mean"])
+        else:
+            obj = create_data_object(attributes["mean"], attributes["timescale"],
+                                            date, attributes["model"])
+            li[idx] = obj
+
+        return li
+
+    def create_data_object(value, timescale, date, model=None):
         '''    
         this function accepts data arguments and assembles them into a dictionary.
         it is intended to create a data object from given data to store in lists effectively.
         '''
 
-        dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-        if timescale == "monthly":
-            dateindex = int(timeidx)
-        elif timescale == "seasonal":
-            dateindex = int(timeidx) + 12
-        else:
-            dateindex = int(timeidx) + 12 + 4
-
-
         if model:
             return {"timescale": timescale,
                     "date": date,
                     "values": [value],
-                    "models": [model],
-                    "dateidx": dateindex}
+                    "models": [model]}
         else:
             return {"timescale": timescale,
                     "date": date,
-                    "values": [value],
-                    "dateidx": dateindex}            
+                    "values": [value]}            
 
-    def merge_duplicates(li):
-        '''    
-        this function accepts a list of multiple data objects and merges objects with the same dateidx.
-        it is intended to reduce the size of the list and organize the data effectively for further process.
-        '''
-        i = 0
-        while i < len(li)-1:
-            if li[i]["dateidx"] == li[i+1]["dateidx"]:
-                if(len(li[i]) == 5):
-                    li[i]["values"] = li[i]["values"] + li[i+1]["values"]
-                    li[i]["models"] = li[i]["models"] + li[i+1]["models"]
-                    del(li[i+1])
-                else:
-                    li[i]["values"] = li[i]["values"] + li[i+1]["values"]
-                    del(li[i+1])
-            else:
-                del(li[i]["dateidx"])
-                i+=1
-        if len(li) > 0:
-            del(li[i]["dateidx"])
-        return li
+
 
     def canonical_timestamp(timestamp, timescale, timeidx):
         '''    
@@ -261,7 +269,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                   "r") as stored_query_file:
             queries = DictReader(stored_query_file)
 
-            projected_data = []
+            projected_data = [{} for i in range(17)]
             units = ''
             # go through stored queries, collecting all that match parameters
             for row in queries:
@@ -280,22 +288,18 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
                     if row['climatology'] == climatology:
 
-                        obj = create_data_object(row["mean"], row["timescale"],
-                                                ctimestamp, row["timeidx"], row["model"])
-                        projected_data.append(obj)
+                        projected_data = add_to_nested_li(projected_data, row, ctimestamp)
 
                     elif (calculate_anomaly and
                             row['model'] == baseline_model and
                             row['climatology'] == baseline_climatology):
-                        obj = create_data_object(row["mean"], row["timescale"], ctimestamp, row["timeidx"])
-                        baseline_data.append(obj)
-
-        projected_data.sort(key=lambda e: e['dateidx'])
-        merge_duplicates(projected_data)
-        baseline_data.sort(key=lambda e: e['dateidx'])  
-        merge_duplicates(baseline_data)
+                        obj = create_data_object(row["mean"], row["timescale"], ctimestamp)
+                        idx = generate_list_idx(row["timescale"], row["timeidx"])
+                        baseline_data[idx] = obj
 
 
+        projected_data = [data_object for data_object in projected_data if data_object != {}]
+        baseline_data = [data_object for data_object in baseline_data if data_object != {}]
 
         # calculate percentiles and anomalies
         for p in projected_data:
@@ -313,17 +317,15 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                             baseline = float(b["values"])
                         else:
                             abort(500,
-                                    ("Multiple matching baseline datasets for {} {} {} {}")
-                                        .format(baseline_model, baseline_climatology, 
+                                    ("Multiple matching baseline datasets ",
+                                    "for {} {} {} {}").format(
+                                        baseline_model,
+                                        baseline_climatology,
                                         p["timescale"], p["date"]))       
 
                 if(not baseline):
-                    abort(500,
-                            ("No baseline match availabe for {} {} {} {}")
-                                .format(baseline_model,baseline_climatology, 
-                                p["timescale"], p["date"]))       
-
-
+                    abort(500, "Missing baseline data: {} {} {}".format(
+                                                baseline_model, baseline_climatology, p["timescale"]))    
 
             else:
                 baseline = 0.0
