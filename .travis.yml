@@ -30,4 +30,4 @@ install:
   - pip install .
 script:
   - python setup.py build_sphinx 
-  - py.test -v --flake8 ce/tests
+  - py.test -v --flake8
