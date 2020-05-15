@@ -165,7 +165,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
     region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
 
     calculate_anomaly = False
-    baseline_data = [{} for i in range(17)]
+    baseline_data = [None for i in range(17)]
 
     percentiles = [float(p) for p in percentile.split(',')]
 
@@ -208,8 +208,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         idx = generate_list_idx(attributes["timescale"], attributes["timeidx"])
         
         k = "values"
-        if k in li[idx].keys():
-            li[idx][k].append(attributes["mean"])
+        if li[idx] != None:
+            li[idx]["values"].append(attributes["mean"])
         else:
             obj = create_data_object(attributes["mean"], attributes["timescale"],
                                             date, attributes["model"])
@@ -263,13 +263,17 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                                                        timeidx,
                                                        timestamp))
 
+
+
+
+
     try:
         # fetch stored queries from csv
         with open("{}/{}.csv".format(region_dir, region),
                   "r") as stored_query_file:
             queries = DictReader(stored_query_file)
 
-            projected_data = [{} for i in range(17)]
+            projected_data = [None for i in range(17)]
             units = ''
             # go through stored queries, collecting all that match parameters
             for row in queries:
@@ -298,8 +302,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                         baseline_data[idx] = obj
 
 
-        projected_data = [data_object for data_object in projected_data if data_object != {}]
-        baseline_data = [data_object for data_object in baseline_data if data_object != {}]
+        projected_data = [data_object for data_object in projected_data if data_object != None]
+        baseline_data = [data_object for data_object in baseline_data if data_object != None]
 
         # calculate percentiles and anomalies
         for p in projected_data:
