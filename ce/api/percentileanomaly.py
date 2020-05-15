@@ -203,7 +203,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
              
 
 
-    def add_to_nested_li(li, attributes, date, model_counter = None):
+    def add_to_nested_li(li, attributes, date, models = None):
         '''
         This function accepts a list of data objects(can be empty), 
         attributes data and ctimestamp. The output is an updated list 
@@ -212,7 +212,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         index already in the list. If there is a duplicate, it only 
         updates the data object by appending the new value to the 
         object's "values" attribute. Otherwise, create a new data
-        object and add to the list. model_counter is to keep track of
+        object and add to the list. "models" is to keep track of
         number of models for each datum.
         '''
 
@@ -225,15 +225,11 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         else:
             li[idx]["values"].append(attributes["mean"])
         
-        if model_counter is not None:
-            model = attributes["model"]
-            if model not in model_counter[idx]:
-                model_counter[idx].append(model)
+        if models is not None:
+            models[idx] |= {attributes["model"]}
             
-            return li, model_counter
+        return li, models
 
-        else:
-            return li
             
 
 
@@ -279,7 +275,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
             projected_data = [None for i in range(17)]
             # keep track of the models for each datum 
-            model_counter = [[] for i in range(17)]
+            models = [set() for i in range(17)]
             units = ''
             # go through stored queries, collecting all that match parameters
             for row in queries:
@@ -298,17 +294,17 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
                     if row['climatology'] == climatology:
 
-                        projected_data, model_counter = add_to_nested_li(projected_data, row, ctimestamp, model_counter)
+                        projected_data, models = add_to_nested_li(projected_data, row, ctimestamp, models)
 
                     elif (calculate_anomaly and
                             row['model'] == baseline_model and
                             row['climatology'] == baseline_climatology):
 
-                        baseline_data = add_to_nested_li(baseline_data, row, ctimestamp)
+                        baseline_data, _ = add_to_nested_li(baseline_data, row, ctimestamp)
 
 
 
-        def determine_baseline(curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology):
+        def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology):
             '''
             The function determines the baseline value 
             using the given arguments(p_obj and baseline_data).
@@ -319,43 +315,39 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             If multiple or no matcing baseline values are found,
             the function aborts the program.
             '''
-            
-            baseline = None
-            b_obj = baseline_data[curr_idx]
+            if calculate_anomaly:
+                baseline = None
+                b_obj = baseline_data[curr_idx]
 
-            if(b_obj is None):
-                    abort(500, "Missing baseline data: {} {} {}".format(
-                            baseline_model, baseline_climatology, p_obj["timescale"]))    
+                if b_obj is None:
+                        abort(500, "Missing baseline dataif(: {} {} {}".format(
+                                baseline_model, baseline_climatology, p_obj["timescale"]))    
 
-            else:
-                if not baseline and len(b_obj["values"]) == 1:
-                    b_obj["values"] = b_obj["values"][0]
-                    baseline = float(b_obj["values"])
                 else:
-                    abort(500,
-                            ("Multiple matching baseline datasets ",
-                            "for {} {} {} {}").format(
-                                baseline_model,
-                                baseline_climatology,
-                                p_obj["timescale"], p_obj["date"]))
+                    if not baseline and len(b_obj["values"]) == 1:
+                        b_obj["values"] = b_obj["values"][0]
+                        baseline = float(b_obj["values"])
+                    else:
+                        abort(500, "Multiple matching baseline datasets ",
+                                "for {} {} {} {}".format(
+                                    baseline_model,
+                                    baseline_climatology,
+                                    p_obj["timescale"], p_obj["date"]))
     
+            else:
+                baseline = 0.0
+            
             return baseline
 
 
         # calculate percentiles and anomalies
-        curr_idx = 0
-        while curr_idx < len(projected_data):
-            p_obj = projected_data[curr_idx]
-
+        for curr_idx, p_obj in enumerate(projected_data):
             if p_obj is not None:
-                if calculate_anomaly:
-                    baseline = determine_baseline(curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology)
-                else:
-                    baseline = 0.0
-
+                
+                baseline = determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology)
                 values = np.asarray([float(v) for v in p_obj["values"]])
 
-                num_models = len(model_counter[curr_idx])
+                num_models = len(models[curr_idx])
                 if num_models < 12 or num_models < values.size:
                     abort(500,
                             "Not all models available for {} {}. Models available: {}").format(
