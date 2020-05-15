@@ -264,7 +264,40 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                                                        timestamp))
 
 
+    def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology):
+        '''
+        The function determines the baseline value 
+        using the given arguments(p_obj and baseline_data).
+        It iterates through every b_obj in the baseline_data 
+        and checks if there is anything that corresponds to 
+        p_obj(a data object in projected_data). The 
+        corresponding b_obj's value is assigned to baseline.
+        If multiple or no matcing baseline values are found,
+        the function aborts the program.
+        '''
+        if calculate_anomaly:
+            baseline = None
+            b_obj = baseline_data[curr_idx]
 
+            if b_obj is None:
+                    abort(500, "Missing baseline dataif(: {} {} {}".format(
+                            baseline_model, baseline_climatology, p_obj["timescale"]))    
+
+            else:
+                if not baseline and len(b_obj["values"]) == 1:
+                    b_obj["values"] = b_obj["values"][0]
+                    baseline = float(b_obj["values"])
+                else:
+                    abort(500, "Multiple matching baseline datasets ",
+                            "for {} {} {} {}".format(
+                                baseline_model,
+                                baseline_climatology,
+                                p_obj["timescale"], p_obj["date"]))
+
+        else:
+            baseline = 0.0
+        
+        return baseline
 
 
     try:
@@ -304,40 +337,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
 
 
-        def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology):
-            '''
-            The function determines the baseline value 
-            using the given arguments(p_obj and baseline_data).
-            It iterates through every b_obj in the baseline_data 
-            and checks if there is anything that corresponds to 
-            p_obj(a data object in projected_data). The 
-            corresponding b_obj's value is assigned to baseline.
-            If multiple or no matcing baseline values are found,
-            the function aborts the program.
-            '''
-            if calculate_anomaly:
-                baseline = None
-                b_obj = baseline_data[curr_idx]
 
-                if b_obj is None:
-                        abort(500, "Missing baseline dataif(: {} {} {}".format(
-                                baseline_model, baseline_climatology, p_obj["timescale"]))    
-
-                else:
-                    if not baseline and len(b_obj["values"]) == 1:
-                        b_obj["values"] = b_obj["values"][0]
-                        baseline = float(b_obj["values"])
-                    else:
-                        abort(500, "Multiple matching baseline datasets ",
-                                "for {} {} {} {}".format(
-                                    baseline_model,
-                                    baseline_climatology,
-                                    p_obj["timescale"], p_obj["date"]))
-    
-            else:
-                baseline = 0.0
-            
-            return baseline
 
 
         # calculate percentiles and anomalies
