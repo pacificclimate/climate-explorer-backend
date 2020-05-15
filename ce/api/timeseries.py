@@ -1,5 +1,5 @@
-'''module for requesting sinlge-file data through the API
-'''
+"""module for requesting sinlge-file data through the API
+"""
 
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound
@@ -8,19 +8,20 @@ from collections import OrderedDict
 from modelmeta import DataFile
 from ce.api.util import get_array, get_units_from_netcdf_file, open_nc
 
+
 def timeseries(sesh, id_, area, variable):
-    '''Delegate for performing data lookups within a single file
+    """Delegate for performing data lookups within a single file
 
     Opens the data file specified by the id_ parameter and returns the
     data values at each timestep in the file.
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         id_ (str): Unique id which is a key to the data file requested
-        
+
         area (str): WKT polygon of selected area
-        
+
         variable (str): Short name of the variable to be returned
 
     Returns:
@@ -54,29 +55,29 @@ def timeseries(sesh, id_, area, variable):
     Raises:
         None?
 
-    '''
+    """
     try:
         file_ = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
     except NoResultFound:
         return {}
 
     # Get all time indexes for this file
-    ti = [ (time.timestep, time.time_idx) for time in file_.timeset.times ]
+    ti = [(time.timestep, time.time_idx) for time in file_.timeset.times]
     ti.sort(key=lambda x: x[1])
 
     with open_nc(file_.filename) as nc:
 
-        data = OrderedDict([(
-            timeval.strftime('%Y-%m-%dT%H:%M:%SZ'),
-            np.asscalar(np.mean(get_array(nc, file_.filename, idx, area, variable)))
+        data = OrderedDict(
+            [
+                (
+                    timeval.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    np.asscalar(
+                        np.mean(get_array(nc, file_.filename, idx, area, variable))
+                    ),
+                )
+                for timeval, idx in ti
+            ]
         )
-            for timeval, idx in ti
-        ])
         units = get_units_from_netcdf_file(nc, variable)
 
-    return {
-        'id': id_,
-        'data': data,
-        'units': units,
-        'modtime': file_.index_time
-    }
+    return {"id": id_, "data": data, "units": units, "modtime": file_.index_time}

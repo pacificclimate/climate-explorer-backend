@@ -5,17 +5,19 @@ from ce.geo_data_grid_2d import GeoDataGrid2D, GeoDataGrid2DError
 
 class VicDataGridError(GeoDataGrid2DError):
     """Base class for exceptions in this module."""
+
     pass
 
 
 class VicDataGridNonuniformCoordinateError(VicDataGridError):
     """Exception for attempt to use a dataset with a coordinate variable
     that violates the uniformity assumption."""
+
     def __init__(self, coord_name):
         self.coord_name = coord_name
-        self.message = \
-            '{} coordinate does not have uniform step size'.format(coord_name)
-
+        self.message = "{} coordinate does not have uniform step size".format(
+            coord_name
+        )
 
 
 class VicDataGrid(GeoDataGrid2D):
@@ -46,8 +48,8 @@ class VicDataGrid(GeoDataGrid2D):
                 raise VicDataGridNonuniformCoordinateError(name)
             return step
 
-        self.lon_step = step(longitudes, 'longitude')
-        self.lat_step = step(latitudes, 'latitudes')
+        self.lon_step = step(longitudes, "longitude")
+        self.lat_step = step(latitudes, "latitudes")
 
     def is_compatible(self, other):
         """Return a boolean indicating whether this `VicDataGrid` and
@@ -63,16 +65,15 @@ class VicDataGrid(GeoDataGrid2D):
         start values of self and other lon and lat coordinates are an integer
         multiple of the (common) step size.
         """
+
         def is_int(value):
             return math.isclose(value - round(value), 0)
 
         return (
-            math.isclose(self.lon_step, other.lon_step) and
-            math.isclose(self.lat_step, other.lat_step) and
-            is_int((self.longitudes[0] - other.longitudes[0]) /
-                   self.lon_step) and
-            is_int((self.latitudes[0] - other.latitudes[0]) /
-                   self.lat_step)
+            math.isclose(self.lon_step, other.lon_step)
+            and math.isclose(self.lat_step, other.lat_step)
+            and is_int((self.longitudes[0] - other.longitudes[0]) / self.lon_step)
+            and is_int((self.latitudes[0] - other.latitudes[0]) / self.lat_step)
         )
 
     def lonlat_to_xy(self, lonlat):
@@ -94,6 +95,4 @@ class VicDataGrid(GeoDataGrid2D):
 
     def get_values_at_lonlats(self, lonlats):
         """Map an iterable of lonlats to a list of values at those lonlats"""
-        return [
-            float(self.values[self.lonlat_to_xy(lonlat)]) for lonlat in lonlats
-        ]
+        return [float(self.values[self.lonlat_to_xy(lonlat)]) for lonlat in lonlats]

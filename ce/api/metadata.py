@@ -1,13 +1,12 @@
-'''module for requesting metadata for one single file through the API
-'''
+"""module for requesting metadata for one single file through the API
+"""
 from sqlalchemy.orm.exc import NoResultFound
-from dateutil.relativedelta import relativedelta
 
 from modelmeta import DataFile
 
 
 def metadata(sesh, model_id):
-    '''Delegate for performing a metadata lookup for one single file
+    """Delegate for performing a metadata lookup for one single file
 
     The `metadata` call is intended for the client to retrieve
     attributes, model information and organizational information. In
@@ -18,7 +17,7 @@ def metadata(sesh, model_id):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         model_id (str): Unique id which is a key to the data file requested
 
     Returns:
@@ -66,13 +65,9 @@ def metadata(sesh, model_id):
     Raises:
         ValueError
 
-    '''
+    """
     try:
-        data_file = (
-            sesh.query(DataFile)
-                .filter(DataFile.unique_id == model_id)
-                .one()
-        )
+        data_file = sesh.query(DataFile).filter(DataFile.unique_id == model_id).one()
     except NoResultFound:
         return {}
 
@@ -92,10 +87,7 @@ def metadata(sesh, model_id):
     end_date = None
 
     if timeset:
-        times = {
-            time.time_idx: time.timestep
-            for time in timeset.times
-        }
+        times = {time.time_idx: time.timestep for time in timeset.times}
         timescale = timeset.time_resolution
         multi_year_mean = timeset.multi_year_mean
         start_date = timeset.start_date
@@ -106,17 +98,17 @@ def metadata(sesh, model_id):
 
     return {
         model_id: {
-            'institution': model.organization,
-            'model_id': model.short_name,
-            'model_name': model.long_name,
-            'experiment': run.emission.short_name,
-            'variables': vars_,
-            'ensemble_member': run.name,
-            'times': times,
-            'timescale': timescale,
-            'multi_year_mean': multi_year_mean,
-            'start_date': start_date,
-            'end_date': end_date,
-            'modtime': data_file.index_time
+            "institution": model.organization,
+            "model_id": model.short_name,
+            "model_name": model.long_name,
+            "experiment": run.emission.short_name,
+            "variables": vars_,
+            "ensemble_member": run.name,
+            "times": times,
+            "timescale": timescale,
+            "multi_year_mean": multi_year_mean,
+            "start_date": start_date,
+            "end_date": end_date,
+            "modtime": data_file.index_time,
         }
     }

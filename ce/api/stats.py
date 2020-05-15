@@ -1,5 +1,5 @@
-'''module for requsting summary statistics, averaged across a region
-'''
+"""module for requsting summary statistics, averaged across a region
+"""
 
 import numpy as np
 import numpy.ma as ma
@@ -14,12 +14,12 @@ log = logging.getLogger(__name__)
 
 
 na_array_stats = {
-    key: np.nan
-    for key in ('min', 'max', 'mean', 'median', 'stdev', 'ncells')
+    key: np.nan for key in ("min", "max", "mean", "median", "stdev", "ncells")
 }
 
+
 def stats(sesh, id_, time, area, variable):
-    '''Request and calculate summary statistics averaged across a region
+    """Request and calculate summary statistics averaged across a region
 
     For performing regional analysis, one typically wants to summarize
     statistical information across a region. This call allows one to
@@ -31,14 +31,14 @@ def stats(sesh, id_, time, area, variable):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         id_ (str): Unique id which is a key to the data file requested
-        
+
         time (int): Timestep index (0-based) representing the time of year;
             0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
-        
+
         area (str): WKT polygon of selected area
-        
+
         variable (str): Short name of the variable to be returned
 
     Returns:
@@ -77,14 +77,15 @@ def stats(sesh, id_, time, area, variable):
     Raises:
         Exception: If `time` parameter cannot be converted to an integer
 
-    '''
+    """
     # Validate arguments
     if time:
         try:
             time = int(time)
         except ValueError:
-            raise Exception('time parameter "{}" not convertable to an integer.'
-                            .format(time))
+            raise Exception(
+                'time parameter "{}" not convertable to an integer.'.format(time)
+            )
     else:
         time = None
 
@@ -107,25 +108,22 @@ def stats(sesh, id_, time, area, variable):
     query = sesh.query(Time.timestep).filter(Time.time_set_id == df.timeset.id)
     if time:
         query.filter(Time.time_idx == time)
-    timevals = [ t for t, in query.all() ]
+    timevals = [t for t, in query.all()]
     timeval = mean_datetime(timevals)
 
-    stats.update({
-        'units': units,
-        'time': timeval,
-        'modtime': df.index_time
-    })
+    stats.update({"units": units, "time": timeval, "modtime": df.index_time})
     return {id_: stats}
 
+
 def array_stats(array):
-    '''Return the min, max, mean, median, standard deviation and number
+    """Return the min, max, mean, median, standard deviation and number
        of cells of a 3d data grid (numpy.ma.MaskedArray)
-    '''
+    """
     return {
-        'min': np.asscalar(np.min(array)),
-        'max': np.asscalar(np.max(array)),
-        'mean': np.asscalar(np.mean(array)),
-        'median': np.asscalar(ma.median(array)),
-        'stdev': np.asscalar(np.std(array)),
-        'ncells': array.compressed().size
+        "min": np.asscalar(np.min(array)),
+        "max": np.asscalar(np.max(array)),
+        "mean": np.asscalar(np.mean(array)),
+        "median": np.asscalar(ma.median(array)),
+        "stdev": np.asscalar(np.std(array)),
+        "ncells": array.compressed().size,
     }
