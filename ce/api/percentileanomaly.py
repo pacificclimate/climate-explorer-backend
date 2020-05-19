@@ -77,24 +77,24 @@ def percentileanomaly(
               "baseline_model": "anusplin",
               "baseline_climatology": "6190",
               "anomaly":[
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-01-15 00:00:00',
                 "values": [ 2.1310248585852, 3.3104322776824]
                 },
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-02-15 00:00:00',
                 "values": [ 2.0116830378, 2.802655705519 ]
                 },
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-03-15 00:00:00',
                 "values": [ 2.176002151962, 2.8835552547429 ]
                 },
 
                 ...
-                
+
                 {
                 "timescale": 'seasonal',
                 "date": '1977-01-16 00:00:00',
@@ -117,28 +117,28 @@ def percentileanomaly(
                 "timescale": 'yearly',
                 "date": '1977-07-02 00:00:00',
                 "values": [ 2.3264379226208, 3.2458067672088 ]
-                }   
-              ],         
-              
+                }
+              ],
+
               "baseline": [
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-01-15 00:00:00',
                 "values": "-11.71985179823"
                 },
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-02-15 00:00:00',
                 "values": "-8.14627567484"
                 },
-                {   
+                {
                 "timescale": 'monthly',
                 "date": '1977-03-15 00:00:00',
                 "values": "-4.646276537509"
                 },
 
                 ...
-                
+
                 {
                 "timescale": 'seasonal',
                 "date": '1977-01-16 00:00:00',
@@ -161,7 +161,7 @@ def percentileanomaly(
                 "timescale": 'yearly',
                 "date": '1977-07-02 00:00:00',
                 "values": "0.8551423608977"
-                }   
+                }
               ]
 
             }
@@ -189,7 +189,7 @@ def percentileanomaly(
     def generate_list_idx(timescale, timeidx):
         """
         This function accepts a timescale and timeidx to generate
-        an index that is useful for list data structure. 
+        an index that is useful for list data structure.
         Index 0~11 is assigned to "monthly" timescale Jan~Dec.
         Index 12~15 is assigned to "seasonal" timescale Winter~Fall.
         Index 16 is assigned to "yearly" timescale.
@@ -201,21 +201,21 @@ def percentileanomaly(
         return 16
 
     def create_data_object(value, timescale, date, model=None):
-        """    
-        this helper function accepts data arguments and assembles 
-        them into a dictionary. It is intended to create a data 
+        """
+        this helper function accepts data arguments and assembles
+        them into a dictionary. It is intended to create a data
         object from given data to store in lists effectively.
         """
         return {"timescale": timescale, "date": date, "values": [value]}
 
     def add_to_nested_li(li, attributes, date, models=None):
         """
-        This function accepts a list of data objects(can be empty), 
-        attributes data and ctimestamp. The output is an updated list 
-        with an added data object/value. Unlike li.append(), this 
-        function checks if there is a data object that has the same 
-        index already in the list. If there is a duplicate, it only 
-        updates the data object by appending the new value to the 
+        This function accepts a list of data objects(can be empty),
+        attributes data and ctimestamp. The output is an updated list
+        with an added data object/value. Unlike li.append(), this
+        function checks if there is a data object that has the same
+        index already in the list. If there is a duplicate, it only
+        updates the data object by appending the new value to the
         object's "values" attribute. Otherwise, create a new data
         object and add to the list. "models" is to keep track of
         number of models for each datum.
@@ -234,7 +234,7 @@ def percentileanomaly(
         return li, models
 
     def canonical_timestamp(timestamp, timescale, timeidx):
-        """    
+        """
         this function accepts a timestamp and returns a standardized value
         for comparison between models with different calendars.
         it is intended to smooth over differences of a day or two caused by
@@ -272,11 +272,11 @@ def percentileanomaly(
         baseline_climatology,
     ):
         """
-        The function determines the baseline value 
+        The function determines the baseline value
         using the given arguments(p_obj and baseline_data).
-        It iterates through every b_obj in the baseline_data 
-        and checks if there is anything that corresponds to 
-        p_obj(a data object in projected_data). The 
+        It iterates through every b_obj in the baseline_data
+        and checks if there is anything that corresponds to
+        p_obj(a data object in projected_data). The
         corresponding b_obj's value is assigned to baseline.
         If multiple or no matcing baseline values are found,
         the function aborts the program.
