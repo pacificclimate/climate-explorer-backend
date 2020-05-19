@@ -1,12 +1,22 @@
-'''module for requesting stats from multiple files based on model or ensemble
-'''
+"""module for requesting stats from multiple files based on model or ensemble
+"""
 
 from ce.api.stats import stats
 from ce.api.util import search_for_unique_ids
 
-def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
-               area=None, variable='', timescale='', cell_method='mean'):
-    '''Request and calculate statistics for multiple models or scenarios
+
+def multistats(
+    sesh,
+    ensemble_name="ce_files",
+    model="",
+    emission="",
+    time=0,
+    area=None,
+    variable="",
+    timescale="",
+    cell_method="mean",
+):
+    """Request and calculate statistics for multiple models or scenarios
 
     There are some cases for which one may want to get a set of
     summary statistics for multiple models and scenarios (e.g. to
@@ -19,26 +29,26 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         ensemble_name (str): The name of the application-level ensemble
             (e.g. "ce_files")
-        
+
         model (str): Short name for some climate model (e.g "CGCM3") to
             be used as a filter
-        
+
         emission (str): Short name for some emission scenario (e.g.
             "historical+rcp85") to be used as a filter
-        
+
         time (int): Timestep index (0-based) representing the time of year;
             0-11 for monthly, 0-3 for seasonal, 0 for annual datasets.
-        
+
         area (str): WKT polygon of selected area
-        
+
         variable (str): Short name of the variable to be returned
-        
+
         timescale (str): Description of the resolution of time to be
             returned (e.g. "monthly" or "yearly")
-        
+
         cell_method (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean" or "standard_deviation").
             Defaulted to "mean".
@@ -78,11 +88,9 @@ def multistats(sesh, ensemble_name='ce_files', model='', emission='', time=0,
                     'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4),
                 }
             }
-    '''
+    """
 
-    ids = search_for_unique_ids(sesh, ensemble_name, model, emission, variable,
-                                time, timescale, cell_method)
-    return {
-        id_: stats(sesh, id_, time, area, variable)[id_]
-        for id_ in ids
-    }
+    ids = search_for_unique_ids(
+        sesh, ensemble_name, model, emission, variable, time, timescale, cell_method
+    )
+    return {id_: stats(sesh, id_, time, area, variable)[id_] for id_ in ids}

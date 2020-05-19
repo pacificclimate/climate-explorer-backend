@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 import py.path
 import tempfile
 from datetime import datetime
@@ -7,52 +8,65 @@ from pkg_resources import resource_filename
 from dateutil.relativedelta import relativedelta
 import pytest
 
-import modelmeta
-from modelmeta import *
+from modelmeta.v2 import (
+    metadata,
+    Ensemble,
+    Emission,
+    Model,
+    Run,
+    VariableAlias,
+    Grid,
+    Time,
+    TimeSet,
+    ClimatologicalTime,
+    DataFile,
+    DataFileVariable,
+)
 from flask_sqlalchemy import SQLAlchemy
 from netCDF4 import Dataset
 
 from ce import get_app
 
 # Add helpers directory to pythonpath: See https://stackoverflow.com/a/33515264
-sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "helpers",))
 
 
-# From http://stackoverflow.com/questions/25525202/py-test-temporary-folder-for-the-session-scope
+# From http://stackoverflow.com/q/25525202/
 # FIXME: Why is this fixture scoped 'function', not 'session'?
-@pytest.fixture(scope='function')
-def sessiondir(request):
+@pytest.fixture(scope="function")
+def sessiondir(request,):
     dir = py.path.local(tempfile.mkdtemp())
     request.addfinalizer(lambda: dir.remove(rec=1))
     return dir
 
 
-@pytest.fixture(scope='function')
-def dsn(sessiondir):
-    return 'sqlite:///{}'.format(sessiondir.join('test.sqlite').realpath())
+@pytest.fixture(scope="function")
+def dsn(sessiondir,):
+    return "sqlite:///{}".format(sessiondir.join("test.sqlite").realpath())
 
 
 @pytest.fixture
-def app(dsn):
+def app(dsn,):
     app = get_app()
-    app.config['SQLALCHEMY_DATABASE_URI'] = dsn
-    app.config['SQLALCHEMY_ECHO'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = dsn
+    app.config["SQLALCHEMY_ECHO"] = False
     return app
 
 
 @pytest.fixture
-def cleandb(app):
+def cleandb(app,):
     db = SQLAlchemy(app)
-    modelmeta.v2.metadata.create_all(bind=db.engine)
+    metadata.create_all(bind=db.engine)
     db.create_all()
     return db
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def netcdf_file():
-    fname = resource_filename('ce',
-        'tests/data/'
-        'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc')
+    fname = resource_filename(
+        "ce",
+        "tests/data/" "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+    )
     with Dataset(fname) as nc:
         yield nc, fname
 
@@ -62,24 +76,27 @@ def netcdf_file():
 #     return resource_filename('ce', 'tests/data/anuspline_na.nc')
 
 
-@pytest.fixture(params=(
-    resource_filename('ce',
-        'tests/data/'
-        'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
-    resource_filename('ce', 'tests/data/anuspline_na.nc'),
-))
-def ncfile(request):
+@pytest.fixture(
+    params=(
+        resource_filename(
+            "ce",
+            "tests/data/" "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+        ),
+        resource_filename("ce", "tests/data/anuspline_na.nc",),
+    )
+)
+def ncfile(request,):
     return request.param
 
 
-@pytest.fixture(scope='function')
-def ncobject(ncfile):
+@pytest.fixture(scope="function")
+def ncobject(ncfile,):
     with Dataset(ncfile) as nc:
         yield nc, ncfile
 
 
 @pytest.fixture
-def populateddb(cleandb):
+def populateddb(cleandb,):
 
     now = datetime.utcnow()
 
@@ -88,85 +105,72 @@ def populateddb(cleandb):
 
     # Ensembles
 
-    ens_bccaqv2 = Ensemble(
-        name='bccaqv2',
-        version=1.0,
-        changes='',
-        description=''
-    )
-    ens_bc_prism = Ensemble(
-        name='bc_prism',
-        version=2.0,
-        changes='',
-        description=''
-    )
-    ens_ce = Ensemble(
-        name='ce',
-        version=2.0,
-        changes='',
-        description=''
-    )
+    ens_bccaqv2 = Ensemble(name="bccaqv2", version=1.0, changes="", description="",)
+    ens_bc_prism = Ensemble(name="bc_prism", version=2.0, changes="", description="",)
+    ens_ce = Ensemble(name="ce", version=2.0, changes="", description="",)
     ens_p2a_classic = Ensemble(
-        name='p2a_classic',
-        version=1.0,
-        changes='',
-        description='')
-    ensembles = [ens_bccaqv2, ens_bc_prism, ens_ce, ens_p2a_classic]
+        name="p2a_classic", version=1.0, changes="", description="",
+    )
+    ensembles = [
+        ens_bccaqv2,
+        ens_bc_prism,
+        ens_ce,
+        ens_p2a_classic,
+    ]
 
     # Emissions
 
-    rcp45 = Emission(short_name='rcp45')
-    rcp85 = Emission(short_name='rcp85')
-    historical = Emission(short_name='historical')
-    emissions = [rcp45, rcp85, historical]
+    rcp45 = Emission(short_name="rcp45")
+    rcp85 = Emission(short_name="rcp85")
+    historical = Emission(short_name="historical")
 
     # Runs
 
-    run1 = Run(name='run1', emission=rcp45)
-    run2 = Run(name='r1i1p1', emission=rcp85)
-    run3 = Run(name='r1i1p1', emission=historical)
-    runs = [run1, run2, run3]
+    run1 = Run(name="run1", emission=rcp45,)
+    run2 = Run(name="r1i1p1", emission=rcp85,)
+    run3 = Run(name="r1i1p1", emission=historical,)
 
     # Models
 
-    csiro = Model(
-        short_name='csiro',
-        type='GCM',
-        runs=[run1],
-        organization='CSIRO'
-    )
+    csiro = Model(short_name="csiro", type="GCM", runs=[run1], organization="CSIRO",)
     canems2 = Model(
-        short_name='CanESM2',
-        long_name='CCCma (Canadian Centre for Climate Modelling and Analysis, '
-                  'Victoria, BC, Canada)',
-        type='GCM',
+        short_name="CanESM2",
+        long_name="CCCma (Canadian Centre for Climate Modelling and Analysis, "
+        "Victoria, BC, Canada)",
+        type="GCM",
         runs=[run2],
-        organization='CCCMA'
+        organization="CCCMA",
     )
     bnu_esm = Model(
-        short_name='BNU-ESM',
-        long_name='Beijing Normal University Earth System Model',
-        type='GCM',
+        short_name="BNU-ESM",
+        long_name="Beijing Normal University Earth System Model",
+        type="GCM",
         runs=[run3],
-        organization='BNU'
+        organization="BNU",
     )
-    models = [csiro, canems2, bnu_esm]
+    models = [
+        csiro,
+        canems2,
+        bnu_esm,
+    ]
 
     # Data files
 
-    def make_data_file(unique_id, filename=None, run=None):
+    def make_data_file(
+        unique_id, filename=None, run=None,
+    ):
         if not filename:
-            filename = '{}.nc'.format(unique_id)
-        if not filename.startswith('/'):
-            filename = resource_filename('ce', 'tests/data/{}'.format(filename))
+            filename = "{}.nc".format(unique_id)
+        if not filename.startswith("/"):
+            filename = resource_filename("ce", "tests/data/{}".format(filename),)
         return DataFile(
             filename=filename,
             unique_id=unique_id,
-            first_1mib_md5sum='xxxx',
-            x_dim_name='lon',
-            y_dim_name='lat',
+            first_1mib_md5sum="xxxx",
+            x_dim_name="lon",
+            y_dim_name="lat",
             index_time=now,
-            run=run
+            run=run,
         )
 
     # TODO: Create and use standards-compliant test files
@@ -176,58 +180,50 @@ def populateddb(cleandb):
     # test except in the no polygon case.
 
     file1 = make_data_file(
-        unique_id='file1',
-        filename='/path/to/some/other/netcdf_file.nc',
-        run=run1
+        unique_id="file1", filename="/path/to/some/other/netcdf_file.nc", run=run1,
     )
     file2 = make_data_file(
-        unique_id='file2',
-        filename='/path/to/some/other/netcdf_file.nc',
-        run=run1
+        unique_id="file2", filename="/path/to/some/other/netcdf_file.nc", run=run1,
     )
     file3 = make_data_file(
-        unique_id='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
-        filename='CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc',
-        run=run2
+        unique_id="CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc",
+        filename="CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc",
+        run=run2,
     )
 
     df_5_monthly = make_data_file(
-        unique_id='tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_5_seasonal = make_data_file(
-        unique_id='tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_5_yearly = make_data_file(
-        unique_id='tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_6_monthly = make_data_file(
-        unique_id='tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_6_seasonal = make_data_file(
-        unique_id='tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_6_yearly = make_data_file(
-        unique_id='tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_7_yearly = make_data_file(
-        unique_id='pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230',
-        run=run3
+        unique_id="pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
-    df_ti_flow_direction = make_data_file(
-        unique_id='flow-direction_peace',
-        run=run1
-    )
+    df_ti_flow_direction = make_data_file(unique_id="flow-direction_peace", run=run1,)
 
     data_files = [
-        file1, file2, file3,
-        df_5_monthly, df_5_seasonal, df_5_yearly,
-        df_6_monthly, df_6_seasonal, df_6_yearly,
+        file1,
+        file2,
+        file3,
+        df_5_monthly,
+        df_5_seasonal,
+        df_5_yearly,
+        df_6_monthly,
+        df_6_seasonal,
+        df_6_yearly,
         df_7_yearly,
         df_ti_flow_direction,
     ]
@@ -236,34 +232,44 @@ def populateddb(cleandb):
     # TODO: Really? Do we really use aliases?
 
     tasmin = VariableAlias(
-        long_name='Daily Minimum Temperature',
-        standard_name='air_temperature',
-        units='degC'
+        long_name="Daily Minimum Temperature",
+        standard_name="air_temperature",
+        units="degC",
     )
     tasmax = VariableAlias(
-        long_name='Daily Maximum Temperature',
-        standard_name='air_temperature',
-        units='degC'
+        long_name="Daily Maximum Temperature",
+        standard_name="air_temperature",
+        units="degC",
     )
     pr = VariableAlias(
-        long_name='Precipitation',
-        standard_name='precipitation_flux',
-        units='kg d-1 m-2'
+        long_name="Precipitation",
+        standard_name="precipitation_flux",
+        units="kg d-1 m-2",
     )
     flow_direction = VariableAlias(
-        long_name='Flow Direction',
-        standard_name='flow_direction',
-        units='1'
+        long_name="Flow Direction", standard_name="flow_direction", units="1",
     )
-    variable_aliases = [tasmin, tasmax, pr, flow_direction]
+    variable_aliases = [
+        tasmin,
+        tasmax,
+        pr,
+        flow_direction,
+    ]
 
     # Grids
 
-    grid_anuspline = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
-                          yc_grid_step=0.0833333, xc_origin=-140.958,
-                          yc_origin=41.0417, xc_count=1068, yc_count=510,
-                          xc_units='degrees_east', yc_units='degrees_north',
-                          evenly_spaced_y=True)
+    grid_anuspline = Grid(
+        name="Canada ANUSPLINE",
+        xc_grid_step=0.0833333,
+        yc_grid_step=0.0833333,
+        xc_origin=-140.958,
+        yc_origin=41.0417,
+        xc_count=1068,
+        yc_count=510,
+        xc_units="degrees_east",
+        yc_units="degrees_north",
+        evenly_spaced_y=True,
+    )
     grids = [grid_anuspline]
 
     # Add all the above
@@ -277,18 +283,20 @@ def populateddb(cleandb):
 
     # DataFileVariable
 
-    def make_data_file_variable(file, var_name=None, grid=grid_anuspline):
+    def make_data_file_variable(
+        file, var_name=None, grid=grid_anuspline,
+    ):
         var_name_to_alias = {
-            'tasmin': tasmin,
-            'tasmax': tasmax,
-            'pr': pr,
-            'flow_direction': flow_direction,
+            "tasmin": tasmin,
+            "tasmax": tasmax,
+            "pr": pr,
+            "flow_direction": flow_direction,
         }[var_name]
         variable_cell_methods = {
-            'tasmin': 'time: minimum',
-            'tasmax': 'time: maximum time: standard_deviation over days',
-            'pr': 'time: mean time: mean over days',
-            'flow_direction': 'foo'
+            "tasmin": "time: minimum",
+            "tasmax": "time: maximum time: standard_deviation over days",
+            "pr": "time: mean time: mean over days",
+            "flow_direction": "foo",
         }[var_name]
         return DataFileVariable(
             file=file,
@@ -297,26 +305,31 @@ def populateddb(cleandb):
             range_max=50,
             variable_alias=var_name_to_alias,
             grid=grid,
-            variable_cell_methods=variable_cell_methods
+            variable_cell_methods=variable_cell_methods,
         )
 
-    tmin1 = make_data_file_variable(file1, var_name='tasmin')
-    tmax1 = make_data_file_variable(file2, var_name='tasmax')
-    tmax2 = make_data_file_variable(file3, var_name='tasmax')
-    tmax3 = make_data_file_variable(df_5_monthly, var_name='tasmax')
-    tmax4 = make_data_file_variable(df_5_seasonal, var_name='tasmax')
-    tmax5 = make_data_file_variable(df_5_yearly, var_name='tasmax')
-    tmax6 = make_data_file_variable(df_6_monthly, var_name='tasmin')
-    tmax7 = make_data_file_variable(df_6_seasonal, var_name='tasmin')
-    tmax8 = make_data_file_variable(df_6_yearly, var_name='tasmin')
-    pr1 = make_data_file_variable(df_7_yearly, var_name='pr')
-    fd = make_data_file_variable(
-        df_ti_flow_direction, var_name='flow_direction'
-    )
+    tmin1 = make_data_file_variable(file1, var_name="tasmin",)
+    tmax1 = make_data_file_variable(file2, var_name="tasmax",)
+    tmax2 = make_data_file_variable(file3, var_name="tasmax",)
+    tmax3 = make_data_file_variable(df_5_monthly, var_name="tasmax",)
+    tmax4 = make_data_file_variable(df_5_seasonal, var_name="tasmax",)
+    tmax5 = make_data_file_variable(df_5_yearly, var_name="tasmax",)
+    tmax6 = make_data_file_variable(df_6_monthly, var_name="tasmin",)
+    tmax7 = make_data_file_variable(df_6_seasonal, var_name="tasmin",)
+    tmax8 = make_data_file_variable(df_6_yearly, var_name="tasmin",)
+    pr1 = make_data_file_variable(df_7_yearly, var_name="pr",)
+    fd = make_data_file_variable(df_ti_flow_direction, var_name="flow_direction",)
 
     data_file_variables = [
-        tmin1, tmax1, tmax2, tmax3, tmax4, tmax5,
-        tmax6, tmax7, tmax8,
+        tmin1,
+        tmax1,
+        tmax2,
+        tmax3,
+        tmax4,
+        tmax5,
+        tmax6,
+        tmax7,
+        tmax8,
         pr1,
         fd,
     ]
@@ -326,7 +339,10 @@ def populateddb(cleandb):
 
     # Associate to Ensembles
 
-    for dfv in [tmax3, tmax6]:
+    for dfv in [
+        tmax3,
+        tmax6,
+    ]:
         ens_bccaqv2.data_file_variables.append(dfv)
 
     for dfv in [tmax6]:
@@ -341,73 +357,80 @@ def populateddb(cleandb):
     # TimeSets
 
     ts_monthly = TimeSet(
-        calendar='gregorian',
-        start_date=datetime(1971, 1, 1),
-        end_date=datetime(2000, 12, 31),
+        calendar="gregorian",
+        start_date=datetime(1971, 1, 1,),
+        end_date=datetime(2000, 12, 31,),
         multi_year_mean=True,
         num_times=12,
-        time_resolution='monthly',
+        time_resolution="monthly",
         times=[
-            Time(time_idx=i, timestep=datetime(1985, 1 + i, 15))
-            for i in range(12)
+            Time(time_idx=i, timestep=datetime(1985, 1 + i, 15,),) for i in range(12)
         ],
         climatological_times=[
             ClimatologicalTime(
                 time_idx=i,
-                time_start=datetime(1971, 1 + i, 1),
-                time_end=datetime(2000, 1 + i, 1)
-                         + relativedelta(months=1)
-                         - relativedelta(days=1),
+                time_start=datetime(1971, 1 + i, 1,),
+                time_end=datetime(2000, 1 + i, 1,)
+                + relativedelta(months=1)
+                - relativedelta(days=1),
             )
             for i in range(12)
-        ]
+        ],
     )
-    ts_monthly.files = [file2, file3, df_5_monthly, df_6_monthly]
+    ts_monthly.files = [
+        file2,
+        file3,
+        df_5_monthly,
+        df_6_monthly,
+    ]
 
     ts_seasonal = TimeSet(
-        calendar='gregorian',
-        start_date=datetime(1971, 1, 1),
-        end_date=datetime(2000, 12, 31),
+        calendar="gregorian",
+        start_date=datetime(1971, 1, 1,),
+        end_date=datetime(2000, 12, 31,),
         multi_year_mean=True,
         num_times=4,
-        time_resolution='seasonal',
+        time_resolution="seasonal",
         times=[
-            Time(time_idx=i, timestep=datetime(1985, 3*i + 1, 15))
-            for i in range(4)
+            Time(time_idx=i, timestep=datetime(1985, 3 * i + 1, 15,),) for i in range(4)
         ],
         climatological_times=[
             ClimatologicalTime(
                 time_idx=i,
-                time_start=datetime(1971, 3*i + 1, 1)
-                           - relativedelta(months=1),
-                time_end=datetime(2000, 3*i + 1, 1)
-                         + relativedelta(months=2)
-                         - relativedelta(days=1),
+                time_start=datetime(1971, 3 * i + 1, 1,) - relativedelta(months=1),
+                time_end=datetime(2000, 3 * i + 1, 1,)
+                + relativedelta(months=2)
+                - relativedelta(days=1),
             )
             for i in range(4)
-        ]
+        ],
     )
-    ts_seasonal.files = [df_5_seasonal, df_6_seasonal]
+    ts_seasonal.files = [
+        df_5_seasonal,
+        df_6_seasonal,
+    ]
 
     ts_yearly = TimeSet(
-        calendar='gregorian',
-        start_date=datetime(1971, 1, 1),
-        end_date=datetime(2000, 12, 31),
+        calendar="gregorian",
+        start_date=datetime(1971, 1, 1,),
+        end_date=datetime(2000, 12, 31,),
         multi_year_mean=True,
         num_times=1,
-        time_resolution='yearly',
-        times=[
-            Time(time_idx=0, timestep=datetime(1985, 7, 2))
-        ],
+        time_resolution="yearly",
+        times=[Time(time_idx=0, timestep=datetime(1985, 7, 2,),)],
         climatological_times=[
             ClimatologicalTime(
                 time_idx=0,
-                time_start=datetime(1971, 1, 1),
-                time_end=datetime(2000, 12, 31),
+                time_start=datetime(1971, 1, 1,),
+                time_end=datetime(2000, 12, 31,),
             )
-        ]
+        ],
     )
-    ts_yearly.files = [df_5_yearly, df_6_yearly, df_7_yearly]
+    ts_yearly.files = [
+        df_5_yearly,
+        df_6_yearly,
+        df_7_yearly,
+    ]
 
     sesh.add_all(sesh.dirty)
 
@@ -416,16 +439,16 @@ def populateddb(cleandb):
 
 
 @pytest.fixture
-def test_client(app):
+def test_client(app,):
     return app.test_client()
 
 
-def db(app):
+def db(app,):
     return SQLAlchemy(app)
 
 
 @pytest.fixture
-def multitime_db(cleandb):
+def multitime_db(cleandb,):
     """A fixture which represents multiple runs where there exist
        multiple climatological time periods in each run
        This is realistic for a set of model output that we would be
@@ -441,61 +464,72 @@ def multitime_db(cleandb):
     sesh = dbcopy.session
     now = datetime.utcnow()
 
-    ens = Ensemble(name='ce', version=2.0, changes='', description='')
+    ens = Ensemble(name="ce", version=2.0, changes="", description="",)
 
-    rcp45 = Emission(short_name='rcp45')
+    rcp45 = Emission(short_name="rcp45")
 
     # Create three runs
-    runs = [Run(name='run{}'.format(i), emission=rcp45) for i in range(3)]
+    runs = [Run(name="run{}".format(i), emission=rcp45,) for i in range(3)]
 
     bnu_esm = Model(
-        short_name='BNU-ESM',
-        long_name='Beijing Normal University Earth System Model',
-        type='GCM',
+        short_name="BNU-ESM",
+        long_name="Beijing Normal University Earth System Model",
+        type="GCM",
         runs=runs,
-        organization='BNU'
+        organization="BNU",
     )
 
     # Create three files for each run
     files = [
         DataFile(
-            filename=resource_filename('ce',
-               'tests/data/'
-               'tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc'),
-            unique_id='file{}'.format(j * 3 + i),
-            first_1mib_md5sum='xxxx',
-            x_dim_name='lon',
-            y_dim_name='lat',
+            filename=resource_filename(
+                "ce",
+                "tests/data/"
+                "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+            ),
+            unique_id="file{}".format(j * 3 + i),
+            first_1mib_md5sum="xxxx",
+            x_dim_name="lon",
+            y_dim_name="lat",
             index_time=now,
-            run=run)
+            run=run,
+        )
         for i, run in enumerate(runs)
         for j in range(3)
     ]
 
     tasmax = VariableAlias(
-        long_name='Daily Maximum Temperature',
-        standard_name='air_temperature',
-        units='degC')
+        long_name="Daily Maximum Temperature",
+        standard_name="air_temperature",
+        units="degC",
+    )
 
-    anuspline_grid = Grid(name='Canada ANUSPLINE', xc_grid_step=0.0833333,
-                          yc_grid_step=0.0833333, xc_origin=-140.958,
-                          yc_origin=41.0417, xc_count=1068, yc_count=510,
-                          xc_units='degrees_east', yc_units='degrees_north',
-                          evenly_spaced_y=True)
+    anuspline_grid = Grid(
+        name="Canada ANUSPLINE",
+        xc_grid_step=0.0833333,
+        yc_grid_step=0.0833333,
+        xc_origin=-140.958,
+        yc_origin=41.0417,
+        xc_count=1068,
+        yc_count=510,
+        xc_units="degrees_east",
+        yc_units="degrees_north",
+        evenly_spaced_y=True,
+    )
 
     dfvs = [
         DataFileVariable(
-            netcdf_variable_name='tasmax',
+            netcdf_variable_name="tasmax",
             range_min=0,
             range_max=50,
             file=file_,
             variable_alias=tasmax,
-            grid=anuspline_grid)
+            grid=anuspline_grid,
+        )
         for file_ in files
     ]
 
-    sesh.add_all(files + dfvs + runs +
-                 [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
+    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
     sesh.commit()
 
     ens.data_file_variables += dfvs
@@ -503,25 +537,26 @@ def multitime_db(cleandb):
 
     # Create the three timesets, with just one time step per timeset
     times = [
-        Time(time_idx=0, timestep=datetime(1985+y, 1, 15))
-        for y in range(0, 90, 30)
+        Time(time_idx=0, timestep=datetime(1985 + y, 1, 15,),)
+        for y in range(0, 90, 30,)
     ]
 
     timesets = [
         TimeSet(
-            calendar='gregorian',
-            start_date=datetime(1971, 1, 1),
-            end_date=datetime(2099, 12, 31),
+            calendar="gregorian",
+            start_date=datetime(1971, 1, 1,),
+            end_date=datetime(2099, 12, 31,),
             multi_year_mean=True,
             num_times=10,
-            time_resolution='other',
-            times=[t]
-        ) for t in times
+            time_resolution="other",
+            times=[t],
+        )
+        for t in times
     ]
 
     # Wire up the timesets with the runs
     for run in runs:
-        for i, ts in enumerate(timesets):
+        for (i, ts,) in enumerate(timesets):
             ts.files.append(run.files[i])
             sesh.add_all(sesh.dirty)
 
@@ -532,8 +567,7 @@ def multitime_db(cleandb):
 
 polygons = {
     # Metro Van 10 vertex
-    'metro_van_10':
-            """POLYGON((-122.70904541015625 49.31438004800689,-122.92327880859375
+    "metro_van_10": """POLYGON((-122.70904541015625 49.31438004800689,-122.92327880859375
             49.35733376286064,-123.14849853515625
             49.410973199695846,-123.34625244140625
             49.30721745093609,-123.36273193359375
@@ -543,8 +577,7 @@ polygons = {
             49.13500260581219,-122.50579833984375
             49.31079887964633,-122.70904541015625 49.31438004800689))""",
     # 18 point BC province
-    'bc_18':
-            """POLYGON((-134.09912109375 59.712097173322924,-132.86865234375
+    "bc_18": """POLYGON((-134.09912109375 59.712097173322924,-132.86865234375
             58.401711667608,-130.49560546875 56.70450561416937,-128.95751953125
             54.49556752187406,-130.93505859375 54.059387886623576,-133.79150390625
             54.521081495443596,-134.01123046875 53.30462107510271,-132.91259765625
@@ -555,8 +588,7 @@ polygons = {
             53.14677033085084,-119.90478515625 53.904338156274704,-119.99267578125
             60.02095215374802,-134.09912109375 59.712097173322924))""",
     # Fraser Plateau 270 pts
-    'fraser_plateau_270':
-            """POLYGON ((-120.803494992649632
+    "fraser_plateau_270": """POLYGON ((-120.803494992649632
             51.028943367893262,-120.829195972290393
             51.03703427093464,-120.785172630137566
             51.152795518318662,-120.908343419489825
@@ -829,14 +861,17 @@ polygons = {
             51.101452014065629,-120.803494992649632
             51.028943367893262))""",
     # Haida Gwaii
-    'haida_gwaii_6':
-            """MULTIPOLYGON(((-133.4329023938909 54.383829480227,-131.07107067594964
+    "haida_gwaii_6": """MULTIPOLYGON(((-133.4329023938909 54.383829480227,-131.07107067594964
             54.46520405265149,-130.32821767956855
             51.66447893217142,-131.63952512891498
             51.84675220747083,-133.49684680488463
             53.040426860630475,-133.4329023938909 54.383829480227)))""",
-    'no_polygon_0': ""
+    "no_polygon_0": "",
 }
-@pytest.fixture(params=polygons.values(), ids=list(polygons.keys()))
-def polygon(request):
+
+
+@pytest.fixture(
+    params=polygons.values(), ids=list(polygons.keys()),
+)
+def polygon(request,):
     return request.param

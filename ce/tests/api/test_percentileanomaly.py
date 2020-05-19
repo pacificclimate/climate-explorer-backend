@@ -3,7 +3,7 @@ import pytest
 import werkzeug
 import math
 
-default_region="bc"
+default_region = "bc"
 default_climatology = "2080"
 default_variable = "tasmean"
 
@@ -194,63 +194,93 @@ default_response={
     'variable': 'tasmean'
     }
 
-@pytest.mark.parametrize('region, exists', [('bc', True), ('fake_region', False)])
+
+@pytest.mark.parametrize("region, exists", [("bc", True), ("fake_region", False)])
 def test_percentile_anomaly_regions(populateddb, region, exists):
-    sesh=populateddb.session
+    sesh = populateddb.session
     if exists:
         percentileanomaly(sesh, region, default_climatology, default_variable)
     else:
         with pytest.raises(werkzeug.exceptions.NotFound):
-            assert default_response == percentileanomaly(sesh, region,
-                                                         default_climatology,
-                                                         default_variable)
+            assert default_response == percentileanomaly(
+                sesh, region, default_climatology, default_variable
+            )
 
-@pytest.mark.parametrize('bmodel', ['anusplin', 'fake_model', ''])
-@pytest.mark.parametrize('bclimatology', ['6190', '3000', ''])
+
+@pytest.mark.parametrize("bmodel", ["anusplin", "fake_model", ""])
+@pytest.mark.parametrize("bclimatology", ["6190", "3000", ""])
 def test_percentile_baselines(populateddb, bmodel, bclimatology):
     sesh = populateddb.session
-    if not bmodel and not bclimatology: # no baseline! no anomaly data.
-        results = percentileanomaly(sesh, default_region, default_climatology, default_variable,
-                                    baseline_model=bmodel, baseline_climatology=bclimatology)
+    if not bmodel and not bclimatology:  # no baseline! no anomaly data.
+        results = percentileanomaly(
+            sesh,
+            default_region,
+            default_climatology,
+            default_variable,
+            baseline_model=bmodel,
+            baseline_climatology=bclimatology,
+        )
         assert "anomaly" not in results
         assert "baseline" not in results
         assert "data" in results
-    elif not bmodel or not bclimatology: # badly specified baselines. error.
+    elif not bmodel or not bclimatology:  # badly specified baselines. error.
         with pytest.raises(werkzeug.exceptions.BadRequest):
-            percentileanomaly(sesh, default_region, default_climatology, default_variable,
-                              baseline_model=bmodel, baseline_climatology=bclimatology)
-    elif bmodel == 'fake_model' or bclimatology == '3000': #nonexistant baselines
+            percentileanomaly(
+                sesh,
+                default_region,
+                default_climatology,
+                default_variable,
+                baseline_model=bmodel,
+                baseline_climatology=bclimatology,
+            )
+    elif bmodel == "fake_model" or bclimatology == "3000":  # nonexistant baselines
         with pytest.raises(werkzeug.exceptions.InternalServerError):
-            percentileanomaly(sesh, default_region, default_climatology, default_variable,
-                              baseline_model=bmodel, baseline_climatology=bclimatology)
-    else: #valid baseline
-        assert default_response == percentileanomaly(sesh, default_region, default_climatology,
-                                                     default_variable, baseline_model=bmodel,
-                                                     baseline_climatology=bclimatology)
+            percentileanomaly(
+                sesh,
+                default_region,
+                default_climatology,
+                default_variable,
+                baseline_model=bmodel,
+                baseline_climatology=bclimatology,
+            )
+    else:  # valid baseline
+        assert default_response == percentileanomaly(
+            sesh,
+            default_region,
+            default_climatology,
+            default_variable,
+            baseline_model=bmodel,
+            baseline_climatology=bclimatology,
+        )
+
+
 def test_missing_models(populateddb):
-        sesh = populateddb.session
-        with pytest.raises(werkzeug.exceptions.InternalServerError):
-            percentileanomaly(sesh, "missing_data", default_climatology, default_variable)
+    sesh = populateddb.session
+    with pytest.raises(werkzeug.exceptions.InternalServerError):
+        percentileanomaly(sesh, "missing_data", default_climatology, default_variable)
+
 
 def test_extra_models(populateddb):
-        sesh = populateddb.session
-        with pytest.raises(werkzeug.exceptions.InternalServerError):
-            percentileanomaly(sesh, "extra_data", default_climatology, default_variable)
+    sesh = populateddb.session
+    with pytest.raises(werkzeug.exceptions.InternalServerError):
+        percentileanomaly(sesh, "extra_data", default_climatology, default_variable)
 
-@pytest.mark.parametrize('num_percentiles', [1, 2, 4, 5, 10])
+
+@pytest.mark.parametrize("num_percentiles", [1, 2, 4, 5, 10])
 def test_percentile_calculation(populateddb, num_percentiles):
     sesh = populateddb.session
     step = math.floor(100 / num_percentiles)
     percentiles = range(0, 100, step)
     pstring = ""
     for p in percentiles:
-        pstring = pstring +"{},".format(p)
-    pstring = pstring.rstrip(',')
+        pstring = pstring + "{},".format(p)
+    pstring = pstring.rstrip(",")
     print(pstring)
-    response = percentileanomaly(sesh, default_region, default_climatology, default_variable,
-                              percentile=pstring)    
-    # check that we get the right number of percentile values and that they're in the 
-    # right order. 
+    response = percentileanomaly(
+        sesh, default_region, default_climatology, default_variable, percentile=pstring
+    )
+    # check that we get the right number of percentile values and that they're in the
+    # right order.
     for resolution in response["anomaly"]:
         percs = resolution["values"]
         assert len(percs) == num_percentiles

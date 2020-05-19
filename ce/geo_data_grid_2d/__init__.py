@@ -1,5 +1,6 @@
 class GeoDataGrid2DError(Exception):
     """Base class for exceptions in this module."""
+
     pass
 
 
@@ -16,8 +17,9 @@ class GeoDataGrid2DIndexError(GeoDataGrid2DError):
     def __init__(self, index, shape):
         self.index = index
         self.shape = shape
-        self.message = 'Index {} is not valid for a grid of shape {}' \
-            .format(index, shape)
+        self.message = "Index {} is not valid for a grid of shape {}".format(
+            index, shape
+        )
 
 
 class GeoDataGrid2D:
@@ -40,8 +42,8 @@ class GeoDataGrid2D:
         """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
         with standard contents and returns it as a `DataGrid`."""
         return cls(
-            dataset.variables['lon'],
-            dataset.variables['lat'],
+            dataset.variables["lon"],
+            dataset.variables["lat"],
             dataset.variables[variable_name],
             dataset.variables[variable_name].units,
         )
@@ -53,4 +55,3 @@ class GeoDataGrid2D:
     def check_valid_index(self, index):
         if not self.is_valid_index(index):
             raise GeoDataGrid2DIndexError(index, self.values.shape)
-

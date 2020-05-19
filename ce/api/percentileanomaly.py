@@ -1,19 +1,25 @@
-'''module for requesting change from a baseline value, expressed as a
+"""module for requesting change from a baseline value, expressed as a
 percentile value of the spread of the PCIC12 models. Because opening a file for
 each of the 12 models is unworkably slow, this module instead extracts data
-from CSV files holding precomputed results of /stats queries.'''
+from CSV files holding precomputed results of /stats queries."""
 
 from flask import abort
 from csv import DictReader
-import json
 import os
 from datetime import datetime
 import numpy as np
 
 
-def percentileanomaly(sesh, region, climatology, variable, percentile='50',
-                      baseline_model="anusplin", baseline_climatology="6190"):
-    '''Request percentiles summaries of the data range of the PCIC12 ensemble
+def percentileanomaly(
+    sesh,
+    region,
+    climatology,
+    variable,
+    percentile="50",
+    baseline_model="anusplin",
+    baseline_climatology="6190",
+):
+    """Request percentiles summaries of the data range of the PCIC12 ensemble
     for a specific region.
 
     This call uses CSV files, one for each of the 52 defined plan2adapt
@@ -159,22 +165,26 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
               ]
 
             }
-    '''
+    """
 
     # get data directory
-    region_dir = os.getenv('REGION_DATA_DIRECTORY').rstrip("/")
+    region_dir = os.getenv("REGION_DATA_DIRECTORY").rstrip("/")
 
     calculate_anomaly = False
     baseline_data = [None for i in range(17)]
 
-    percentiles = [float(p) for p in percentile.split(',')]
+    percentiles = [float(p) for p in percentile.split(",")]
 
-    if baseline_model != '' and baseline_climatology != '':
+    if baseline_model != "" and baseline_climatology != "":
         calculate_anomaly = True
-    elif baseline_model != '' or baseline_climatology != '':
-        abort(400,
-              ('Must supply both historical model and climatology ',
-               'for anomaly calculation'))
+    elif baseline_model != "" or baseline_climatology != "":
+        abort(
+            400,
+            (
+                "Must supply both historical model and climatology ",
+                "for anomaly calculation",
+            ),
+        )
 
     def generate_list_idx(timescale, timeidx):
         '''
@@ -233,22 +243,25 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         '''
         date_format = '%Y-%m-%d %H:%M:%S'
         dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+
         if timescale == "monthly":
             if dt.month == int(timeidx) + 1:
-                return dt.replace(day=15, hour=0,
-                                  minute=0, second=0).strftime(date_format)
+                return dt.replace(day=15, hour=0, minute=0, second=0).strftime(
+                    date_format
+                )
         elif timescale == "seasonal":
             if dt.month == (int(timeidx) * 3) + 1:
-                return dt.replace(day=16, hour=0,
-                                  minute=0, second=0).strftime(date_format)
+                return dt.replace(day=16, hour=0, minute=0, second=0).strftime(
+                    date_format
+                )
         elif timescale == "yearly":
             if dt.month == 7:
-                return dt.replace(day=2, hour=0,
-                                  minute=0, second=0).strftime(date_format)
-        abort(500,
-              "Invalid timestamp for {} {}: {}".format(timescale,
-                                                       timeidx,
-                                                       timestamp))
+                return dt.replace(day=2, hour=0, minute=0, second=0).strftime(
+                    date_format
+                )
+        abort(
+            500, "Invalid timestamp for {} {}: {}".format(timescale, timeidx, timestamp)
+        )
 
     def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, 
                             baseline_model, baseline_climatology):
@@ -286,8 +299,7 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
     try:
         # fetch stored queries from csv
-        with open("{}/{}.csv".format(region_dir, region),
-                  "r") as stored_query_file:
+        with open("{}/{}.csv".format(region_dir, region), "r") as stored_query_file:
             queries = DictReader(stored_query_file)
 
             projected_data = [None for i in range(17)]
@@ -296,18 +308,20 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             units = ''
             # go through stored queries, collecting all that match parameters
             for row in queries:
-                ctimestamp = canonical_timestamp(row["timestamp"],
-                                                 row["timescale"],
-                                                 row["timeidx"])
-                if row['variable'] == variable:
+                ctimestamp = canonical_timestamp(
+                    row["timestamp"], row["timescale"], row["timeidx"]
+                )
+                if row["variable"] == variable:
                     if row["units"] != units:  # make sure datasets share units
-                        if units == '':
-                            units = row['units']
+                        if units == "":
+                            units = row["units"]
                         else:
-                            abort(500,
-                                  message=("Incompatible units: ",
-                                           "{}, {}").format(units,
-                                                            row['units']))
+                            abort(
+                                500,
+                                message=("Incompatible units: ", "{}, {}").format(
+                                    units, row["units"]
+                                ),
+                            )
 
                     if row['climatology'] == climatology:
 
@@ -352,12 +366,12 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         baseline_data = remove_None(baseline_data)
 
         response = {
-                'units': units,
-                'percentiles': percentiles,
-                'region': region,
-                'climatology': climatology,
-                'variable': variable
-            }
+            "units": units,
+            "percentiles": percentiles,
+            "region": region,
+            "climatology": climatology,
+            "variable": variable,
+        }
 
         if calculate_anomaly:
             response["baseline_model"] = baseline_model

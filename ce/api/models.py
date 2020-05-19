@@ -1,11 +1,12 @@
-'''module for requesting list of available models
-'''
+"""module for requesting list of available models
+"""
 
 from modelmeta import Ensemble
 
-def models(sesh, ensemble_name='ce_files'):
 
-    '''
+def models(sesh, ensemble_name="ce_files"):
+
+    """
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object
 
@@ -15,11 +16,15 @@ def models(sesh, ensemble_name='ce_files'):
         model_short_name1,
         model_short_name2,
         ]
-    '''
+    """
 
     ensemble = sesh.query(Ensemble).filter(Ensemble.name == ensemble_name).first()
 
-    if not ensemble: # Result does not contain any row therefore ensemble does not exist
+    if (
+        not ensemble
+    ):  # Result does not contain any row therefore ensemble does not exist
         return []
 
-    return list(set([ dfv.file.run.model.short_name for dfv in ensemble.data_file_variables ]))
+    return list(
+        set([dfv.file.run.model.short_name for dfv in ensemble.data_file_variables])
+    )
