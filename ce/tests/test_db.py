@@ -1,10 +1,9 @@
-import pytest
-from flask_sqlalchemy import SQLAlchemy
-from modelmeta import *
+from modelmeta.v2 import Ensemble
+
 
 def test_can_query_db(cleandb):
     sesh = cleandb.session
-    results = sesh.query(Ensemble.name).all()
+    assert len(sesh.query(Ensemble.name).all()) == 0
 
 
 def test_db_is_populated(populateddb):

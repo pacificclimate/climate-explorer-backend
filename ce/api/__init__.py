@@ -1,8 +1,8 @@
-''' PCIC Climate Explorer backend API module
+""" PCIC Climate Explorer backend API module
 
 .. moduleauthor:: James Hiebert <hiebert@uvic.ca>
 
-'''
+"""
 
 
 import inspect
@@ -21,75 +21,93 @@ from ce.api.metadata import metadata
 from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
+from ce.api.percentileanomaly import percentileanomaly
 from ce.api.streamflow.watershed import watershed
+from ce.api.health.regions import regions
+
 
 methods = {
-    'stats': stats,
-    'multistats': multistats,
-    'data': data,
-    'models': models,
-    'metadata': metadata,
-    'multimeta': multimeta,
-    'timeseries': timeseries,
-    'lister': lister,
-    'grid': grid,
-    'watershed': watershed
+    "stats": stats,
+    "multistats": multistats,
+    "data": data,
+    "models": models,
+    "metadata": metadata,
+    "multimeta": multimeta,
+    "timeseries": timeseries,
+    "lister": lister,
+    "grid": grid,
+    "percentileanomaly": percentileanomaly,
+    "watershed": watershed,
+    "regions": regions,
 }
 
-__all__ = list(methods.keys()) + ['call']
+__all__ = list(methods.keys()) + ["call"]
 
-def call(session, request_type):
-    '''Extracts request query parameters, checks for required arguments
+
+def call(session, request_type, item=None):
+    """Extracts request query parameters, checks for required arguments
        and delegates to helper functions to fetch the results from
        storage
 
        Args:
           session (sqlalchemy.orm.session.Session): A database Session object
           request_type(str): name of the API endpoint to call
+          item(str): name of an individual item for a REST API
 
        Returns:
           werkzeug.wrappers.Response.  A JSON encoded response object
-    '''
+    """
 
     try:
         func = methods[request_type]
     except KeyError:
         return Response("Bad Request", status=400)
 
-    # Check that required args are included in the query params
-    required_params = set(get_required_args(func)).difference(['sesh'])
+    # Check that required args are included in the query params, excluding the
+    # REST item, if there is one
+    if item:
+        required_params = set(get_required_args(func)).difference(["sesh", "item"])
+    else:
+        required_params = set(get_required_args(func)).difference(["sesh"])
     provided_params = set(request.args.keys())
     optional_params = set(get_keyword_args(func))
     missing = required_params.difference(provided_params)
     if missing:
-        return Response("Missing query param{}: {}".format(
-                's' if len(missing) > 1 else '',
-                ', '.join(missing)),
-                status=400)
+        return Response(
+            "Missing query param{}: {}".format(
+                "s" if len(missing) > 1 else "", ", ".join(missing)
+            ),
+            status=400,
+        )
 
     # FIXME: Sanitize input
-    args = { key: request.args.get(key) for key in required_params }
-    kwargs = { key: request.args.get(key) for key in optional_params if request.args.get(key) is not None }
+    args = {key: request.args.get(key) for key in required_params}
+    kwargs = {
+        key: request.args.get(key)
+        for key in optional_params
+        if request.args.get(key) is not None
+    }
     args.update(kwargs)
-    # Note: all arguments to the delgate functions are necessarily strings
+    # Note: all arguments to the delegate functions are necessarily strings
     # at this point, since they're all coming through the URL query
     # parameters
-    rv = func(session, **args)
+    if item:
+        rv = func(session, item, **args)
+    else:
+        rv = func(session, **args)
     modtime = find_modtime(rv)
-    resp = Response(
-        dumps(format_dates(rv)),
-        content_type='application/json'
-    )
-    resp.last_modified = find_modtime(rv)
+    resp = Response(dumps(format_dates(rv)), content_type="application/json")
+    resp.last_modified = modtime
     return resp
 
 
-# from http://stackoverflow.com/questions/196960/can-you-list-the-keyword-arguments-a-python-function-receives
+# from http://stackoverflow.com/q/196960/
 def get_required_args(func):
     args, _, _, defaults = inspect.getargspec(func)
     if defaults:
-        args = args[:-len(defaults)]
-    return args   # *args and **kwargs are not required, so ignore them.
+        args = args[: -len(defaults)]
+    return args  # *args and **kwargs are not required, so ignore them.
+
 
 def get_keyword_args(func):
     args, _, _, defaults = inspect.getargspec(func)
@@ -100,24 +118,24 @@ def get_keyword_args(func):
 
 
 def find_modtime(obj):
-    '''Find the maximum modtime in an object
+    """Find the maximum modtime in an object
 
     Recursively search a dictionary, returning the maximum value found
     in all keys named 'modtime
-    '''
+    """
     if not isinstance(obj, dict):
         return None
 
     candidates = [find_modtime(val) for val in obj.values() if isinstance(val, dict)]
-    if 'modtime' in obj and isinstance(obj['modtime'], datetime):
-        candidates.append(obj['modtime'])
-    candidates = [ x for x in candidates if isinstance(x, datetime) ]
+    if "modtime" in obj and isinstance(obj["modtime"], datetime):
+        candidates.append(obj["modtime"])
+    candidates = [x for x in candidates if isinstance(x, datetime)]
     if candidates:
         return max(candidates)
 
 
 def format_dates(obj):
-    '''Recursively format datetimes to strings
+    """Recursively format datetimes to strings
 
     json.dumps doesn't properly convert datetimes to their
     representative format. It simply using the __repr__ of the datetime
@@ -126,11 +144,13 @@ def format_dates(obj):
     This method recursively searches a dict, formatting all datetime
     objects, and leaving everything else unchanged. The formatted object
     is returned.
-    '''
-    time_format = '%Y-%m-%dT%H:%M:%SZ'
+    """
+    time_format = "%Y-%m-%dT%H:%M:%SZ"
     if not isinstance(obj, dict):
         return obj
     return {
         key: val.strftime(time_format)
-        if isinstance(val, datetime) else format_dates(val)
-        for key, val in obj.items()}
+        if isinstance(val, datetime)
+        else format_dates(val)
+        for key, val in obj.items()
+    }

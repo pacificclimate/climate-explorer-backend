@@ -7,7 +7,7 @@ node {
     }
 
     stage('Python Test Suite') {
-        runPythonTestSuite('pcic/geospatial-python:gdal3', ['requirements.txt'], '-v')
+        runPythonTestSuite('pcic/geospatial-python:gdal3', ['requirements.txt', 'test_requirements.txt'], '-v --flake8')
     }
 
     stage('Clean Workspace') {

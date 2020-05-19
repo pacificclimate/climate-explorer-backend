@@ -1,0 +1,1 @@
+This API is a [REST query](https://restfulapi.net/). It can be used to request information on either a collection of items or a single item. If information on a single item is requested, the `item` argument of the function is specified in the URL path, not as a query parameter. For example, to request information on the item `foo`, use (`endpoint/foo`) not (`endpoint?item=foo`).

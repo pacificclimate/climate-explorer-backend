@@ -1,13 +1,13 @@
-'''module for requesting metadata from multiple files based on model or ensemble
-'''
+"""module for requesting metadata from multiple files based on model or ensemble
+"""
 
 from modelmeta import DataFile, Model, Emission, Run
 from modelmeta import DataFileVariable, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
 
 
-def multimeta(sesh, ensemble_name='ce_files', model=''):
-    '''Retrieve metadata for all data files in an ensemble
+def multimeta(sesh, ensemble_name="ce_files", model=""):
+    """Retrieve metadata for all data files in an ensemble
 
     The ``multimeta`` API call is available to retrieve summarized
     metadata from all data files in a given ensemble, optionally
@@ -23,14 +23,14 @@ def multimeta(sesh, ensemble_name='ce_files', model=''):
 
     Args:
         sesh (sqlalchemy.orm.session.Session): A database Session object
-        
+
         ensemble (str): Some named ensemble
-        
+
         model (str): Short name for some climate model (e.g "CGCM3")
 
     Returns:
-        A dictionary keyed by unique_id for all unique_ids in the requested model/ensemble.
-        The value is delegated to the metadata call
+        A dictionary keyed by unique_id for all unique_ids in the
+        requested model/ensemble. The value is delegated to the metadata call
 
         For example::
 
@@ -56,30 +56,34 @@ def multimeta(sesh, ensemble_name='ce_files', model=''):
               ...
           }
 
-    '''
+    """
 
-    q = sesh.query(DataFile.unique_id,
-                   Model.organization,
-                   Model.short_name,
-                   Model.long_name,
-                   Emission.short_name,
-                   Run.name,
-                   DataFileVariable.netcdf_variable_name,
-                   VariableAlias.long_name,
-                   TimeSet.time_resolution,
-                   TimeSet.multi_year_mean,
-                   TimeSet.start_date,
-                   TimeSet.end_date,
-                   DataFile.index_time)\
-            .join(Run)\
-            .join(Model)\
-            .join(Emission)\
-            .join(DataFileVariable)\
-            .join(EnsembleDataFileVariables)\
-            .join(Ensemble)\
-            .join(VariableAlias)\
-            .join(TimeSet)\
-            .filter(Ensemble.name == ensemble_name)
+    q = (
+        sesh.query(
+            DataFile.unique_id,
+            Model.organization,
+            Model.short_name,
+            Model.long_name,
+            Emission.short_name,
+            Run.name,
+            DataFileVariable.netcdf_variable_name,
+            VariableAlias.long_name,
+            TimeSet.time_resolution,
+            TimeSet.multi_year_mean,
+            TimeSet.start_date,
+            TimeSet.end_date,
+            DataFile.index_time,
+        )
+        .join(Run)
+        .join(Model)
+        .join(Emission)
+        .join(DataFileVariable)
+        .join(EnsembleDataFileVariables)
+        .join(Ensemble)
+        .join(VariableAlias)
+        .join(TimeSet)
+        .filter(Ensemble.name == ensemble_name)
+    )
 
     if model:
         q = q.filter(Model.short_name == model)
@@ -90,24 +94,36 @@ def multimeta(sesh, ensemble_name='ce_files', model=''):
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
     # circa release 1.1
-    for id_, org, model_short, model_long, emission, run, var, long_var, \
-            timescale, multi_year_mean, start_date, end_date, modtime in \
-            results:
+    for (
+        id_,
+        org,
+        model_short,
+        model_long,
+        emission,
+        run,
+        var,
+        long_var,
+        timescale,
+        multi_year_mean,
+        start_date,
+        end_date,
+        modtime,
+    ) in results:
         if id_ not in rv:
             rv[id_] = {
-                'institution': org,
-                'model_id': model_short,
-                'model_name': model_long,
-                'experiment': emission,
-                'variables': {var: long_var},
-                'ensemble_member': run,
-                'timescale': timescale,
-                'multi_year_mean': multi_year_mean,
-                'start_date': start_date,
-                'end_date': end_date,
-                'modtime': modtime
+                "institution": org,
+                "model_id": model_short,
+                "model_name": model_long,
+                "experiment": emission,
+                "variables": {var: long_var},
+                "ensemble_member": run,
+                "timescale": timescale,
+                "multi_year_mean": multi_year_mean,
+                "start_date": start_date,
+                "end_date": end_date,
+                "modtime": modtime,
             }
         else:
-            rv[id_]['variables'][var] = long_var
+            rv[id_]["variables"][var] = long_var
 
     return rv
