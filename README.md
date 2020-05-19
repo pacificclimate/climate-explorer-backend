@@ -3,11 +3,40 @@
 [![Build Status](https://travis-ci.org/pacificclimate/climate-explorer-backend.svg?branch=master)](https://travis-ci.org/pacificclimate/climate-explorer-backend)
 [![Code Climate](https://codeclimate.com/github/pacificclimate/climate-explorer-backend/badges/gpa.svg)](https://codeclimate.com/github/pacificclimate/climate-explorer-backend)
 
-## Dependencies
+## System Dependencies
 
 ```bash
 $ sudo apt-get install libpq-dev python-dev libhdf5-dev libnetcdf-dev libgdal-dev
 ```
+
+### GDAL
+
+Installing the GDAL Python package requires two pieces: the system
+libraries and the Python bindings. While the latter is easily done
+with `pip` and is included in the requirements.txt file, the former
+can be complicated depending on your system. If you're lucky, there is
+a pre-built package available from apt, apk, or yum. If you're not,
+see below.
+
+Keep in mind that the minor version number of the GDAL system
+libraries *must agree* with the minor version of the GDAL `pip`
+package. If the `pip` package fails to install, it is highly likely
+that you're trying to install a mismatched version.
+
+Also know that while we so pin the GDAL version and keep it up to
+date, an updated version isn't strictly a requirement. If you are
+developing on a system where the most recent GDAL system libraries are
+not available (e.g. Ubuntu bionic), feel free to install a lesser
+version of GDAL for development purposes. Simply remove the version
+suffix from GDAL in the requirements.txt file, install it manually
+(e.g. `pip install GDAL==2.3`) and then proceed to finish the
+installation of dependencies.
+
+If you prefer to build GDAL from source (not recommended), there is a
+`build_gdal.sh` script in the repo that does reasonably well. Your
+mileage may vary.
+
+### Troubleshooting
 
 GDAL doesn't properly source its own lib paths when installing the python package, so we have to define
 these environment variables:

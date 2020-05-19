@@ -1,4 +1,6 @@
-FROM pcic/geospatial-python
+FROM pcic/geospatial-python:gdal3
+
+RUN apk add postgresql-dev
 
 ADD . /app
 WORKDIR /app

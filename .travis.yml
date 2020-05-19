@@ -14,11 +14,15 @@ env:
     - PIP_INDEX_URL=https://pypi.pacificclimate.org/simple
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
-    - GDALVERSION="2.3.1"
+    - GDALVERSION="3.0.4"
     - CPLUS_INCLUDE_PATH=$GDALINST/include
     - C_INCLUDE_PATH=$GDALINST/include
     - CFLAGS=-I$GDALINST/include
-
+cache:
+  directories:
+    - $GDALINST
+    - $GDALBUILD
+    - $HOME/.cache/pip
 before_install:
   - ./build_gdal.sh
   - export PATH=$GDALINST/bin:$PATH
