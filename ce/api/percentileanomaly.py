@@ -187,29 +187,29 @@ def percentileanomaly(
         )
 
     def generate_list_idx(timescale, timeidx):
-        '''
+        """
         This function accepts a timescale and timeidx to generate
         an index that is useful for list data structure. 
         Index 0~11 is assigned to "monthly" timescale Jan~Dec.
         Index 12~15 is assigned to "seasonal" timescale Winter~Fall.
         Index 16 is assigned to "yearly" timescale.
-        '''
+        """
         if timescale == "monthly":
             return int(timeidx)
-        if timescale == "seasonal": 
+        if timescale == "seasonal":
             return int(timeidx) + 12
         return 16
 
     def create_data_object(value, timescale, date, model=None):
-        '''    
+        """    
         this helper function accepts data arguments and assembles 
         them into a dictionary. It is intended to create a data 
         object from given data to store in lists effectively.
-        '''
-        return {"timescale": timescale, "date": date, "values": [value]}  
-             
-    def add_to_nested_li(li, attributes, date, models = None):
-        '''
+        """
+        return {"timescale": timescale, "date": date, "values": [value]}
+
+    def add_to_nested_li(li, attributes, date, models=None):
+        """
         This function accepts a list of data objects(can be empty), 
         attributes data and ctimestamp. The output is an updated list 
         with an added data object/value. Unlike li.append(), this 
@@ -219,30 +219,30 @@ def percentileanomaly(
         object's "values" attribute. Otherwise, create a new data
         object and add to the list. "models" is to keep track of
         number of models for each datum.
-        '''
+        """
         idx = generate_list_idx(attributes["timescale"], attributes["timeidx"])
-        
+
         if li[idx] is None:
-            obj = create_data_object(attributes["mean"], attributes["timescale"],date)
+            obj = create_data_object(attributes["mean"], attributes["timescale"], date)
             li[idx] = obj
         else:
             li[idx]["values"].append(attributes["mean"])
-        
+
         if models is not None:
             models[idx] |= {attributes["model"]}
-            
+
         return li, models
 
     def canonical_timestamp(timestamp, timescale, timeidx):
-        '''    
+        """    
         this function accepts a timestamp and returns a standardized value
         for comparison between models with different calendars.
         it is intended to smooth over differences of a day or two caused by
         calendar divergences around month length, so it will raise an error
         if a timestamp has an unexpected month value for its index.
-        '''
-        date_format = '%Y-%m-%d %H:%M:%S'
-        dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+        """
+        date_format = "%Y-%m-%d %H:%M:%S"
+        dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
 
         if timescale == "monthly":
             if dt.month == int(timeidx) + 1:
@@ -263,9 +263,15 @@ def percentileanomaly(
             500, "Invalid timestamp for {} {}: {}".format(timescale, timeidx, timestamp)
         )
 
-    def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, 
-                            baseline_model, baseline_climatology):
-        '''
+    def determine_baseline(
+        calculate_anomaly,
+        curr_idx,
+        p_obj,
+        baseline_data,
+        baseline_model,
+        baseline_climatology,
+    ):
+        """
         The function determines the baseline value 
         using the given arguments(p_obj and baseline_data).
         It iterates through every b_obj in the baseline_data 
@@ -274,27 +280,36 @@ def percentileanomaly(
         corresponding b_obj's value is assigned to baseline.
         If multiple or no matcing baseline values are found,
         the function aborts the program.
-        '''
+        """
         if calculate_anomaly:
             baseline = None
             b_obj = baseline_data[curr_idx]
 
             if b_obj is None:
-                    abort(500, "Missing baseline dataif(: {} {} {}".format(
-                            baseline_model, baseline_climatology, p_obj["timescale"]))    
+                abort(
+                    500,
+                    "Missing baseline dataif(: {} {} {}".format(
+                        baseline_model, baseline_climatology, p_obj["timescale"]
+                    ),
+                )
             else:
                 if not baseline and len(b_obj["values"]) == 1:
                     b_obj["values"] = b_obj["values"][0]
                     baseline = float(b_obj["values"])
                 else:
-                    abort(500, "Multiple matching baseline datasets ",
-                            "for {} {} {} {}".format(
-                                baseline_model,
-                                baseline_climatology,
-                                p_obj["timescale"], p_obj["date"]))
+                    abort(
+                        500,
+                        "Multiple matching baseline datasets ",
+                        "for {} {} {} {}".format(
+                            baseline_model,
+                            baseline_climatology,
+                            p_obj["timescale"],
+                            p_obj["date"],
+                        ),
+                    )
         else:
             baseline = 0.0
-        
+
         return baseline
 
     try:
@@ -303,9 +318,9 @@ def percentileanomaly(
             queries = DictReader(stored_query_file)
 
             projected_data = [None for i in range(17)]
-            # keep track of the models for each datum 
+            # keep track of the models for each datum
             models = [set() for i in range(17)]
-            units = ''
+            units = ""
             # go through stored queries, collecting all that match parameters
             for row in queries:
                 ctimestamp = canonical_timestamp(
@@ -323,43 +338,53 @@ def percentileanomaly(
                                 ),
                             )
 
-                    if row['climatology'] == climatology:
+                    if row["climatology"] == climatology:
 
-                        projected_data, models = add_to_nested_li(projected_data, row,
-                                                                 ctimestamp, models)
+                        projected_data, models = add_to_nested_li(
+                            projected_data, row, ctimestamp, models
+                        )
 
-                    elif (calculate_anomaly and
-                            row['model'] == baseline_model and
-                            row['climatology'] == baseline_climatology):
+                    elif (
+                        calculate_anomaly
+                        and row["model"] == baseline_model
+                        and row["climatology"] == baseline_climatology
+                    ):
 
-                        baseline_data, _ = add_to_nested_li(baseline_data, row, ctimestamp)
+                        baseline_data, _ = add_to_nested_li(
+                            baseline_data, row, ctimestamp
+                        )
 
         # calculate percentiles and anomalies
         for curr_idx, p_obj in enumerate(projected_data):
             if p_obj is not None:
-                baseline = determine_baseline(calculate_anomaly, curr_idx, 
-                                                p_obj, baseline_data, 
-                                                baseline_model, baseline_climatology)
+                baseline = determine_baseline(
+                    calculate_anomaly,
+                    curr_idx,
+                    p_obj,
+                    baseline_data,
+                    baseline_model,
+                    baseline_climatology,
+                )
                 values = np.asarray([float(v) for v in p_obj["values"]])
 
                 num_models = len(models[curr_idx])
                 if num_models < 12 or num_models < values.size:
-                    abort(500,
-                            "Not all models available for {} {}. Models available: {}").format(
-                                p_obj["timescale"], p_obj["date"], p_obj["models"])
+                    abort(
+                        500, "Not all models available for {} {}. Models available: {}"
+                    ).format(p_obj["timescale"], p_obj["date"], p_obj["models"])
                 elif num_models > 12 or num_models > values.size:
-                    abort(500,
-                            "Extraneous data for {} {}. Models available: {}").format(
-                                p_obj["timescale"], p_obj["date"], p_obj["models"])
+                    abort(
+                        500, "Extraneous data for {} {}. Models available: {}"
+                    ).format(p_obj["timescale"], p_obj["date"], p_obj["models"])
 
                 anomalies = values - baseline
 
                 p_obj["values"] = list(np.percentile(anomalies, percentiles))
-            
+
         def remove_None(li):
-            '''
+            """
             the function accepts a list and removes every None values in the list
-            '''
+            """
             return [obj for obj in li if obj is not None]
 
         projected_data = remove_None(projected_data)
