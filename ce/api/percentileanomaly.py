@@ -185,24 +185,19 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         Index 16 is assigned to "yearly" timescale.
         '''
         if timescale == "monthly":
-            idx = int(timeidx)
-        elif timescale == "seasonal": 
-            idx = int(timeidx) + 12
-        else:
-            idx = 16
-
-        return idx
+            return int(timeidx)
+        if timescale == "seasonal": 
+            return int(timeidx) + 12
+        return 16
 
     def create_data_object(value, timescale, date, model=None):
         '''    
-        this helper function accepts data arguments and assembles them into a dictionary.
-        it is intended to create a data object from given data to store in lists effectively.
+        this helper function accepts data arguments and assembles 
+        them into a dictionary. It is intended to create a data 
+        object from given data to store in lists effectively.
         '''
-
         return {"timescale": timescale, "date": date, "values": [value]}  
              
-
-
     def add_to_nested_li(li, attributes, date, models = None):
         '''
         This function accepts a list of data objects(can be empty), 
@@ -215,12 +210,10 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         object and add to the list. "models" is to keep track of
         number of models for each datum.
         '''
-
         idx = generate_list_idx(attributes["timescale"], attributes["timeidx"])
         
         if li[idx] is None:
-            obj = create_data_object(attributes["mean"], attributes["timescale"],
-                                            date)
+            obj = create_data_object(attributes["mean"], attributes["timescale"],date)
             li[idx] = obj
         else:
             li[idx]["values"].append(attributes["mean"])
@@ -230,11 +223,6 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             
         return li, models
 
-            
-
-
-
-
     def canonical_timestamp(timestamp, timescale, timeidx):
         '''    
         this function accepts a timestamp and returns a standardized value
@@ -243,7 +231,6 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
         calendar divergences around month length, so it will raise an error
         if a timestamp has an unexpected month value for its index.
         '''
-
         date_format = '%Y-%m-%d %H:%M:%S'
         dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
         if timescale == "monthly":
@@ -263,8 +250,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                                                        timeidx,
                                                        timestamp))
 
-
-    def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology):
+    def determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, 
+                            baseline_model, baseline_climatology):
         '''
         The function determines the baseline value 
         using the given arguments(p_obj and baseline_data).
@@ -282,7 +269,6 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
             if b_obj is None:
                     abort(500, "Missing baseline dataif(: {} {} {}".format(
                             baseline_model, baseline_climatology, p_obj["timescale"]))    
-
             else:
                 if not baseline and len(b_obj["values"]) == 1:
                     b_obj["values"] = b_obj["values"][0]
@@ -293,12 +279,10 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                                 baseline_model,
                                 baseline_climatology,
                                 p_obj["timescale"], p_obj["date"]))
-
         else:
             baseline = 0.0
         
         return baseline
-
 
     try:
         # fetch stored queries from csv
@@ -327,7 +311,8 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
                     if row['climatology'] == climatology:
 
-                        projected_data, models = add_to_nested_li(projected_data, row, ctimestamp, models)
+                        projected_data, models = add_to_nested_li(projected_data, row,
+                                                                 ctimestamp, models)
 
                     elif (calculate_anomaly and
                             row['model'] == baseline_model and
@@ -335,16 +320,12 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
 
                         baseline_data, _ = add_to_nested_li(baseline_data, row, ctimestamp)
 
-
-
-
-
-
         # calculate percentiles and anomalies
         for curr_idx, p_obj in enumerate(projected_data):
             if p_obj is not None:
-                
-                baseline = determine_baseline(calculate_anomaly, curr_idx, p_obj, baseline_data, baseline_model, baseline_climatology)
+                baseline = determine_baseline(calculate_anomaly, curr_idx, 
+                                                p_obj, baseline_data, 
+                                                baseline_model, baseline_climatology)
                 values = np.asarray([float(v) for v in p_obj["values"]])
 
                 num_models = len(models[curr_idx])
@@ -360,20 +341,15 @@ def percentileanomaly(sesh, region, climatology, variable, percentile='50',
                 anomalies = values - baseline
 
                 p_obj["values"] = list(np.percentile(anomalies, percentiles))
-
-            curr_idx += 1
-
-
+            
         def remove_None(li):
             '''
             the function accepts a list and removes every None values in the list
             '''
             return [obj for obj in li if obj is not None]
 
-
         projected_data = remove_None(projected_data)
         baseline_data = remove_None(baseline_data)
-
 
         response = {
                 'units': units,
