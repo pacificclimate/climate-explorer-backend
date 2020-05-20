@@ -114,7 +114,7 @@ def data(
         """
         with open_nc(data_file.filename) as nc:
             a = get_array(nc, data_file.filename, time_idx, area, variable)
-        return np.asscalar(np.mean(a))
+        return np.mean(a).item()
 
     def get_time_value(timeset, time_idx):
         """
