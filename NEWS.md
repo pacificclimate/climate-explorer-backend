@@ -1,5 +1,20 @@
 # News / Release Notes
 
+## 2.0.0
+*21-May-2020*
+
+* Update GDAL to version 3.0 [#140](https://github.com/pacificclimate/climate-explorer-backend/pull/140)
+* Format `percentileanomaly` API output as a list [#133](https://github.com/pacificclimate/climate-explorer-backend/pull/137)
+* Set up PEP8 testing and bring existing code up to standard [#141](https://github.com/pacificclimate/climate-explorer-backend/pull/141)
+
+
+## 1.3.0
+*21-May-2020*
+
+* Use the PCIC jenkins library [#124](https://github.com/pacificclimate/climate-explorer-backend/pull/124)
+* Document suggested use of watershed API [#132](https://github.com/pacificclimate/climate-explorer-backend/pull/132)
+* Add `percentileanomaly` and `regions` API endpoints to support plan2adapt [#128](https://github.com/pacificclimate/climate-explorer-backend/pull/128)
+
 ## 1.2.0
 *28-January-2020*
 
