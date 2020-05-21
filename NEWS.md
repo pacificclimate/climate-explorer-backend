@@ -1,5 +1,12 @@
 # News / Release Notes
 
+## 1.3.0
+*21-May-2020*
+
+* Use the PCIC jenkins library [#124](https://github.com/pacificclimate/climate-explorer-backend/pull/124)
+* Document suggested use of watershed API [#132](https://github.com/pacificclimate/climate-explorer-backend/pull/132)
+* Add percentileanomaly and regions API endpoints to support plan2adapt [#128](https://github.com/pacificclimate/climate-explorer-backend/pull/128)
+
 ## 1.2.0
 *28-January-2020*
 
