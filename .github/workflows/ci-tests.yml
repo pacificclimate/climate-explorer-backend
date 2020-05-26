@@ -6,7 +6,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    contianer: pcic/geospatial-python:gdal3
+    container: pcic/geospatial-python:gdal3
 
     steps:
     - uses: actions/checkout@v2
