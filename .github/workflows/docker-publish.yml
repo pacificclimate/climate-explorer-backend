@@ -26,7 +26,7 @@ jobs:
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: pcic/climate-explorer-frontend
+        name: pcic/climate-explorer-backend
         username: ${{ secrets.pcicdevops_at_dockerhub_username }}
         password: ${{ secrets.pcicdevops_at_dockerhub_password }}
         tags: "${{ env.BRANCH }},${{ env.TAG }}"
