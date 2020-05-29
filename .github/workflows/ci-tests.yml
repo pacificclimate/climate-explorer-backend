@@ -1,0 +1,20 @@
+name: CI Tests
+
+on: push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+    container: pcic/geospatial-python:gdal3
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        pip install -i https://pypi.pacificclimate.org/simple -r requirements.txt -r test_requirements.txt
+        pip install .
+        python setup.py build_sphinx
+    - name: Test with pytest
+      run: |
+        pytest -v --flake8
