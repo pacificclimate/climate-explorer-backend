@@ -2,10 +2,11 @@ name: Docker Publishing
 
 on:
   push:
-    tags:
-      - '*'
     branches:
       - '*'
+  release:
+    types:
+      - created
 
 jobs:
   docker-publish:
