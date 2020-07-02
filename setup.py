@@ -36,7 +36,7 @@ setup(
         "modelmeta==0.2.0",
         "shapely>=1.6",
         "numpy",
-        "netcdf4<1.4",
+        "netCDF4",
         "python-dateutil",
         "GDAL",
         "rasterio",
