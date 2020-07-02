@@ -7,7 +7,7 @@ WORKDIR /app
 
 RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
 RUN pip3 install gunicorn
-RUN python3 ./setup.py install
+RUN pip3 install .
 
 EXPOSE 8000
 
