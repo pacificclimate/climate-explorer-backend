@@ -1,9 +1,9 @@
-name: CI Tests
+name: Python CI
 
 on: push
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-18.04
     container: pcic/geospatial-python:gdal3
