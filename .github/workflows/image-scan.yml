@@ -18,5 +18,9 @@ jobs:
     - uses: anchore/scan-action@v1
       with:
         image-reference: "pcic/climate-explorer-backend:test-image"
-        dockerfile-path: "./Dockerfile"
         fail-build: true
+    - name: Upload Report
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: AnchoreReports
+        path: ./anchore-reports/
