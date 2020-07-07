@@ -1,6 +1,7 @@
 # PCIC Climate Explorer Backend
 
-[![Build Status](https://travis-ci.org/pacificclimate/climate-explorer-backend.svg?branch=master)](https://travis-ci.org/pacificclimate/climate-explorer-backend)
+![Python CI](https://github.com/pacificclimate/climate-explorer-backend/workflows/Python%20CI/badge.svg)
+![Docker Publishing](https://github.com/pacificclimate/climate-explorer-backend/workflows/Docker%20Publishing/badge.svg)
 [![Code Climate](https://codeclimate.com/github/pacificclimate/climate-explorer-backend/badges/gpa.svg)](https://codeclimate.com/github/pacificclimate/climate-explorer-backend)
 
 ## System Dependencies
@@ -64,14 +65,14 @@ $ source venv/bin/activate
 
 ### Building the Documentation
 
-Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation. 
+Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation.
 
 ```
 pip install -e .
 pyenv/bin/python setup.py build_sphinx
 ```
 
-HTML documentation will be in the `doc/build/html` directory. 
+HTML documentation will be in the `doc/build/html` directory.
 
 Sphinx can also generate a PDF by invoking the TeXlive toolchain, if it is installed on your machine. On Ubuntu, you will to install the following packages before sphinx can successfully create a PDF:
 * latexmk
@@ -123,11 +124,11 @@ cd climate-explorer-backend
 docker build -t climate-explorer-backend-image .
 ```
 
-It's convenient to create a seperate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database.
+It's convenient to create a separate read-only docker container to mount the data. This container can be shared by multiple instances of the server backend. More `-v` arguments can be supplied as needed to bring together data from multiple locations, as long as individual files end up mapped onto the locations given for them in the metadata database.
 
-Jenkins image build:
+Automated image build:
 
-Jenkins automatically handles the generation of docker images. Currently it is configured to trigger an image build for each push on individual branches. The image generated will have the name `climate-explorer-backend/[branch_name]`.
+Github actions will automatically build and publish and image to our [docker hub](https://hub.docker.com/r/pcic/climate-explorer-backend) on each push and tag creation. The tagging strategy is defined by the [docker workflow](https://github.com/marketplace/actions/build-and-push-docker-images#tag_with_ref).
 
 ```bash
 docker run --name ce_data -v /absolute/path/to/wherever/the/needed/data/is/:/storage/data/:ro ubuntu 16.04
