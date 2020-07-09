@@ -33,7 +33,7 @@ setup(
         "Flask-SQLAlchemy",
         "Flask-Cors",
         "Flask-Cache",
-        "modelmeta==0.2.0",
+        "modelmeta>=1.0.0",
         "shapely>=1.6",
         "numpy",
         "netCDF4",
