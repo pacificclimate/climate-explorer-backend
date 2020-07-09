@@ -20,7 +20,7 @@ from modelmeta.v2 import (
     TimeSet,
     ClimatologicalTime,
     DataFile,
-    DataFileVariable,
+    DataFileVariableGridded,
 )
 from flask_sqlalchemy import SQLAlchemy
 from netCDF4 import Dataset
@@ -298,7 +298,7 @@ def populateddb(cleandb,):
             "pr": "time: mean time: mean over days",
             "flow_direction": "foo",
         }[var_name]
-        return DataFileVariable(
+        return DataFileVariableGridded(
             file=file,
             netcdf_variable_name=var_name,
             range_min=0,
@@ -518,7 +518,7 @@ def multitime_db(cleandb,):
     )
 
     dfvs = [
-        DataFileVariable(
+        DataFileVariableGridded(
             netcdf_variable_name="tasmax",
             range_min=0,
             range_max=50,
