@@ -12,6 +12,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install dependencies
       run: |
+        pip install -U pip wheel
         pip install -i https://pypi.pacificclimate.org/simple -r requirements.txt -r test_requirements.txt
         pip install .
         python setup.py build_sphinx
