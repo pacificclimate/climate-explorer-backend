@@ -1,6 +1,6 @@
 FROM pcic/geospatial-python:gdal3
 
-RUN apk add postgresql-dev
+RUN apk add postgresql-dev libxml2-dev libxslt-dev
 
 ADD . /app
 WORKDIR /app
