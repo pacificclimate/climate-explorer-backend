@@ -178,12 +178,14 @@ def make_mask_grid_key(nc, fname, poly, variable):
     and min / max / number of steps for both latitutde and longitude.
     Assumes a regular grid.
     """
-    latsteps = nc.variables["lat"].shape[0]
-    latmin = nc.variables["lat"][0]
-    latmax = nc.variables["lat"][latsteps - 1]
-    lonsteps = nc.variables["lon"].shape[0]
-    lonmin = nc.variables["lon"][0]
-    lonmax = nc.variables["lon"][lonsteps - 1]
+    lat = nc.variables["lat"]
+    lon = nc.variables["lon"]
+    latsteps = lat.shape[0]
+    latmin = np.min(lat)
+    latmax = np.max(lat)
+    lonsteps = lon.shape[0]
+    lonmin = np.min(lon)
+    lonmax = np.max(lon)
     wkt = dumps(poly)  # dict-style geoJSON can't be hashed
     return (wkt, latmin, latmax, latsteps, lonmin, lonmax, lonsteps)
 

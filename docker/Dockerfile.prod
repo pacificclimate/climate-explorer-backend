@@ -1,13 +1,15 @@
 FROM pcic/geospatial-python:gdal3
 
-RUN apk add postgresql-dev
+RUN apk add postgresql-dev libxml2-dev libxslt-dev
+# Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
+RUN apk upgrade perl
 
 ADD . /app
 WORKDIR /app
 
 RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
 RUN pip3 install gunicorn
-RUN python3 ./setup.py install
+RUN pip3 install .
 
 EXPOSE 8000
 

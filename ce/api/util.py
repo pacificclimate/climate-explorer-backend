@@ -63,6 +63,7 @@ def open_nc(fname):
 
     try:
         nc = Dataset(fname, "r")
+        nc.set_always_mask(False)
         yield nc
     finally:
         nc.close()

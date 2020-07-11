@@ -2,7 +2,7 @@ import time
 import pytest
 
 from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
-from ce.api.geo import polygon_to_mask, memoize, getsize
+from ce.api.geo import polygon_to_mask, memoize, getsize, make_mask_grid_key
 from shapely.wkt import loads
 from shapely.errors import ReadingError
 from collections import OrderedDict
@@ -19,15 +19,20 @@ def test_data_cache(netcdf_file):
     netcdf_file, fname = netcdf_file
     f.cache_clear()
     f(netcdf_file, fname, test_polygons[0], var)
-    assert f.get_hits() == 0, f.get_misses() == 1
+    assert f.get_hits() == 0
+    assert f.get_misses() == 1
     f(netcdf_file, fname, test_polygons[0], var)
-    assert f.get_hits() == 1, f.get_misses() == 1
+    assert f.get_hits() == 1
+    assert f.get_misses() == 1
     f(netcdf_file, fname, test_polygons[1], var)
-    assert f.get_hits() == 1, f.get_misses() == 2
+    assert f.get_hits() == 1
+    assert f.get_misses() == 2
     f(netcdf_file, fname, test_polygons[1], var)
-    assert f.get_hits() == 2, f.get_misses() == 2
+    assert f.get_hits() == 2
+    assert f.get_misses() == 2
     f(netcdf_file, fname, test_polygons[1], var)
-    assert f.get_hits() == 3, f.get_misses() == 2
+    assert f.get_hits() == 3
+    assert f.get_misses() == 2
 
 
 def test_mask_cache(netcdf_file):
@@ -103,3 +108,17 @@ def test_clip_speed(ncobject, polygon):
     t = time.time() - t0
     # Ensure that we can clip our largest polygons in under 100ms
     assert t < .1
+
+
+def test_make_mask_grid_key(ncobject, polygon):
+    ncobject, fname = ncobject
+    try:
+        poly = loads(polygon)
+    except ReadingError:
+        pytest.skip("Invalid polygon, so speed test is irrellevant")
+
+    result = make_mask_grid_key(ncobject, fname, poly, None)
+    try:
+        {result}
+    except TypeError:
+        assert False, "make_mask_grid_key() generated an unhashable key"
