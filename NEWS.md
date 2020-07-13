@@ -1,5 +1,12 @@
 # News / Release Notes
 
+## 3.0.0
+*13-July-2020
+
+* Upgrades modelmeta and netCDF4 requirements [#147](https://github.com/pacificclimate/climate-explorer-backend/pull/147)
+  and [#144](https://github.com/pacificclimate/climate-explorer-backend/pull/144)
+* Migrate Continuous Integration to Github Actions [#145](https://github.com/pacificclimate/climate-explorer-backend/pull/145)
+
 ## 2.0.0
 *21-May-2020*
 
