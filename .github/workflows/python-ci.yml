@@ -1,9 +1,9 @@
-name: CI Tests
+name: Python CI
 
 on: push
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-18.04
     container: pcic/geospatial-python:gdal3
@@ -17,6 +17,11 @@ jobs:
         pip install -i https://pypi.pacificclimate.org/simple -r requirements.txt -r test_requirements.txt
         pip install .
         python setup.py build_sphinx
-    - name: Test with pytest
+    - name: Test with pytest (full)
+      if: github.ref == 'refs/heads/master'
       run: |
-        pytest -v --flake8
+        py.test -v --tb=short --cov --flake8
+    - name: Test with pytest (fast)
+      if: github.ref != 'refs/heads/master'
+      run: |
+        py.test -m "not slow" -v --tb=short --flake8

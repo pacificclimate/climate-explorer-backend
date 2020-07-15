@@ -4,30 +4,20 @@ on:
   push:
     branches:
       - '*'
-  release:
-    types:
-      - created
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  docker-publish:
+  publish:
 
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@master
-    - run: git pull --unshallow
-    - name: Get Branch
-      uses: nelonoel/branch-name@v1
-    - name: Get Tag
-      uses: olegtarasov/get-tag@v2
-    - name: Set env vars for build
-      run: |
-        echo ::set-env name=BRANCH::$(echo ${BRANCH_NAME})
-        echo ::set-env name=TAG::$(echo ${GIT_TAG_NAME})
-    - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: pcic/climate-explorer-backend
-        username: ${{ secrets.pcicdevops_at_dockerhub_username }}
-        password: ${{ secrets.pcicdevops_at_dockerhub_password }}
-        tags: "${{ env.BRANCH }},${{ env.TAG }}"
+      - uses: actions/checkout@master
+      - name: Publish to Registry
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.pcicdevops_at_dockerhub_username }}
+          password: ${{ secrets.pcicdevops_at_dockerhub_password }}
+          repository: pcic/climate-explorer-backend
+          tag_with_ref: true
