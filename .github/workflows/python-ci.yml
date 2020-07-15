@@ -20,7 +20,7 @@ jobs:
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       run: |
-        py.test -v --tb=short --cov --flake8
+        py.test -v --tb=short --flake8
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
