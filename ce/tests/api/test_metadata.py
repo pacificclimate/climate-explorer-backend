@@ -18,6 +18,7 @@ def test_metadata(populateddb, unique_id):
     file_metadata = rv[unique_id]
 
     for key in [
+        'filepath',
         "institution",
         "model_id",
         "model_name",
@@ -32,6 +33,8 @@ def test_metadata(populateddb, unique_id):
         "modtime",
     ]:
         assert key in file_metadata
+
+    assert f"{unique_id}.nc" in file_metadata["filepath"]
 
     times = file_metadata["times"]
     assert len(times) > 0

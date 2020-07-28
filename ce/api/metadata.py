@@ -36,6 +36,7 @@ def metadata(sesh, model_id):
             {
                 'tmax_monClim_PRISM_historical_run1_198101-201012':
                 {
+                    'filepath': '/storage/data/projects/blah/blah/tmax_monClim_PRISM_historical_run1_198101-201012.nc',
                     'institution': 'Pacific Climate Impacts Consortium',
                     'model_id': 'BCSD+ANUSPLIN300+CCSM4',
                     'model_name': 'CCSM4 GCM data downscaled to '
@@ -98,6 +99,7 @@ def metadata(sesh, model_id):
 
     return {
         model_id: {
+            "filepath": data_file.filename,
             "institution": model.organization,
             "model_id": model.short_name,
             "model_name": model.long_name,
