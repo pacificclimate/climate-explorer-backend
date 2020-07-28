@@ -35,24 +35,26 @@ def multimeta(sesh, ensemble_name="ce_files", model=""):
         For example::
 
           {
-          pr_day_BCCAQ-ANUSPLIN300-MRI-CGCM3_historical-rcp45_r1i1p1_19500101-21001231:
-              {
-              institution: "PCIC",
-              model_id: "BCCAQ+ANUSPLIN300+MRI-CGCM3",
-              model_name: "",
-              experiment: "historical+rcp45",
-              variables:
-                  {
-                  "pr": "Precipitation"
-                  },
-              ensemble_member: "r1i1p1",
-              timescale: "monthly",
-              multi_year_mean: false,
-              start_date: datetime.datetime(1950, 1, 1, 0, 0),
-              end_date: datetime.datetime(2100, 12, 31, 0, 0),
-              modtime: datetime.datetime(2010, 1, 1, 17, 30, 4)
+              'pr_day_BCCAQ-ANUSPLIN300-MRI-CGCM3_historical-rcp45_r1i1p1_19500101-21001231': {
+                  'filepath': '/storage/data/projects/blah/blah/pr_day_BCCAQ-ANUSPLIN300-MRI-CGCM3_historical-rcp45_r1i1p1_19500101-21001231.nc',
+                  'institution': 'PCIC',
+                  'model_id': 'BCCAQ+ANUSPLIN300+MRI-CGCM3',
+                  'model_name': '',
+                  'experiment': 'historical+rcp45',
+                  'variables':
+                      {
+                        'pr': 'Precipitation'
+                      },
+                  'ensemble_member': 'r1i1p1',
+                  'timescale': 'monthly',
+                  'multi_year_mean': false,
+                  'start_date': datetime.datetime(1950, 1, 1, 0, 0),
+                  'end_date': datetime.datetime(2100, 12, 31, 0, 0),
+                  'modtime': datetime.datetime(2010, 1, 1, 17, 30, 4)
               },
-          unique_id2:
+              'unique_id2': {
+                  ...
+              },
               ...
           }
 
@@ -61,6 +63,7 @@ def multimeta(sesh, ensemble_name="ce_files", model=""):
     q = (
         sesh.query(
             DataFile.unique_id,
+            DataFile.filename,
             Model.organization,
             Model.short_name,
             Model.long_name,
@@ -100,6 +103,7 @@ def multimeta(sesh, ensemble_name="ce_files", model=""):
     # circa release 1.1
     for (
         id_,
+        filepath,
         org,
         model_short,
         model_long,
@@ -115,6 +119,7 @@ def multimeta(sesh, ensemble_name="ce_files", model=""):
     ) in results:
         if id_ not in rv:
             rv[id_] = {
+                "filepath": filepath,
                 "institution": org,
                 "model_id": model_short,
                 "model_name": model_long,
