@@ -4,7 +4,7 @@
 import numpy as np
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
-from modelmeta import DataFileVariable, Ensemble
+from modelmeta import DataFileVariableGridded, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
 
 
@@ -131,9 +131,9 @@ def data(
         raise Exception("Timeset has no time with index value {}".format(time_idx))
 
     query = (
-        sesh.query(DataFileVariable)
-        .filter(DataFileVariable.netcdf_variable_name == variable)
-        .join(DataFileVariable.file)
+        sesh.query(DataFileVariableGridded)
+        .filter(DataFileVariableGridded.netcdf_variable_name == variable)
+        .join(DataFileVariableGridded.file)
         .join(DataFile.run)
         .join(Run.model)
         .filter(Model.short_name == model)
@@ -142,7 +142,9 @@ def data(
         .join(DataFile.timeset)
         .filter(TimeSet.time_resolution == timescale)
         .filter(TimeSet.multi_year_mean)
-        .filter(DataFileVariable.ensembles.any(Ensemble.name == ensemble_name))
+        .filter(
+            DataFileVariableGridded.ensembles.any(Ensemble.name == ensemble_name)
+        )
     )
     data_file_variables = query.all()
 

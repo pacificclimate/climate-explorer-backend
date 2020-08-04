@@ -33,7 +33,12 @@ from ce.api.geospatial import (
 from ce.api.util import is_valid_index, vec_add, neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
-from modelmeta import DataFile, DataFileVariable, Ensemble, EnsembleDataFileVariables
+from modelmeta import (
+    DataFile,
+    DataFileVariableGridded,
+    Ensemble,
+    EnsembleDataFileVariables
+)
 
 
 def watershed(sesh, station, ensemble_name):
@@ -299,9 +304,9 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     """
     query = (
         sesh.query(distinct(DataFile.filename).label("filename"))
-        .join(DataFileVariable, EnsembleDataFileVariables, Ensemble,)
+        .join(DataFileVariableGridded, EnsembleDataFileVariables, Ensemble,)
         .filter(Ensemble.name == ensemble_name)
-        .filter(DataFileVariable.netcdf_variable_name == variable)
+        .filter(DataFileVariableGridded.netcdf_variable_name == variable)
         .filter(DataFile.time_set_id.is_(None))
     )
 

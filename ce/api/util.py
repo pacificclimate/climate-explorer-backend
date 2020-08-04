@@ -157,8 +157,8 @@ def search_for_unique_ids(
         raise Exception("Unsupported cell_method: {}".format(cell_method))
 
     cell_methods = (
-        sesh.query(mm.DataFileVariable.variable_cell_methods)
-        .distinct(mm.DataFileVariable.variable_cell_methods)
+        sesh.query(mm.DataFileVariableGridded.variable_cell_methods)
+        .distinct(mm.DataFileVariableGridded.variable_cell_methods)
         .all()
     )
 
@@ -170,7 +170,7 @@ def search_for_unique_ids(
         sesh.query(mm.DataFile.unique_id)
         .distinct(mm.DataFile.unique_id)
         .join(
-            mm.DataFileVariable,
+            mm.DataFileVariableGridded,
             mm.EnsembleDataFileVariables,
             mm.Ensemble,
             mm.Run,
@@ -180,8 +180,10 @@ def search_for_unique_ids(
             mm.Time,
         )
         .filter(mm.Ensemble.name == ensemble_name)
-        .filter(mm.DataFileVariable.netcdf_variable_name == variable)
-        .filter(mm.DataFileVariable.variable_cell_methods.in_(matching_cell_methods))
+        .filter(mm.DataFileVariableGridded.netcdf_variable_name == variable)
+        .filter(mm.DataFileVariableGridded.variable_cell_methods.in_(
+            matching_cell_methods
+        ))
         .filter(mm.Time.time_idx == time)
     )
 
