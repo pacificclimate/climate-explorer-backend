@@ -8,14 +8,14 @@ from shapely.errors import ReadingError
 from collections import OrderedDict
 
 test_polygons = [
-    'POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))',
-    'POLYGON ((-125 55, -116 55, -116 60, -125 60, -125 55))'
+    "POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))",
+    "POLYGON ((-125 55, -116 55, -116 60, -125 60, -125 55))",
 ]
 
 
 def test_data_cache(netcdf_file):
     f = wkt_to_masked_array
-    var = 'tasmax'
+    var = "tasmax"
     netcdf_file, fname = netcdf_file
     f.cache_clear()
     f(netcdf_file, fname, test_polygons[0], var)
@@ -37,7 +37,7 @@ def test_data_cache(netcdf_file):
 
 def test_mask_cache(netcdf_file):
     f = polygon_to_mask
-    var = 'tasmax'
+    var = "tasmax"
     nc, fname = netcdf_file
     f.cache_clear()
     gj0 = loads(test_polygons[0])
@@ -63,7 +63,6 @@ def test_mask_cache(netcdf_file):
 # cache to trigger a delete, test cache clearing with a simple function
 # and tiny cache instead.
 def test_cache_delete():
-
     def make_fib_key(n):
         return n
 
@@ -78,10 +77,10 @@ def test_cache_delete():
 
     @memoize(make_fib_key, cache_size_mb)
     def cached_fibonacci(n):
-        if(n < 3):
+        if n < 3:
             return 1
         else:
-            return cached_fibonacci(n-1) + cached_fibonacci(n-2)
+            return cached_fibonacci(n - 1) + cached_fibonacci(n - 2)
 
     f = cached_fibonacci
     previous_cache = f.get_size()
@@ -89,12 +88,12 @@ def test_cache_delete():
     for n in range(1, 20):
         cached_fibonacci(n)
         assert (f.get_size() / mb_conversion) <= cache_size_mb
-        if(previous_cache >= f.get_size()):
+        if previous_cache >= f.get_size():
             return True
         previous_cache = f.get_size()
 
     # make sure cache has stayed the same size or shrunk at least once.
-    assert(0)
+    assert 0
 
 
 def test_clip_speed(ncobject, polygon):
@@ -104,10 +103,10 @@ def test_clip_speed(ncobject, polygon):
     except ReadingError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
-    polygon_to_masked_array(ncobject, fname, poly, 'tasmax')
+    polygon_to_masked_array(ncobject, fname, poly, "tasmax")
     t = time.time() - t0
     # Ensure that we can clip our largest polygons in under 100ms
-    assert t < .1
+    assert t < 0.1
 
 
 def test_make_mask_grid_key(ncobject, polygon):

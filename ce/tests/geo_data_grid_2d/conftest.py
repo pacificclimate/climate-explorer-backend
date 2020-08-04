@@ -19,5 +19,5 @@ def data_grid_1(longitudes_1, latitudes_1):
         longitudes=longitudes_1,
         latitudes=latitudes_1,
         values=numpy.arange(12).reshape((4, 3)),
-        units='units'
+        units="units",
     )

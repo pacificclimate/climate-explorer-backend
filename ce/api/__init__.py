@@ -112,7 +112,7 @@ def get_required_args(func):
 def get_keyword_args(func):
     args, _, _, defaults, _, _, _ = inspect.getfullargspec(func)
     if defaults:
-        return args[-len(defaults):]
+        return args[-len(defaults) :]
     else:
         return []
 

@@ -125,5 +125,5 @@ def array_stats(array):
         "mean": np.mean(array).item(),
         "median": ma.median(array).item(),
         "stdev": np.std(array).item(),
-        "ncells": array.compressed().size
+        "ncells": array.compressed().size,
     }
