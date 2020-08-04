@@ -78,14 +78,12 @@ def multimeta(sesh, ensemble_name="ce_files", model=""):
         .join(Model)
         .join(Emission)
         .join(
-            DataFileVariableGridded,
-            DataFileVariableGridded.data_file_id == DataFile.id
+            DataFileVariableGridded, DataFileVariableGridded.data_file_id == DataFile.id
         )
         .join(EnsembleDataFileVariables)
         .join(Ensemble)
         .join(
-            VariableAlias,
-            VariableAlias.id == DataFileVariableGridded.variable_alias_id
+            VariableAlias, VariableAlias.id == DataFileVariableGridded.variable_alias_id
         )
         .join(TimeSet, TimeSet.id == DataFile.time_set_id)
         .filter(Ensemble.name == ensemble_name)

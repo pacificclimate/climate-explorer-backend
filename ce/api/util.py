@@ -181,9 +181,9 @@ def search_for_unique_ids(
         )
         .filter(mm.Ensemble.name == ensemble_name)
         .filter(mm.DataFileVariableGridded.netcdf_variable_name == variable)
-        .filter(mm.DataFileVariableGridded.variable_cell_methods.in_(
-            matching_cell_methods
-        ))
+        .filter(
+            mm.DataFileVariableGridded.variable_cell_methods.in_(matching_cell_methods)
+        )
         .filter(mm.Time.time_idx == time)
     )
 

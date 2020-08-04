@@ -37,7 +37,7 @@ from modelmeta import (
     DataFile,
     DataFileVariableGridded,
     Ensemble,
-    EnsembleDataFileVariables
+    EnsembleDataFileVariables,
 )
 
 

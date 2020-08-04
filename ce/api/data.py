@@ -142,9 +142,7 @@ def data(
         .join(DataFile.timeset)
         .filter(TimeSet.time_resolution == timescale)
         .filter(TimeSet.multi_year_mean)
-        .filter(
-            DataFileVariableGridded.ensembles.any(Ensemble.name == ensemble_name)
-        )
+        .filter(DataFileVariableGridded.ensembles.any(Ensemble.name == ensemble_name))
     )
     data_file_variables = query.all()
 
