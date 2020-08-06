@@ -5,7 +5,7 @@ import re
 import pytest
 
 from ce.api import find_modtime
-from ce.tests.helpers.test_utils import check_dict_subset
+from test_utils import check_dict_subset
 
 
 @pytest.mark.parametrize(
