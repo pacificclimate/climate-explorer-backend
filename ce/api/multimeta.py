@@ -121,9 +121,11 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
     allowable_extra_attribute_names = """
             filepath
         """.split()
-    extra_attribute_names = [
-        name for name in extras.split(",") if name in allowable_extra_attribute_names
-    ] if extras is not None and extras != "" else []
+    extra_attribute_names = (
+        [name for name in extras.split(",") if name in allowable_extra_attribute_names]
+        if extras is not None and extras != ""
+        else []
+    )
 
     simple_attribute_names = base_attribute_names + extra_attribute_names
 
@@ -135,7 +137,8 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
                 name: getattr(result, name) for name in simple_attribute_names
             }
             rv[unique_id]["variables"] = {}
-        rv[unique_id]["variables"][result.netcdf_variable_name] = \
-            result.variable_long_name
-        
+        rv[unique_id]["variables"][
+            result.netcdf_variable_name
+        ] = result.variable_long_name
+
     return rv

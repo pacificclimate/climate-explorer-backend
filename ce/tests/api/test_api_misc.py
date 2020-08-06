@@ -11,39 +11,23 @@ from test_utils import check_dict_subset
 @pytest.mark.parametrize(
     "endpoint, query_params, expected",
     [
-        (
-            "stats",
-            {"id_": "", "time": "", "area": "", "variable": ""},
-            {},
-        ),
+        ("stats", {"id_": "", "time": "", "area": "", "variable": ""}, {},),
         (
             "data",
             {"model": "", "emission": "", "time": "0", "area": "", "variable": ""},
             {},
         ),
-        (
-            "timeseries",
-            {"id_": "", "area": "", "variable": ""},
-            {},
-        ),
-        (
-            "models",
-            {},
-            {},
-        ),
+        ("timeseries", {"id_": "", "area": "", "variable": ""}, {},),
+        ("models", {}, {},),
         (
             "metadata",
-            {
-                "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-            },
+            {"model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",},
             {
                 "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230": {
                     "institution": "BNU",
                     "model_id": "BNU-ESM",
                     "experiment": "historical",
-                    "variables": {
-                        "tasmax": "Daily Maximum Temperature"
-                    },
+                    "variables": {"tasmax": "Daily Maximum Temperature"},
                     "ensemble_member": "r1i1p1",
                     "times": {
                         "0": "1985-01-15T00:00:00Z",
@@ -57,12 +41,12 @@ from test_utils import check_dict_subset
                         "8": "1985-09-15T00:00:00Z",
                         "9": "1985-10-15T00:00:00Z",
                         "10": "1985-11-15T00:00:00Z",
-                        "11": "1985-12-15T00:00:00Z"
+                        "11": "1985-12-15T00:00:00Z",
                     },
                     "timescale": "monthly",
                     "multi_year_mean": True,
                     "start_date": "1971-01-01T00:00:00Z",
-                    "end_date": "2000-12-31T00:00:00Z"
+                    "end_date": "2000-12-31T00:00:00Z",
                 },
             },
         ),
@@ -94,9 +78,7 @@ from test_utils import check_dict_subset
                     "multi_year_mean": True,
                     "start_date": "1971-01-01T00:00:00Z",
                     "end_date": "2000-12-31T00:00:00Z",
-                    "variables": {
-                        "tasmax": "Daily Maximum Temperature",
-                    },
+                    "variables": {"tasmax": "Daily Maximum Temperature",},
                 },
             },
         ),
@@ -105,29 +87,20 @@ from test_utils import check_dict_subset
             {"ensemble_name": "ce", "model": "", "extras": "filepath"},
             {
                 "CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc": {
-                    "filepath": re.compile(r"CanESM2-rcp85-tasmax-r1i1p1-2010-2039\.nc"),
+                    "filepath": re.compile(
+                        r"CanESM2-rcp85-tasmax-r1i1p1-2010-2039\.nc"
+                    ),
                     "institution": "CCCMA",
                 },
             },
         ),
-        (
-            "lister",
-            {"model": ""},
-            {},
-        ),
-        (
-            "grid",
-            {"id_": ""},
-            {},
-        ),
+        ("lister", {"model": ""}, {},),
+        ("grid", {"id_": ""}, {},),
     ],
 )
 @pytest.mark.usefixtures("populateddb")
 def test_api_endpoint_calls(
-    test_client,
-    endpoint,
-    query_params,
-    expected,
+    test_client, endpoint, query_params, expected,
 ):
     url = "/api/" + endpoint
     response = test_client.get(url, query_string=query_params)

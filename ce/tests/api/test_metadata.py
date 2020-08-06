@@ -11,15 +11,7 @@ from ce.api import metadata
         "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
     ),
 )
-@pytest.mark.parametrize(
-    "extras",
-    (
-        None,
-        "",
-        "filepath",
-        "filepath,obviouslywrong"
-    )
-)
+@pytest.mark.parametrize("extras", (None, "", "filepath", "filepath,obviouslywrong"))
 def test_metadata(populateddb, unique_id, extras):
     sesh = populateddb.session
     rv = metadata(sesh, unique_id, extras=extras)

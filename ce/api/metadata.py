@@ -106,26 +106,22 @@ def metadata(sesh, model_id, extras=""):
 
     # Time are given null values if timeset is absent.
     timeset = data_file.timeset
-    time_values = {
-        "times": {
-            time.time_idx: time.timestep for time in timeset.times
-        },
-        "timescale": timeset.time_resolution,
-        "multi_year_mean": timeset.multi_year_mean,
-        "start_date": timeset.start_date,
-        "end_date": timeset.end_date,
-    } if timeset else {
-        "times": {},
-        "timescale": None,
-        "multi_year_mean": None,
-        "start_date": None,
-        "end_date": None,
-    }
-
-    return {
-        model_id: {
-            **base_values,
-            **requested_extra_values,
-            **time_values,
+    time_values = (
+        {
+            "times": {time.time_idx: time.timestep for time in timeset.times},
+            "timescale": timeset.time_resolution,
+            "multi_year_mean": timeset.multi_year_mean,
+            "start_date": timeset.start_date,
+            "end_date": timeset.end_date,
         }
-    }
+        if timeset
+        else {
+            "times": {},
+            "timescale": None,
+            "multi_year_mean": None,
+            "start_date": None,
+            "end_date": None,
+        }
+    )
+
+    return {model_id: {**base_values, **requested_extra_values, **time_values,}}
