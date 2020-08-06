@@ -5,20 +5,28 @@ from ce.api import metadata
 
 
 @pytest.mark.parametrize(
-    ("unique_id"),
+    "unique_id",
     (
         "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
         "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
     ),
 )
-def test_metadata(populateddb, unique_id):
+@pytest.mark.parametrize(
+    "extras",
+    (
+        None,
+        "",
+        "filepath",
+        "filepath,obviouslywrong"
+    )
+)
+def test_metadata(populateddb, unique_id, extras):
     sesh = populateddb.session
-    rv = metadata(sesh, unique_id)
+    rv = metadata(sesh, unique_id, extras=extras)
     assert unique_id in rv
     file_metadata = rv[unique_id]
 
     for key in [
-        'filepath',
         "institution",
         "model_id",
         "model_name",
@@ -34,7 +42,8 @@ def test_metadata(populateddb, unique_id):
     ]:
         assert key in file_metadata
 
-    assert f"{unique_id}.nc" in file_metadata["filepath"]
+    if extras is not None and "filepath" in extras:
+        assert f"{unique_id}.nc" in file_metadata["filepath"]
 
     times = file_metadata["times"]
     assert len(times) > 0

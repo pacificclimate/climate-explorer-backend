@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from modelmeta import DataFile
 
 
-def metadata(sesh, model_id):
+def metadata(sesh, model_id, extras=""):
     """Delegate for performing a metadata lookup for one single file
 
     The `metadata` call is intended for the client to retrieve
@@ -20,6 +20,9 @@ def metadata(sesh, model_id):
 
         model_id (str): Unique id which is a key to the data file requested
 
+        extras (str): Comma-separated list of extra fields to be included in
+            response. Currently responds to fields:
+                "filepath": in each dictionary item, filepath of data file
     Returns:
         dict: Empty dictionary if model_id is not found in the database.
 
@@ -72,45 +75,57 @@ def metadata(sesh, model_id):
     except NoResultFound:
         return {}
 
-    vars_ = {
-        dfv.netcdf_variable_name: a.long_name
-        for a, dfv in [
-            (dfv.variable_alias, dfv) for dfv in data_file.data_file_variables
-        ]
+    variables = {
+        dfv.netcdf_variable_name: dfv.variable_alias.long_name
+        for dfv in data_file.data_file_variables
     }
-
-    timeset = data_file.timeset
-
-    times = {}
-    timescale = None
-    multi_year_mean = None
-    start_date = None
-    end_date = None
-
-    if timeset:
-        times = {time.time_idx: time.timestep for time in timeset.times}
-        timescale = timeset.time_resolution
-        multi_year_mean = timeset.multi_year_mean
-        start_date = timeset.start_date
-        end_date = timeset.end_date
-
     run = data_file.run
     model = run.model
 
+    # These values are always returned
+    base_values = {
+        "institution": model.organization,
+        "model_id": model.short_name,
+        "model_name": model.long_name,
+        "experiment": run.emission.short_name,
+        "variables": variables,
+        "ensemble_member": run.name,
+        "modtime": data_file.index_time,
+    }
+
+    # A subset of these values is returned, depending on what is requested
+    # by `extras` param
+    all_extra_values = {
+        "filepath": data_file.filename,
+    }
+    requested_extra_values = {
+        key: value
+        for key, value in all_extra_values.items()
+        if key in (extras or "").split(",")
+    }
+
+    # Time are given null values if timeset is absent.
+    timeset = data_file.timeset
+    time_values = {
+        "times": {
+            time.time_idx: time.timestep for time in timeset.times
+        },
+        "timescale": timeset.time_resolution,
+        "multi_year_mean": timeset.multi_year_mean,
+        "start_date": timeset.start_date,
+        "end_date": timeset.end_date,
+    } if timeset else {
+        "times": {},
+        "timescale": None,
+        "multi_year_mean": None,
+        "start_date": None,
+        "end_date": None,
+    }
+
     return {
         model_id: {
-            "filepath": data_file.filename,
-            "institution": model.organization,
-            "model_id": model.short_name,
-            "model_name": model.long_name,
-            "experiment": run.emission.short_name,
-            "variables": vars_,
-            "ensemble_member": run.name,
-            "times": times,
-            "timescale": timescale,
-            "multi_year_mean": multi_year_mean,
-            "start_date": start_date,
-            "end_date": end_date,
-            "modtime": data_file.index_time,
+            **base_values,
+            **requested_extra_values,
+            **time_values,
         }
     }
