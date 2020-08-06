@@ -28,6 +28,10 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
 
         model (str): Short name for some climate model (e.g "CGCM3")
 
+        extras (str): Comma-separated list of extra fields to be included in
+            response. Currently responds to fields:
+                "filepath": in each dictionary item, filepath of data file
+
     Returns:
         A dictionary keyed by unique_id for all unique_ids in the
         requested model/ensemble. The value is delegated to the metadata call
