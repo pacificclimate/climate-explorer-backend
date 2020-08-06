@@ -1,7 +1,13 @@
 # News / Release Notes
 
+## 3.0.1
+*13-July-2020*
+
+* Fix errors in database queries for API endpoints [#154](https://github.com/pacificclimate/climate-explorer-backend/pull/154)
+* Use Black as Python code style checker [#155](https://github.com/pacificclimate/climate-explorer-backend/pull/155)
+
 ## 3.0.0
-*13-July-2020
+*13-July-2020*
 
 * Upgrades modelmeta and netCDF4 requirements [#147](https://github.com/pacificclimate/climate-explorer-backend/pull/147)
   and [#144](https://github.com/pacificclimate/climate-explorer-backend/pull/144)
