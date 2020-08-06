@@ -14,24 +14,27 @@ from ce.tests.helpers.test_utils import check_dict_subset
         (
             "stats",
             {"id_": "", "time": "", "area": "", "variable": ""},
-            None,
+            {},
         ),
         (
             "data",
             {"model": "", "emission": "", "time": "0", "area": "", "variable": ""},
-            None,
+            {},
         ),
         (
             "timeseries",
             {"id_": "", "area": "", "variable": ""},
-            None,
+            {},
         ),
-        ("models", {}, None,),
+        (
+            "models",
+            {},
+            {},
+        ),
         (
             "metadata",
             {
                 "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-                "extras": "filepath",
             },
             {
                 "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230": {
@@ -42,8 +45,6 @@ from ce.tests.helpers.test_utils import check_dict_subset
                         "tasmax": "Daily Maximum Temperature"
                     },
                     "ensemble_member": "r1i1p1",
-                    "filepath": re.compile(r"tasmax_mClim_BNU-ESM_historical_r1i1p1_"
-                                           r"19650101-19701230\.nc"),
                     "times": {
                         "0": "1985-01-15T00:00:00Z",
                         "1": "1985-02-15T00:00:00Z",
@@ -62,15 +63,29 @@ from ce.tests.helpers.test_utils import check_dict_subset
                     "multi_year_mean": True,
                     "start_date": "1971-01-01T00:00:00Z",
                     "end_date": "2000-12-31T00:00:00Z"
-                }
+                },
+            },
+        ),
+        (
+            "metadata",
+            {
+                "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+                "extras": "filepath",
+            },
+            {
+                "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230": {
+                    "institution": "BNU",
+                    "filepath": re.compile(
+                        r"tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230\.nc"
+                    ),
+                },
             },
         ),
         (
             "multimeta",
-            {"ensemble_name": "ce", "model": "", "extras": "filepath"},
+            {"ensemble_name": "ce", "model": ""},
             {
                 "CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc": {
-                    "filepath": re.compile(r"CanESM2-rcp85-tasmax-r1i1p1-2010-2039\.nc"),
                     "institution": "CCCMA",
                     "model_id": "CanESM2",
                     "experiment": "rcp85",
@@ -81,16 +96,38 @@ from ce.tests.helpers.test_utils import check_dict_subset
                     "end_date": "2000-12-31T00:00:00Z",
                     "variables": {
                         "tasmax": "Daily Maximum Temperature",
-                    }
+                    },
                 },
             },
         ),
-        ("lister", {"model": ""}, None),
-        ("grid", {"id_": ""}, None),
+        (
+            "multimeta",
+            {"ensemble_name": "ce", "model": "", "extras": "filepath"},
+            {
+                "CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc": {
+                    "filepath": re.compile(r"CanESM2-rcp85-tasmax-r1i1p1-2010-2039\.nc"),
+                    "institution": "CCCMA",
+                },
+            },
+        ),
+        (
+            "lister",
+            {"model": ""},
+            {},
+        ),
+        (
+            "grid",
+            {"id_": ""},
+            {},
+        ),
     ],
 )
+@pytest.mark.usefixtures("populateddb")
 def test_api_endpoint_calls(
-    test_client, populateddb, endpoint, query_params, expected,
+    test_client,
+    endpoint,
+    query_params,
+    expected,
 ):
     url = "/api/" + endpoint
     response = test_client.get(url, query_string=query_params)
@@ -99,8 +136,7 @@ def test_api_endpoint_calls(
     assert response.cache_control.max_age > 0
     if endpoint not in ("models", "lister"):
         assert response.last_modified is not None
-    if expected is not None:
-        check_dict_subset(expected, response.get_json())
+    check_dict_subset(expected, response.get_json())
 
 
 def test_dates_are_formatted(test_client, populateddb):
