@@ -6,21 +6,26 @@ from ce.api import multimeta
 
 @pytest.mark.parametrize("model", (
     "BNU-ESM",
-    ""
+    "",
 ))
 @pytest.mark.parametrize("unique_id", (
     "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-    "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
+    "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
 ))
-def test_multimeta(populateddb, model, unique_id):
+@pytest.mark.parametrize("extras", (
+    None,
+    "",
+    "filepath",
+    "filepath,obviouslywrong"
+))
+def test_multimeta(populateddb, model, unique_id, extras):
     sesh = populateddb.session
     # Multimeta is wrapped for caching. Call the wrapped function
-    rv = multimeta(sesh, ensemble_name="ce", model=model)
+    rv = multimeta(sesh, ensemble_name="ce", model=model, extras=extras)
     assert unique_id in rv
     file_metadata = rv[unique_id]
 
     for key in [
-        "filepath",
         "institution",
         "model_id",
         "model_name",
@@ -38,6 +43,8 @@ def test_multimeta(populateddb, model, unique_id):
     # times are not included in the /multimeta response
     assert "times" not in file_metadata
 
-    assert f"{unique_id}.nc" in file_metadata["filepath"]
+    if extras is not None and "filepath" in extras:
+        assert f"{unique_id}.nc" in file_metadata["filepath"]
+
     assert file_metadata["model_id"] == "BNU-ESM"
     assert isinstance(file_metadata["modtime"], datetime)
