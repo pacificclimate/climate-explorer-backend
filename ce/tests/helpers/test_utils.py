@@ -1,3 +1,4 @@
+import re
 import numpy
 
 
@@ -41,12 +42,21 @@ def check_dict_subset(dict1, dict2, path=[]):
         path_ = path + [key]
         if type(value1) == dict:
             check_dict_subset(value1, value2, path=path_)
+        elif type(value1) == type(re.compile("")) and type(value2) == str:
+            # TODO: Replace `type(re.compile(''))` with `re.Pattern` for Py>=3.7
+            # Special case for comparing strings: if a supplied value is a
+            # regex and the comparison value is a string, then comparison is
+            # regex match.
+            assert (
+                value1.search(value2) is not None
+            ), f"Regex '{value1}' does not match string '{value2}'"
         else:
             assert value1 == value2, "{}: {} != {}".format(
                 "".join("['{}']".format(p) for p in path_), value1, value2
             )
 
     for key in dict1.keys():
+        assert key in dict2, f"key '{key}' in dict1 but not in dict2"
         compare(key, dict1[key], dict2[key])
 
 

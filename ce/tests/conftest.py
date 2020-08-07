@@ -48,6 +48,7 @@ def dsn(sessiondir,):
 @pytest.fixture
 def app(dsn,):
     app = get_app()
+    app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = dsn
     app.config["SQLALCHEMY_ECHO"] = False
     return app
@@ -440,7 +441,8 @@ def populateddb(cleandb,):
 
 @pytest.fixture
 def test_client(app,):
-    return app.test_client()
+    with app.test_client() as client:
+        yield client
 
 
 def db(app,):
