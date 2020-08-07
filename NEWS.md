@@ -1,7 +1,13 @@
 # News / Release Notes
 
+## 3.1.0
+*2020-Aug-7*
+
+- Add optional `filepath` property to metadata responses 
+  [#150](https://github.com/pacificclimate/climate-explorer-backend/pull/150)
+
 ## 3.0.1
-*13-July-2020*
+*2020-Aug-6*
 
 * Fix errors in database queries for API endpoints [#154](https://github.com/pacificclimate/climate-explorer-backend/pull/154)
 * Use Black as Python code style checker [#155](https://github.com/pacificclimate/climate-explorer-backend/pull/155)
