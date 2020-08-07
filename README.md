@@ -63,6 +63,13 @@ $ source venv/bin/activate
 (venv)$ pip install -e .
 ```
 
+#### Pre-commit hook
+The `pre-commit hook` will run checks against your code whenever you make a commit. This prevents styling from breaking the CI/CD actions pipeline. To install, run the following:
+```bash
+(venv)$ pip install pre-commit
+(venv)$ pre-commit install
+```
+
 ### Building the Documentation
 
 Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation.
