@@ -13,7 +13,7 @@ make
 
 This will create a virtual environment with all required packages. By default `make` creates a `python` venv named `ceb-venv`. To activate, run:
 ```
-source ~/tmp/ceb-venv/bin/activate
+source /tmp/ceb-venv/bin/activate
 ```
 
 ## Manual Setup
