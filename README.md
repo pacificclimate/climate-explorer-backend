@@ -4,7 +4,23 @@
 ![Docker Publishing](https://github.com/pacificclimate/climate-explorer-backend/workflows/Docker%20Publishing/badge.svg)
 [![Code Climate](https://codeclimate.com/github/pacificclimate/climate-explorer-backend/badges/gpa.svg)](https://codeclimate.com/github/pacificclimate/climate-explorer-backend)
 
-## System Dependencies
+## Setup
+
+Project setup is automated, simply run:
+```
+make
+```
+
+This will create a virtual environment with all required packages. By default `make` creates a `python` venv named `ceb-venv`. To activate, run:
+```
+source /tmp/ceb-venv/bin/activate
+```
+
+## Manual Setup
+
+If you do not wish to use `make`, or want a better understanding of the installation process, follow the sections below.
+
+### System Dependencies
 
 ```bash
 $ sudo apt-get install libpq-dev python-dev libhdf5-dev libnetcdf-dev libgdal-dev
@@ -37,7 +53,7 @@ If you prefer to build GDAL from source (not recommended), there is a
 `build_gdal.sh` script in the repo that does reasonably well. Your
 mileage may vary.
 
-### Troubleshooting
+#### Troubleshooting
 
 GDAL doesn't properly source its own lib paths when installing the python package, so we have to define
 these environment variables:
