@@ -35,8 +35,6 @@ def test_metadata(populateddb, unique_id, extras):
     ]:
         assert key in file_metadata
 
-    print(file_metadata)
-
     if extras is not None and "filepath" in extras:
         assert f"{unique_id}.nc" in file_metadata["filepath"]
 
