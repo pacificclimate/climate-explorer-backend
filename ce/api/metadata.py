@@ -79,6 +79,12 @@ def metadata(sesh, model_id, extras=""):
         dfv.netcdf_variable_name: dfv.variable_alias.long_name
         for dfv in data_file.data_file_variables
     }
+
+    units = {
+        dfv.netcdf_variable_name: dfv.variable_alias.units
+        for dfv in data_file.data_file_variables
+    }
+
     run = data_file.run
     model = run.model
 
@@ -89,6 +95,7 @@ def metadata(sesh, model_id, extras=""):
         "model_name": model.long_name,
         "experiment": run.emission.short_name,
         "variables": variables,
+        "units": units,
         "ensemble_member": run.name,
         "modtime": data_file.index_time,
     }
