@@ -24,6 +24,7 @@ def test_metadata(populateddb, unique_id, extras):
         "model_name",
         "experiment",
         "variables",
+        "units",
         "ensemble_member",
         "times",
         "timescale",

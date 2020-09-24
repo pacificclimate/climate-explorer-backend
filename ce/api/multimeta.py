@@ -75,6 +75,7 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
             Run.name.label("ensemble_member"),
             DataFileVariableGridded.netcdf_variable_name.label("netcdf_variable_name"),
             VariableAlias.long_name.label("variable_long_name"),
+            VariableAlias.units.label("units"),
             TimeSet.time_resolution.label("timescale"),
             TimeSet.multi_year_mean.label("multi_year_mean"),
             TimeSet.start_date.label("start_date"),
@@ -115,7 +116,7 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
             multi_year_mean
             start_date
             end_date
-            modtime        
+            modtime
         """.split()
 
     allowable_extra_attribute_names = """
@@ -137,8 +138,10 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
                 name: getattr(result, name) for name in simple_attribute_names
             }
             rv[unique_id]["variables"] = {}
+            rv[unique_id]["units"] = {}
         rv[unique_id]["variables"][
             result.netcdf_variable_name
         ] = result.variable_long_name
+        rv[unique_id]["units"][result.netcdf_variable_name] = result.units
 
     return rv

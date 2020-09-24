@@ -26,6 +26,7 @@ def test_multimeta(populateddb, model, unique_id, extras):
         "model_name",
         "experiment",
         "variables",
+        "units",
         "ensemble_member",
         "timescale",
         "multi_year_mean",
