@@ -19,8 +19,8 @@ aggregates. Each individual value in these files represents a mean or stanard
 deviation calculated across multiple years, typically thirty years, which is 
 standard in climate science. For example, a monthly climatological mean might 
 cover 1961-1990, but feature only twelve timestamps. The January timestamp is 
-the mean of the value for January 1961, January 1962, and so on up to January 
-1990. The February timestamp is the mean of the values for February 1961, 
+the mean of the value for January 1961, January 1962, and so on up to January 1990. The February timestamp is the mean of the values for 
+February 1961, 
 February 1962, and so on. Climatological means may be monthly, seasonal, 
 or annual. This API primarily supports analysis of climatological datasets, 
 and more analysis options are available for them.
@@ -79,23 +79,21 @@ ensemble named `bc_moti`, with variable name equal to `streamflow`.
 
 When requesting streamflow data from a point, please be cautious and aware 
 of potential differences in precision. Note that while you may supply a point
- with arbitrarily precise longitude and latitude values to the API, the 
- streamflow data is a gridded dataset and has only one value available per 
- grid cell. If you supply the coordinates of a small creek inside the same 
- grid cell as a river, the data you receive is for the total flow through 
- that grid cell; it is primarily influenced by the river. Accordingly, 
- this dataset is more accurate for larger streams, and should not be 
- considered accurate for streams that drain watersheds of less than 200 
- kilometers area. Information on the grid corresponding to a dataset can 
- be obtained from the `grid` API, which will provide a list of the longitudes 
- and latitudes corresponding to the centroids of each grid cell.
+with arbitrarily precise longitude and latitude values to the API, the 
+streamflow data is a gridded dataset and has only one value available per 
+grid cell. If you supply the coordinates of a small creek inside the same 
+grid cell as a river, the data you receive is for the total flow through 
+that grid cell; it is primarily influenced by the river. Accordingly, 
+this dataset is more accurate for larger streams, and should not be 
+considered accurate for streams that drain watersheds of less than 200 
+kilometers area. Information on the grid corresponding to a dataset can 
+be obtained from the `grid` API, which will provide a list of the longitudes and latitudes corresponding to the centroids of each grid cell.
 
 To get contextual information on the watershed that drains to the streamflow 
 location of interest, the `watershed` API can be invoked with the same 
 WKT Point used to request streamflow data. This API provides information on 
 the topology and extent of the watershed that drains to the grid cell 
-containing the specified point. The outline of the watershed is provided as a 
-GeoJSON object. This outline, like the streamflow data itself, has a 
+containing the specified point. The outline of the watershed is provided as a GeoJSON object. This outline, like the streamflow data itself, has a 
 resolution determined by the size of a grid cell.
 
 The GeoJSON watershed polygon can furthermore be used to request data on 
