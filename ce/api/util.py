@@ -25,18 +25,21 @@ def get_units_from_netcdf_file(nc, variable):
     return nc.variables[variable].units
 
 
-def get_units_from_file_object(file_, varname):
+def get_units_from_file_object(file_, varname, ensemble_name):
     for dfv in file_.data_file_variables:
-        if dfv.netcdf_variable_name == varname:
-            return dfv.variable_alias.units
+        for ensemble in dfv.ensembles:
+            if dfv.netcdf_variable_name == varname and ensemble.name == ensemble_name:
+                return dfv.variable_alias.units
     raise Exception(
         "Variable {} is not indexed for file {}".format(varname, file_.filename)
     )
 
 
-def get_units_from_run_object(run, varname):
+def get_units_from_run_object(run, varname, ensemble_name):
     files = get_files_from_run_variable(run, varname)
-    units = {get_units_from_file_object(file_, varname) for file_ in files}
+    units = {
+        get_units_from_file_object(file_, varname, ensemble_name) for file_ in files
+    }
 
     if len(units) != 1:
         raise Exception(
