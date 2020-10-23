@@ -55,10 +55,9 @@ def get_grid_from_netcdf_file(nc):
 
 @contextmanager
 def open_nc(fname):
-    if not os.path.exists(fname):
+    if not "http" in fname and not os.path.exists(fname):
         raise Exception(
-            "The metadata database is out of sync with the filesystem. "
-            "I was told to open the file {}, but it does not exist.".format(fname)
+            f"File name: {fname} is not valid, database not in sync with filesystem."
         )
 
     try:
@@ -228,3 +227,16 @@ def neighbours(cell):
     """Return all neighbours of `cell`: all cells with an x or y offset
     of +/-1"""
     return (vec_add(cell, offset) for offset in neighbour_offsets)
+
+
+def apply_thredds_root(
+    filename,
+    root="https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets",
+):
+    """Apply thredds root to filename
+
+    PCIC's THREDDS data server stores files that follow the same filepath
+    pattern found in `/storage`. To access it, we just want to add on the first
+    section of the url, the rest will be the same.
+    """
+    return root + filename
