@@ -8,7 +8,13 @@ import logging
 
 from modelmeta import DataFile, Time
 
-from ce.api.util import get_array, get_units_from_netcdf_file, mean_datetime, open_nc
+from ce.api.util import (
+    get_array,
+    get_units_from_netcdf_file,
+    mean_datetime,
+    open_nc,
+    apply_thredds_root,
+)
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +24,7 @@ na_array_stats = {
 }
 
 
-def stats(sesh, id_, time, area, variable):
+def stats(sesh, id_, time, area, variable, thredds=False):
     """Request and calculate summary statistics averaged across a region
 
     For performing regional analysis, one typically wants to summarize
@@ -91,7 +97,7 @@ def stats(sesh, id_, time, area, variable):
 
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
-        fname = df.filename
+        fname = df.filename if not thredds else apply_thredds_root(df.filename)
     except NoResultFound:
         return {}
 
