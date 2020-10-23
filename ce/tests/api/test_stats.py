@@ -6,19 +6,29 @@ from ce.api import stats
 
 
 @pytest.mark.parametrize(
-    "unique_id, var_name",
+    "unique_id, var_name, thredds",
     [
-        ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
-        ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
-        ("tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
+        ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
+        ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
+        ("tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
+        (
+            "/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmax",
+            True,
+        ),
+        (
+            "/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmin",
+            True,
+        ),
     ],
 )
-def test_stats(populateddb, polygon, unique_id, var_name):
+def test_stats(populateddb, polygon, unique_id, var_name, thredds):
     sesh = populateddb.session
-    rv = stats(sesh, unique_id, None, polygon, var_name)
+    rv = stats(sesh, unique_id, None, polygon, var_name, thredds)
     statistics = rv[unique_id]
     for attr in ("min", "max", "mean", "median", "stdev"):
         value = statistics[attr]

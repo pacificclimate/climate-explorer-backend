@@ -9,7 +9,7 @@ from numpy.ma import MaskedArray
 from dateutil.parser import parse
 from netCDF4 import Dataset
 
-from ce.api.util import get_array, mean_datetime
+from ce.api.util import get_array, mean_datetime, open_nc
 
 
 @pytest.fixture(
@@ -68,3 +68,29 @@ utc = timezone.utc
 def test_mean_datetime(input_, output):
     x = [parse(t).replace(tzinfo=utc) for t in input_]
     assert mean_datetime(x) == parse(output).replace(tzinfo=utc)
+
+
+@pytest.mark.online
+@pytest.mark.parametrize(
+    ("local", "online"),
+    [
+        (
+            "/storage/data/projects/comp_support/daccs/test-data/fdd_seasonal_CanESM2_rcp85_r1i1p1_1951-2100.nc",
+            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/fdd_seasonal_CanESM2_rcp85_r1i1p1_1951-2100.nc",
+        )
+    ],
+)
+def test_open_nc(local, online):
+    with open_nc(local) as nc_local, open_nc(online) as nc_online:
+        for key in nc_local.dimensions.keys():
+            assert nc_local.dimensions[key].name == nc_online.dimensions[key].name
+            assert nc_local.dimensions[key].size == nc_online.dimensions[key].size
+
+
+@pytest.mark.online
+@pytest.mark.parametrize(("bad_path"), [("/bad/path/to/file.nc")])
+def test_open_nc_exception(bad_path):
+    with pytest.raises(Exception):
+        with open_nc(bad_path) as nc:
+            # Test won't make it this far, but in case we do, let's fail the test
+            assert False

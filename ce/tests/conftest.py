@@ -195,6 +195,10 @@ def populateddb(cleandb,):
     df_5_monthly = make_data_file(
         unique_id="tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
+    df_5_monthly_online = make_data_file(
+        unique_id="/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        run=run3,
+    )
     df_5_seasonal = make_data_file(
         unique_id="tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
@@ -203,6 +207,10 @@ def populateddb(cleandb,):
     )
     df_6_monthly = make_data_file(
         unique_id="tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
+    )
+    df_6_monthly_online = make_data_file(
+        unique_id="/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        run=run3,
     )
     df_6_seasonal = make_data_file(
         unique_id="tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
@@ -220,9 +228,11 @@ def populateddb(cleandb,):
         file2,
         file3,
         df_5_monthly,
+        df_5_monthly_online,
         df_5_seasonal,
         df_5_yearly,
         df_6_monthly,
+        df_6_monthly_online,
         df_6_seasonal,
         df_6_yearly,
         df_7_yearly,
@@ -313,9 +323,11 @@ def populateddb(cleandb,):
     tmax1 = make_data_file_variable(file2, var_name="tasmax",)
     tmax2 = make_data_file_variable(file3, var_name="tasmax",)
     tmax3 = make_data_file_variable(df_5_monthly, var_name="tasmax",)
+    tmax3_online = make_data_file_variable(df_5_monthly_online, var_name="tasmax",)
     tmax4 = make_data_file_variable(df_5_seasonal, var_name="tasmax",)
     tmax5 = make_data_file_variable(df_5_yearly, var_name="tasmax",)
     tmax6 = make_data_file_variable(df_6_monthly, var_name="tasmin",)
+    tmax6_online = make_data_file_variable(df_6_monthly_online, var_name="tasmin",)
     tmax7 = make_data_file_variable(df_6_seasonal, var_name="tasmin",)
     tmax8 = make_data_file_variable(df_6_yearly, var_name="tasmin",)
     pr1 = make_data_file_variable(df_7_yearly, var_name="pr",)
@@ -326,9 +338,11 @@ def populateddb(cleandb,):
         tmax1,
         tmax2,
         tmax3,
+        tmax3_online,
         tmax4,
         tmax5,
         tmax6,
+        tmax6_online,
         tmax7,
         tmax8,
         pr1,
@@ -383,6 +397,8 @@ def populateddb(cleandb,):
         file3,
         df_5_monthly,
         df_6_monthly,
+        df_5_monthly_online,
+        df_6_monthly_online,
     ]
 
     ts_seasonal = TimeSet(
