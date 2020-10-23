@@ -13,33 +13,35 @@ import modelmeta as mm
 from ce.api.geo import wkt_to_masked_array
 
 
-def get_files_from_run_variable(run, variable):
-    return [
-        file_
-        for file_ in run.files
-        if variable in [dfv.netcdf_variable_name for dfv in file_.data_file_variables]
-    ]
+def get_files_from_run_variable(run, variable, ensemble_name):
+    files = []
+    for file_ in run.files:
+        for dfv in file_.data_file_variables:
+            for ensemble in dfv.ensembles:
+                if (
+                    variable == dfv.netcdf_variable_name
+                    and ensemble.name == ensemble_name
+                ):
+                    files.append(file_)
+    return files
 
 
 def get_units_from_netcdf_file(nc, variable):
     return nc.variables[variable].units
 
 
-def get_units_from_file_object(file_, varname, ensemble_name):
+def get_units_from_file_object(file_, varname):
     for dfv in file_.data_file_variables:
-        for ensemble in dfv.ensembles:
-            if dfv.netcdf_variable_name == varname and ensemble.name == ensemble_name:
-                return dfv.variable_alias.units
+        if dfv.netcdf_variable_name == varname:
+            return dfv.variable_alias.units
     raise Exception(
         "Variable {} is not indexed for file {}".format(varname, file_.filename)
     )
 
 
 def get_units_from_run_object(run, varname, ensemble_name):
-    files = get_files_from_run_variable(run, varname)
-    units = {
-        get_units_from_file_object(file_, varname, ensemble_name) for file_ in files
-    }
+    files = get_files_from_run_variable(run, varname, ensemble_name)
+    units = {get_units_from_file_object(file_, varname) for file_ in files}
 
     if len(units) != 1:
         raise Exception(
