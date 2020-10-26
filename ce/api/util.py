@@ -229,10 +229,7 @@ def neighbours(cell):
     return (vec_add(cell, offset) for offset in neighbour_offsets)
 
 
-def apply_thredds_root(
-    filename,
-    root="https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets",
-):
+def apply_thredds_root(root, filename):
     """Apply thredds root to filename
 
     PCIC's THREDDS data server stores files that follow the same filepath

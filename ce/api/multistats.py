@@ -16,6 +16,7 @@ def multistats(
     timescale="",
     cell_method="mean",
     thredds=False,
+    thredds_root="https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets",
 ):
     """Request and calculate statistics for multiple models or scenarios
 
@@ -55,7 +56,11 @@ def multistats(
             Defaulted to "mean".
 
         thredds (bool): If set to `True` the filepath will be searched for
-            on THREDDS server
+            on THREDDS server.
+
+        thredds_root (str): The portion of the thredds url that will be constant
+            for all filepaths.
+
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.
@@ -97,4 +102,7 @@ def multistats(
     ids = search_for_unique_ids(
         sesh, ensemble_name, model, emission, variable, time, timescale, cell_method
     )
-    return {id_: stats(sesh, id_, time, area, variable, thredds)[id_] for id_ in ids}
+    return {
+        id_: stats(sesh, id_, time, area, variable, thredds, thredds_root)[id_]
+        for id_ in ids
+    }
