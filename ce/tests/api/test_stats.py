@@ -5,6 +5,7 @@ import pytest
 from ce.api import stats
 
 
+@pytest.mark.online
 @pytest.mark.parametrize(
     "unique_id, var_name, thredds",
     [

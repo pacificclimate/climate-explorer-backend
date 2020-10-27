@@ -21,6 +21,7 @@ def test_data_bad_time(populateddb):
     )
 
 
+@pytest.mark.online
 @pytest.mark.parametrize("variable", ("tasmax", "tasmin",))
 @pytest.mark.parametrize(
     "timescale, time_idx, expected_ymd",
