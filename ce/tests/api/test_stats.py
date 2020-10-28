@@ -7,7 +7,7 @@ from ce.api import stats
 
 @pytest.mark.online
 @pytest.mark.parametrize(
-    "unique_id, var_name, thredds",
+    "unique_id, var_name, is_thredds",
     [
         ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
         ("tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
@@ -27,9 +27,11 @@ from ce.api import stats
         ),
     ],
 )
-def test_stats(populateddb, polygon, unique_id, var_name, thredds):
+def test_stats(
+    populateddb, polygon, mock_thredds_url_root, unique_id, var_name, is_thredds
+):
     sesh = populateddb.session
-    rv = stats(sesh, unique_id, None, polygon, var_name, thredds)
+    rv = stats(sesh, unique_id, None, polygon, var_name, is_thredds)
     statistics = rv[unique_id]
     for attr in ("min", "max", "mean", "median", "stdev"):
         value = statistics[attr]
