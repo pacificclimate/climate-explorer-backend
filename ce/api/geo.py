@@ -176,7 +176,7 @@ class memoize(object):
         return cf
 
 
-def make_mask_grid_key(nc, fname, poly, variable):
+def make_mask_grid_key(nc, resource, poly, variable):
     """
     Generates a key for characterizing a numpy mask  meant to
     be applied to netCDF files: the polygon the mask is generated from
@@ -196,13 +196,13 @@ def make_mask_grid_key(nc, fname, poly, variable):
 
 
 @memoize(make_mask_grid_key, 10)
-def polygon_to_mask(nc, fname, poly, variable):
+def polygon_to_mask(nc, resource, poly, variable):
     """Generates a numpy mask from a polygon"""
     nclons = nc.variables["lon"][:]
     if np.any(nclons > 180):
         poly = translate(poly, xoff=180)
 
-    dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
+    dst_name = f'NETCDF:"{resource}":{variable}'
     with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
         if raster.transform == rasterio.Affine.identity():
             raise Exception(
@@ -216,27 +216,27 @@ def polygon_to_mask(nc, fname, poly, variable):
     return mask, out_transform, window
 
 
-def make_masked_file_key(nc, fname, wkt, varname):
+def make_masked_file_key(nc, resource, wkt, varname):
     """generates a key suitable for characterizing a masked netCDF file:
        filename and polygon"""
-    return (fname, wkt)
+    return (resource, wkt)
 
 
 @memoize(make_masked_file_key, 100)
-def wkt_to_masked_array(nc, fname, wkt, variable):
+def wkt_to_masked_array(nc, resource, wkt, variable):
     poly = loads(wkt)
-    return polygon_to_masked_array(nc, fname, poly, variable)
+    return polygon_to_masked_array(nc, resource, poly, variable)
 
 
-def polygon_to_masked_array(nc, fname, poly, variable):
+def polygon_to_masked_array(nc, resource, poly, variable):
     """Applies a polygon mask to a variable read from a netCDF file,
     in addition to any masks specified in the file itself (_FillValue)
     Returns a numpy masked array with every time slice masked"""
 
-    def polygon_to_masked_array_helper(fname):
-        mask, out_transform, window = polygon_to_mask(nc, fname, poly, variable)
+    def polygon_to_masked_array_helper(resource):
+        mask, out_transform, window = polygon_to_mask(nc, resource, poly, variable)
 
-        dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
+        dst_name = f'NETCDF:"{resource}":{variable}'
         with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
             # based on https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
             height, width = mask.shape
@@ -253,26 +253,26 @@ def polygon_to_masked_array(nc, fname, poly, variable):
 
         return array * scale_factor + add_offset
 
-    if "dodsC" in fname:
-        with rasterio_thredds_helper(fname) as temp_name:
+    if "dodsC" in resource:
+        with rasterio_thredds_helper(resource) as temp_name:
             return polygon_to_masked_array_helper(temp_name)
 
-    return polygon_to_masked_array_helper(fname)
+    return polygon_to_masked_array_helper(resource)
 
 
 @contextmanager
-def rasterio_thredds_helper(fname):
+def rasterio_thredds_helper(resource):
     """Provides rasterio with a readable file from an online resource_name
 
     As of 2020/08/23 rasterio is not capable of reading opendap urls. To get
     around this, we can copy over the data from the url to a tempfile which can
     then be read by rasterio.
 
-    The text replacement in the fname is changing the url output from opendap
+    The text replacement in the resource is changing the url output from opendap
     to httpserver. The reason for this change is netCDF.Dataset is not capable
     of reading the httpserver, thus we have to make a small adjustment here.
     """
-    resource_name = fname.replace("dodsC", "fileServer")
+    resource_name = resource.replace("dodsC", "fileServer")
 
     try:
         temp = NamedTemporaryFile(mode="wb", suffix=".nc", delete=False)

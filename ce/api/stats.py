@@ -111,7 +111,7 @@ def stats(
 
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
-        fname = (
+        resource = (
             df.filename
             if not thredds
             else apply_thredds_root(thredds_root, df.filename)
@@ -120,8 +120,8 @@ def stats(
         return {}
 
     try:
-        with open_nc(fname) as nc:
-            array = get_array(nc, fname, time, area, variable)
+        with open_nc(resource) as nc:
+            array = get_array(nc, resource, time, area, variable)
             units = get_units_from_netcdf_file(nc, variable)
     except Exception as e:
         log.error(e)
