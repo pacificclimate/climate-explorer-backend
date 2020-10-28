@@ -10,6 +10,7 @@ from shapely.affinity import translate
 from shapely.geometry import mapping  # convert a Shapely Geom to GeoJSON
 import rasterio
 from rasterio.mask import raster_geometry_mask as rio_getmask
+import os
 
 # From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
@@ -283,3 +284,4 @@ def rasterio_thredds_helper(fname):
         yield temp.name
     finally:
         temp.close()
+        os.remove(temp.name)
