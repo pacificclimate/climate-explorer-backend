@@ -229,11 +229,17 @@ def neighbours(cell):
     return (vec_add(cell, offset) for offset in neighbour_offsets)
 
 
-def apply_thredds_root(root, filename):
+def apply_thredds_root(filename):
     """Apply thredds root to filename
 
     PCIC's THREDDS data server stores files that follow the same filepath
     pattern found in `/storage`. To access it, we just want to add on the first
     section of the url, the rest will be the same.
     """
-    return root + filename
+    thredds_url_root = os.getenv("THREDDS_URL_ROOT")
+    if not thredds_url_root:
+        raise Exception(
+            "You must set the THREDDS_URL_ROOT environment variable to use the server"
+        )
+
+    return thredds_url_root + filename

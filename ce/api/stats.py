@@ -25,13 +25,7 @@ na_array_stats = {
 
 
 def stats(
-    sesh,
-    id_,
-    time,
-    area,
-    variable,
-    thredds=False,
-    thredds_root="https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets",
+    sesh, id_, time, area, variable, is_thredds=False,
 ):
     """Request and calculate summary statistics averaged across a region
 
@@ -54,9 +48,6 @@ def stats(
         area (str): WKT polygon of selected area
 
         variable (str): Short name of the variable to be returned
-
-        thredds_root (str): The portion of the thredds url that will be constant
-            for all filepaths.
 
         thredds (bool): If set to `True` the filepath will be searched for
             on THREDDS server.
@@ -111,11 +102,7 @@ def stats(
 
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
-        resource = (
-            df.filename
-            if not thredds
-            else apply_thredds_root(thredds_root, df.filename)
-        )
+        resource = df.filename if not is_thredds else apply_thredds_root(df.filename)
     except NoResultFound:
         return {}
 
