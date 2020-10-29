@@ -3,6 +3,8 @@ import sys
 from collections import OrderedDict
 from threading import RLock
 from contextlib import ContextDecorator, contextmanager
+import shutil
+import requests
 
 import numpy as np
 from shapely.wkt import loads, dumps
@@ -17,7 +19,6 @@ from numbers import Number
 from collections import Set, Mapping, deque
 
 from tempfile import NamedTemporaryFile
-from urllib.request import urlopen
 
 
 try:  # Python 2
@@ -276,11 +277,8 @@ def rasterio_thredds_helper(resource):
 
     try:
         temp = NamedTemporaryFile(mode="wb", suffix=".nc", delete=False)
-        with urlopen(resource_name) as resp:
-            chunk = resp.read(2 ** 16)
-            while chunk:
-                temp.write(chunk)
-                chunk = resp.read(2 ** 16)
+        with requests.get(resource_name, stream=True) as file_source:
+            shutil.copyfileobj(file_source.raw, temp)
         yield temp.name
     finally:
         temp.close()
