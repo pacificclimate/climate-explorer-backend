@@ -16,12 +16,12 @@ from ce.api import stats
         ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
         ("tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
         (
-            "/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
             "tasmax",
             True,
         ),
         (
-            "/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
             "tasmin",
             True,
         ),

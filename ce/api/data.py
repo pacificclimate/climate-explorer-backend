@@ -2,6 +2,7 @@
 """
 
 import numpy as np
+import os
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariableGridded, Ensemble
@@ -112,6 +113,8 @@ def data(
         :param time_idx (int): index of time of interest
         :return: float
         """
+        if "/storage" in data_file.filename:
+            data_file.filename = os.getenv("THREDDS_URL_ROOT") + data_file.filename
         with open_nc(data_file.filename) as nc:
             a = get_array(nc, data_file.filename, time_idx, area, variable)
         return np.mean(a).item()
