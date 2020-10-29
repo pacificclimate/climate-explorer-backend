@@ -14,16 +14,15 @@ from ce.api.geo import wkt_to_masked_array
 
 
 def get_files_from_run_variable(run, variable, ensemble_name):
-    files = []
-    for file_ in run.files:
-        for dfv in file_.data_file_variables:
-            for ensemble in dfv.ensembles:
-                if (
-                    variable == dfv.netcdf_variable_name
-                    and ensemble.name == ensemble_name
-                ):
-                    files.append(file_)
-    return files
+    return [
+        file_
+        for file_ in run.files
+        if any(
+            variable == dfv.netcdf_variable_name
+            and any(ensemble.name == ensemble_name for ensemble in dfv.ensembles)
+            for dfv in file_.data_file_variables
+        )
+    ]
 
 
 def get_units_from_netcdf_file(nc, variable):
