@@ -196,7 +196,8 @@ def populateddb(cleandb,):
         unique_id="tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_5_monthly_online = make_data_file(
-        unique_id="/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        unique_id="tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        filename="/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
         run=run3,
     )
     df_5_seasonal = make_data_file(
@@ -209,7 +210,8 @@ def populateddb(cleandb,):
         unique_id="tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run3,
     )
     df_6_monthly_online = make_data_file(
-        unique_id="/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        unique_id="tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+        filename="/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
         run=run3,
     )
     df_6_seasonal = make_data_file(
