@@ -439,6 +439,114 @@ def populateddb(cleandb,):
     return populateable_db
 
 
+# @pytest.fixture
+# def conflicting_units_db(cleandb,):
+#     conflicting_unitsdb = cleandb
+#     sesh = conflicting_unitsdb.session
+#     now = datetime.utcnow()
+
+#     ens_ce = Ensemble(name="ce", version=2.0, changes="", description="",)
+#     sesh.add(ens_ce)
+
+#     rcp45 = Emission(short_name="rcp45")
+#     sesh.add(rcp45)
+
+#     run = Run(name="run", emission=rcp45)
+#     sesh.add(run)
+
+#     bnu_esm = Model(
+#         short_name="BNU-ESM",
+#         long_name="Beijing Normal University Earth System Model",
+#         type="GCM",
+#         runs=[run],
+#         organization="BNU",
+#     )
+#     sesh.add(bnu_esm)
+
+#     def make_data_file(
+#         unique_id, filename=None, run=None,
+#     ):
+#         if not filename:
+#             filename = "{}.nc".format(unique_id)
+#         if not filename.startswith("/"):
+#             filename = resource_filename("ce", "tests/data/{}".format(filename),)
+#         return DataFile(
+#             filename=filename,
+#             unique_id=unique_id,
+#             first_1mib_md5sum="xxxx",
+#             x_dim_name="lon",
+#             y_dim_name="lat",
+#             index_time=now,
+#             run=run,
+#         )
+
+#     df_seasonal = make_data_file(
+#         unique_id="tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run,
+#     )
+#     df_yearly = make_data_file(
+#         unique_id="tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", run=run,
+#     )
+#     sesh.add_all([df_seasonal, df_yearly])
+
+#     # Create conflicting variables
+#     tasmax1 = VariableAlias(
+#         long_name="Daily Maximum Temperature",
+#         standard_name="air_temperature",
+#         units="degC",
+#     )
+#     tasmax2 = VariableAlias(
+#         long_name="Daily Maximum Temperature",
+#         standard_name="air_temperature",
+#         units="degK",
+#     )
+#     sesh.add_all([tasmax1,tasmax2])
+
+#     anuspline_grid = Grid(
+#         name="Canada ANUSPLINE",
+#         xc_grid_step=0.0833333,
+#         yc_grid_step=0.0833333,
+#         xc_origin=-140.958,
+#         yc_origin=41.0417,
+#         xc_count=1068,
+#         yc_count=510,
+#         xc_units="degrees_east",
+#         yc_units="degrees_north",
+#         evenly_spaced_y=True,
+#     )
+#     sesh.add(anuspline_grid)
+
+#     dfv1 = DataFileVariableGridded(
+#             file=df_seasonal,
+#             netcdf_variable_name="tasmax",
+#             range_min=0,
+#             range_max=50,
+#             variable_alias=tasmax1,
+#             grid=anuspline_grid,
+#         )
+#     dfv2 = DataFileVariableGridded(
+#             file=df_yearly,
+#             netcdf_variable_name="tasmax",
+#             range_min=0,
+#             range_max=50,
+#             variable_alias=tasmax2,
+#             grid=anuspline_grid,
+#     )
+#     sesh.add_all([dfv1, dfv2])
+#     for dfv in [
+#         dfv1,
+#         dfv2,
+#     ]:
+#         ens_ce.data_file_variables.append(dfv)
+#     sesh.add_all(sesh.dirty)
+
+#     sesh.commit()
+#     print(dfv1.variable_alias.units)
+#     print(dfv1.ensembles)
+#     print(dfv2.variable_alias.units)
+#     print(dfv2.ensembles)
+#     return conflicting_unitsdb
+
+
 @pytest.fixture
 def test_client(app,):
     with app.test_client() as client:
@@ -505,6 +613,11 @@ def multitime_db(cleandb,):
         standard_name="air_temperature",
         units="degC",
     )
+    tasmax_diff_units = VariableAlias(
+        long_name="Tasmax with different units",
+        standard_name="tmax_diff_units",
+        units="degK",
+    )
 
     anuspline_grid = Grid(
         name="Canada ANUSPLINE",
@@ -530,8 +643,38 @@ def multitime_db(cleandb,):
         )
         for file_ in files
     ]
+    # Add extra file for diff units
+    files.append(
+        DataFile(
+            filename=resource_filename(
+                "ce",
+                "tests/data/"
+                "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+            ),
+            unique_id="file9",
+            first_1mib_md5sum="xxxx",
+            x_dim_name="lon",
+            y_dim_name="lat",
+            index_time=now,
+            run=runs[0],
+        )
+    )
+    dfv_diff_units = DataFileVariableGridded(
+        netcdf_variable_name="tasmax",
+        range_min=0,
+        range_max=50,
+        file=files[9],
+        variable_alias=tasmax_diff_units,
+        grid=anuspline_grid,
+    )
+    dfvs.append(dfv_diff_units)
 
-    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
+    sesh.add_all(
+        files
+        + dfvs
+        + runs
+        + [anuspline_grid, tasmax, tasmax_diff_units, bnu_esm, rcp45, ens]
+    )
     sesh.commit()
 
     ens.data_file_variables += dfvs
@@ -566,6 +709,64 @@ def multitime_db(cleandb,):
 
     return dbcopy
 
+
+# @pytest.fixture
+# def conflicting_units_db(multitime_db,):
+#     conflicting_unitsdb = multitime_db
+#     sesh = conflicting_unitsdb.session
+#     now = datetime.utcnow()
+
+#     rcp45 = Emission(short_name="rcp45")
+#     run = Run(name="run1", emission=rcp45,)
+
+#     df = DataFile(
+#         filename=resource_filename(
+#             "ce",
+#             "tests/data/"
+#             "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+#             ),
+#             unique_id="file10",
+#             first_1mib_md5sum="xxxx",
+#             x_dim_name="lon",
+#             y_dim_name="lat",
+#             index_time=now,
+#             run=run,
+#         )
+
+#     tasmax_diff_units = VariableAlias(
+#         long_name="Daily Maximum Temperature",
+#         standard_name="air_temperature",
+#         units="degK",
+#     )
+
+#     anuspline_grid = Grid(
+#         name="Canada ANUSPLINE",
+#         xc_grid_step=0.0833333,
+#         yc_grid_step=0.0833333,
+#         xc_origin=-140.958,
+#         yc_origin=41.0417,
+#         xc_count=1068,
+#         yc_count=510,
+#         xc_units="degrees_east",
+#         yc_units="degrees_north",
+#         evenly_spaced_y=True,
+#     )
+
+#     dfv = DataFileVariableGridded(
+#             netcdf_variable_name="tasmax",
+#             range_min=0,
+#             range_max=50,
+#             file=df,
+#             variable_alias=tasmax_diff_units,
+#             grid=anuspline_grid,
+#         )
+
+#     sesh.add_all([df, dfv, tasmax_diff_units])
+#     sesh.commit()
+
+#     ens.data_file_variables.append(dfv)
+#     sesh.add_all(sesh.dirty)
+#     return conflicting_unitsdb
 
 polygons = {
     # Metro Van 10 vertex
