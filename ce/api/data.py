@@ -124,10 +124,12 @@ def data(
             is_thredds = strtobool(is_thredds)
 
         if is_thredds:
-            data_file.filename = os.getenv("THREDDS_URL_ROOT") + data_file.filename
+            data_filename = os.getenv("THREDDS_URL_ROOT") + data_file.filename
+        else:
+            data_filename = data_file.filename
 
-        with open_nc(data_file.filename) as nc:
-            a = get_array(nc, data_file.filename, time_idx, area, variable)
+        with open_nc(data_filename) as nc:
+            a = get_array(nc, data_filename, time_idx, area, variable)
         return np.mean(a).item()
 
     def get_time_value(timeset, time_idx):
