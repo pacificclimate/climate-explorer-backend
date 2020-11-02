@@ -18,6 +18,7 @@ def data(
     variable,
     timescale="other",
     ensemble_name="ce_files",
+    is_thredds=False,
 ):
     """Delegate for performing data lookups across climatological files
 
@@ -102,7 +103,7 @@ def data(
             'time parameter "{}" not convertable to an integer.'.format(time)
         )
 
-    def get_spatially_averaged_data(data_file, time_idx):
+    def get_spatially_averaged_data(data_file, time_idx, is_thredds):
         """
         From the NetCDF data file pointed at by `data_file`,
         get the spatial average over the area specified by `area`
@@ -113,8 +114,12 @@ def data(
         :param time_idx (int): index of time of interest
         :return: float
         """
-        if "/storage" in data_file.filename:
+        if isinstance(is_thredds, str):
+            is_thredds = strtobool(is_thredds)
+
+        if is_thredds:
             data_file.filename = os.getenv("THREDDS_URL_ROOT") + data_file.filename
+
         with open_nc(data_file.filename) as nc:
             a = get_array(nc, data_file.filename, time_idx, area, variable)
         return np.mean(a).item()
@@ -164,7 +169,7 @@ def data(
         time_key = get_time_value(data_file_variable.file.timeset, time).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-        value = get_spatially_averaged_data(data_file_variable.file, time)
+        value = get_spatially_averaged_data(data_file_variable.file, time, is_thredds)
         run_result["data"][time_key] = value
         run_result["modtime"] = max(
             run_result["modtime"], data_file_variable.file.index_time
