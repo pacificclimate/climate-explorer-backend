@@ -13,11 +13,15 @@ import modelmeta as mm
 from ce.api.geo import wkt_to_masked_array
 
 
-def get_files_from_run_variable(run, variable):
+def get_files_from_run_variable(run, variable, ensemble_name):
     return [
         file_
         for file_ in run.files
-        if variable in [dfv.netcdf_variable_name for dfv in file_.data_file_variables]
+        if any(
+            variable == dfv.netcdf_variable_name
+            and any(ensemble.name == ensemble_name for ensemble in dfv.ensembles)
+            for dfv in file_.data_file_variables
+        )
     ]
 
 
@@ -34,8 +38,8 @@ def get_units_from_file_object(file_, varname):
     )
 
 
-def get_units_from_run_object(run, varname):
-    files = get_files_from_run_variable(run, varname)
+def get_units_from_run_object(run, varname, ensemble_name):
+    files = get_files_from_run_variable(run, varname, ensemble_name)
     units = {get_units_from_file_object(file_, varname) for file_ in files}
 
     if len(units) != 1:

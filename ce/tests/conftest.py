@@ -466,7 +466,9 @@ def multitime_db(cleandb,):
     sesh = dbcopy.session
     now = datetime.utcnow()
 
-    ens = Ensemble(name="ce", version=2.0, changes="", description="",)
+    ce_ens = Ensemble(name="ce", version=2.0, changes="", description="",)
+    # Create diff ensemble to test unit consistency ensemble filter
+    p2a_ens = Ensemble(name="p2a", version=2.0, changes="", description="",)
 
     rcp45 = Emission(short_name="rcp45")
 
@@ -505,6 +507,12 @@ def multitime_db(cleandb,):
         standard_name="air_temperature",
         units="degC",
     )
+    # Create variable with different units
+    tasmax_diff_units = VariableAlias(
+        long_name="Tasmax with different units",
+        standard_name="tmax_diff_units",
+        units="degK",
+    )
 
     anuspline_grid = Grid(
         name="Canada ANUSPLINE",
@@ -530,11 +538,44 @@ def multitime_db(cleandb,):
         )
         for file_ in files
     ]
+    # Create file with different units
+    files.append(
+        DataFile(
+            filename=resource_filename(
+                "ce",
+                "tests/data/"
+                "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+            ),
+            unique_id="file9",
+            first_1mib_md5sum="xxxx",
+            x_dim_name="lon",
+            y_dim_name="lat",
+            index_time=now,
+            run=runs[0],
+        )
+    )
+    # Create dfv with same var name and diff units
+    dfv_diff_units = DataFileVariableGridded(
+        netcdf_variable_name="tasmax",
+        range_min=0,
+        range_max=50,
+        file=files[9],
+        variable_alias=tasmax_diff_units,
+        grid=anuspline_grid,
+    )
+    dfvs.append(dfv_diff_units)
 
-    sesh.add_all(files + dfvs + runs + [anuspline_grid, tasmax, bnu_esm, rcp45, ens])
+    sesh.add_all(
+        files
+        + dfvs
+        + runs
+        + [anuspline_grid, tasmax, tasmax_diff_units, bnu_esm, rcp45, ce_ens, p2a_ens]
+    )
     sesh.commit()
 
-    ens.data_file_variables += dfvs
+    ce_ens.data_file_variables += dfvs[:-1]
+    # Add dfv with diff units to diff ensemble
+    p2a_ens.data_file_variables.append(dfvs.pop())
     sesh.add_all(sesh.dirty)
 
     # Create the three timesets, with just one time step per timeset
