@@ -5,6 +5,7 @@ import numpy as np
 import numpy.ma as ma
 from sqlalchemy.orm.exc import NoResultFound
 import logging
+from distutils.util import strtobool
 
 from modelmeta import DataFile, Time
 
@@ -99,6 +100,9 @@ def stats(
             )
     else:
         time = None
+
+    if isinstance(is_thredds, str):
+        is_thredds = strtobool(is_thredds)
 
     try:
         df = sesh.query(DataFile).filter(DataFile.unique_id == id_).one()
