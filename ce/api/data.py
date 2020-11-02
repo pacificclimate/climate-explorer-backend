@@ -49,6 +49,10 @@ def data(
 
         ensemble_name (str): Name of ensemble
 
+        is_thredds (bool): If set to `True` the filepath will be searched for
+            on THREDDS server. This flag is not needed when running the backend
+            as a server as the files are accessed over the web.
+
     Returns:
         dict:
             Empty dictionary if there exist no files matching the provided
@@ -112,6 +116,7 @@ def data(
 
         :param data_file (modelmeta.DataFile): source data file
         :param time_idx (int): index of time of interest
+        :param is_thredds (bool): whether data target is on thredds server
         :return: float
         """
         if isinstance(is_thredds, str):

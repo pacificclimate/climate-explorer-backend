@@ -50,8 +50,9 @@ def stats(
 
         variable (str): Short name of the variable to be returned
 
-        thredds (bool): If set to `True` the filepath will be searched for
-            on THREDDS server.
+        is_thredds (bool): If set to `True` the filepath will be searched for
+            on THREDDS server. This flag is not needed when running the backend
+            as a server as the files are accessed over the web.
 
     Returns:
         dict: Empty dictionary if model_id is not found in the database.

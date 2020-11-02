@@ -55,7 +55,8 @@ def multistats(
             Defaulted to "mean".
 
         is_thredds (bool): If set to `True` the filepath will be searched for
-            on THREDDS server.
+            on THREDDS server. This flag is not needed when running the backend
+            as a server as the files are accessed over the web.
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.
