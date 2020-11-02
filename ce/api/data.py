@@ -7,6 +7,7 @@ import os
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariableGridded, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
+from distutils.util import strtobool
 
 
 def data(
