@@ -1,9 +1,17 @@
 # News / Release Notes
 
+## 3.2.0
+**2020-November-9**
+
+- Replace `m2r` with `m2r2` [#164](https://github.com/pacificclimate/climate-explorer-backend/pull/164)
+- Provides units in `metadata` and `multidata` responses [#165](https://github.com/pacificclimate/climate-explorer-backend/pull/165)
+- Add ensemble name filter to `get_units_from_file_object` [#169](https://github.com/pacificclimate/climate-explorer-backend/pull/169)
+- Optionally target data from thredds server [#171](https://github.com/pacificclimate/climate-explorer-backend/pull/171)
+
 ## 3.1.0
 *2020-Aug-7*
 
-- Add optional `filepath` property to metadata responses 
+- Add optional `filepath` property to metadata responses
   [#150](https://github.com/pacificclimate/climate-explorer-backend/pull/150)
 
 ## 3.0.1
@@ -47,7 +55,7 @@
 ## 1.1.1
 *15-April-2019*
 
-* Fix for `cell_method` filter issue [PR #99](https://github.com/pacificclimate/climate-explorer-backend/pull/99) 
+* Fix for `cell_method` filter issue [PR #99](https://github.com/pacificclimate/climate-explorer-backend/pull/99)
 
 ## 1.1.0
 

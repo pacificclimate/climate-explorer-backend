@@ -63,6 +63,13 @@ $ export CPLUS_INCLUDE_PATH=/usr/include/gdal
 $ export C_INCLUDE_PATH=/usr/include/gdal
 ```
 
+### `THREDDS` Data
+If you plan to use a `THREDDS` server to provide the data you must set the root
+of the url in an environment variable.
+```
+export THREDDS_URL_ROOT=https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets
+```
+
 ## Development
 
 ### Installation

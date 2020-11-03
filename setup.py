@@ -17,7 +17,7 @@ def recursive_list(pkg_dir, basedir):
     return [x for x in find()]
 
 
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
 setup(
     name="ce",
