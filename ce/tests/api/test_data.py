@@ -21,6 +21,7 @@ def test_data_bad_time(populateddb):
     )
 
 
+@pytest.mark.online
 @pytest.mark.parametrize("variable", ("tasmax", "tasmin",))
 @pytest.mark.parametrize(
     "timescale, time_idx, expected_ymd",
@@ -30,7 +31,9 @@ def test_data_bad_time(populateddb):
         ("yearly", 0, (1985, 7, 2)),
     ),
 )
-def test_data_single_file(populateddb, variable, timescale, time_idx, expected_ymd):
+def test_data_single_file(
+    populateddb, mock_thredds_url_root, variable, timescale, time_idx, expected_ymd
+):
     rv = data(
         populateddb.session,
         model="BNU-ESM",

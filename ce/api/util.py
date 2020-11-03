@@ -58,34 +58,33 @@ def get_grid_from_netcdf_file(nc):
 
 
 @contextmanager
-def open_nc(fname):
-    if not os.path.exists(fname):
+def open_nc(resource):
+    if not "http" in resource and not os.path.exists(resource):
         raise Exception(
-            "The metadata database is out of sync with the filesystem. "
-            "I was told to open the file {}, but it does not exist.".format(fname)
+            f"The metadata database is out of sync with the filesystem. I was told to open file with name {resource}, but it does not exist."
         )
 
     try:
-        nc = Dataset(fname, "r")
+        nc = Dataset(resource, "r")
         nc.set_always_mask(False)
         yield nc
     finally:
         nc.close()
 
 
-def get_array(nc, fname, time, area, variable):
+def get_array(nc, resource, time, area, variable):
 
     if variable not in nc.variables:
-        raise Exception("File {} does not have variable {}.".format(fname, variable))
+        raise Exception(f"Resource {resource} does not have variable {variable}.")
 
     a = nc.variables[variable]
 
     if area:
         # Mask out data that isn't inside the input polygon
-        a = wkt_to_masked_array(nc, fname, area, variable)
-        a = time_slice_array(a, time, nc, fname, variable)
+        a = wkt_to_masked_array(nc, resource, area, variable)
+        a = time_slice_array(a, time, nc, resource, variable)
     else:
-        a = time_slice_array(a, time, nc, fname, variable)
+        a = time_slice_array(a, time, nc, resource, variable)
         a = ma.masked_array(a)
 
     return a
@@ -95,10 +94,10 @@ def get_array(nc, fname, time, area, variable):
 # Reduces a 3-dimensional array to a two-dimensional array by
 # returning the timeidxth slice, IFF time is defined and time
 # is a dimension in the netCDF. Otherwise return array unchanged.
-def time_slice_array(a, timeidx, nc, fname, variable):
+def time_slice_array(a, timeidx, nc, resource, variable):
     if timeidx or timeidx == 0:
         if "time" not in nc.variables[variable].dimensions:
-            raise Exception("File {} does not have a time dimension".format(fname))
+            raise Exception(f"Resource {resource} does not have a time dimension")
         a = a[timeidx, :, :]
     return a
 
@@ -232,3 +231,19 @@ def neighbours(cell):
     """Return all neighbours of `cell`: all cells with an x or y offset
     of +/-1"""
     return (vec_add(cell, offset) for offset in neighbour_offsets)
+
+
+def apply_thredds_root(filename):
+    """Apply thredds root to filename
+
+    PCIC's THREDDS data server stores files that follow the same filepath
+    pattern found in `/storage`. To access it, we just want to add on the first
+    section of the url, the rest will be the same.
+    """
+    thredds_url_root = os.getenv("THREDDS_URL_ROOT")
+    if not thredds_url_root:
+        raise Exception(
+            "You must set the THREDDS_URL_ROOT environment variable to use the server"
+        )
+
+    return thredds_url_root + filename

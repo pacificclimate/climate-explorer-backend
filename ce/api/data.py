@@ -2,10 +2,12 @@
 """
 
 import numpy as np
+import os
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariableGridded, Ensemble
 from ce.api.util import get_array, get_units_from_run_object, open_nc
+from distutils.util import strtobool
 
 
 def data(
@@ -17,6 +19,7 @@ def data(
     variable,
     timescale="other",
     ensemble_name="ce_files",
+    is_thredds=False,
 ):
     """Delegate for performing data lookups across climatological files
 
@@ -46,6 +49,10 @@ def data(
             returned (e.g. "monthly" or "yearly")
 
         ensemble_name (str): Name of ensemble
+
+        is_thredds (bool): If set to `True` the filepath will be searched for
+            on THREDDS server. This flag is not needed when running the backend
+            as a server as the files are accessed over the web.
 
     Returns:
         dict:
@@ -101,7 +108,7 @@ def data(
             'time parameter "{}" not convertable to an integer.'.format(time)
         )
 
-    def get_spatially_averaged_data(data_file, time_idx):
+    def get_spatially_averaged_data(data_file, time_idx, is_thredds):
         """
         From the NetCDF data file pointed at by `data_file`,
         get the spatial average over the area specified by `area`
@@ -110,10 +117,19 @@ def data(
 
         :param data_file (modelmeta.DataFile): source data file
         :param time_idx (int): index of time of interest
+        :param is_thredds (bool): whether data target is on thredds server
         :return: float
         """
-        with open_nc(data_file.filename) as nc:
-            a = get_array(nc, data_file.filename, time_idx, area, variable)
+        if isinstance(is_thredds, str):
+            is_thredds = strtobool(is_thredds)
+
+        if is_thredds:
+            data_filename = os.getenv("THREDDS_URL_ROOT") + data_file.filename
+        else:
+            data_filename = data_file.filename
+
+        with open_nc(data_filename) as nc:
+            a = get_array(nc, data_filename, time_idx, area, variable)
         return np.mean(a).item()
 
     def get_time_value(timeset, time_idx):
@@ -161,7 +177,7 @@ def data(
         time_key = get_time_value(data_file_variable.file.timeset, time).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-        value = get_spatially_averaged_data(data_file_variable.file, time)
+        value = get_spatially_averaged_data(data_file_variable.file, time, is_thredds)
         run_result["data"][time_key] = value
         run_result["modtime"] = max(
             run_result["modtime"], data_file_variable.file.index_time

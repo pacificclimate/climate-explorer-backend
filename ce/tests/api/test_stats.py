@@ -5,20 +5,33 @@ import pytest
 from ce.api import stats
 
 
+@pytest.mark.online
 @pytest.mark.parametrize(
-    "unique_id, var_name",
+    "unique_id, var_name, is_thredds",
     [
-        ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),
-        ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
-        ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
-        ("tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
+        ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax", False),
+        ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", False),
+        ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", "false"),
+        ("tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin", "false"),
+        (
+            "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmax",
+            "true",
+        ),
+        (
+            "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
+            "tasmin",
+            True,
+        ),
     ],
 )
-def test_stats(populateddb, polygon, unique_id, var_name):
+def test_stats(
+    populateddb, polygon, mock_thredds_url_root, unique_id, var_name, is_thredds
+):
     sesh = populateddb.session
-    rv = stats(sesh, unique_id, None, polygon, var_name)
+    rv = stats(sesh, unique_id, None, polygon, var_name, is_thredds)
     statistics = rv[unique_id]
     for attr in ("min", "max", "mean", "median", "stdev"):
         value = statistics[attr]

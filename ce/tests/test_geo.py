@@ -2,10 +2,17 @@ import time
 import pytest
 
 from ce.api.geo import wkt_to_masked_array, polygon_to_masked_array
-from ce.api.geo import polygon_to_mask, memoize, getsize, make_mask_grid_key
+from ce.api.geo import (
+    polygon_to_mask,
+    memoize,
+    getsize,
+    make_mask_grid_key,
+    rasterio_thredds_helper,
+)
 from shapely.wkt import loads
 from shapely.errors import ReadingError
 from collections import OrderedDict
+import rasterio
 
 test_polygons = [
     "POLYGON ((-125 50, -116 50, -116 60, -125 60, -125 50))",
@@ -121,3 +128,23 @@ def test_make_mask_grid_key(ncobject, polygon):
         {result}
     except TypeError:
         assert False, "make_mask_grid_key() generated an unhashable key"
+
+
+@pytest.mark.online
+@pytest.mark.parametrize(
+    "local, online",
+    [
+        (
+            "ce/tests/data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+        ),
+        (
+            "ce/tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+        ),
+    ],
+)
+def test_rasterio_thredds_helper(local, online):
+    with rasterio_thredds_helper(online) as temp_name:
+        with rasterio.open(temp_name) as result, rasterio.open(local) as expected:
+            assert result.profile == expected.profile

@@ -20,10 +20,10 @@ jobs:
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       run: |
-        py.test -v --tb=short
+        py.test -m "not online" -v --tb=short
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
-        py.test -m "not slow" -v --tb=short
+        py.test -m "not online and not slow" -v --tb=short
     - name: Code format check
       run: black . --check

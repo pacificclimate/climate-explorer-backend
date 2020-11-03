@@ -15,6 +15,7 @@ def multistats(
     variable="",
     timescale="",
     cell_method="mean",
+    is_thredds=False,
 ):
     """Request and calculate statistics for multiple models or scenarios
 
@@ -52,6 +53,10 @@ def multistats(
         cell_method (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean" or "standard_deviation").
             Defaulted to "mean".
+
+        is_thredds (bool): If set to `True` the filepath will be searched for
+            on THREDDS server. This flag is not needed when running the backend
+            as a server as the files are accessed over the web.
 
     Returns:
         dict: Empty dictionary if no unique_ids matched the search.
@@ -93,4 +98,4 @@ def multistats(
     ids = search_for_unique_ids(
         sesh, ensemble_name, model, emission, variable, time, timescale, cell_method
     )
-    return {id_: stats(sesh, id_, time, area, variable)[id_] for id_ in ids}
+    return {id_: stats(sesh, id_, time, area, variable, is_thredds)[id_] for id_ in ids}

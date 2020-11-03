@@ -2,7 +2,9 @@ import logging
 import sys
 from collections import OrderedDict
 from threading import RLock
-from contextlib import ContextDecorator
+from contextlib import ContextDecorator, contextmanager
+import shutil
+import requests
 
 import numpy as np
 from shapely.wkt import loads, dumps
@@ -10,10 +12,14 @@ from shapely.affinity import translate
 from shapely.geometry import mapping  # convert a Shapely Geom to GeoJSON
 import rasterio
 from rasterio.mask import raster_geometry_mask as rio_getmask
+import os
 
 # From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
 from collections import Set, Mapping, deque
+
+from tempfile import NamedTemporaryFile
+
 
 try:  # Python 2
     zero_depth_bases = (basestring, Number, xrange, bytearray)
@@ -171,7 +177,7 @@ class memoize(object):
         return cf
 
 
-def make_mask_grid_key(nc, fname, poly, variable):
+def make_mask_grid_key(nc, resource, poly, variable):
     """
     Generates a key for characterizing a numpy mask  meant to
     be applied to netCDF files: the polygon the mask is generated from
@@ -191,13 +197,13 @@ def make_mask_grid_key(nc, fname, poly, variable):
 
 
 @memoize(make_mask_grid_key, 10)
-def polygon_to_mask(nc, fname, poly, variable):
+def polygon_to_mask(nc, resource, poly, variable):
     """Generates a numpy mask from a polygon"""
     nclons = nc.variables["lon"][:]
     if np.any(nclons > 180):
         poly = translate(poly, xoff=180)
 
-    dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
+    dst_name = f'NETCDF:"{resource}":{variable}'
     with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
         if raster.transform == rasterio.Affine.identity():
             raise Exception(
@@ -211,38 +217,69 @@ def polygon_to_mask(nc, fname, poly, variable):
     return mask, out_transform, window
 
 
-def make_masked_file_key(nc, fname, wkt, varname):
+def make_masked_file_key(nc, resource, wkt, varname):
     """generates a key suitable for characterizing a masked netCDF file:
        filename and polygon"""
-    return (fname, wkt)
+    return (resource, wkt)
 
 
 @memoize(make_masked_file_key, 100)
-def wkt_to_masked_array(nc, fname, wkt, variable):
+def wkt_to_masked_array(nc, resource, wkt, variable):
     poly = loads(wkt)
-    return polygon_to_masked_array(nc, fname, poly, variable)
+    return polygon_to_masked_array(nc, resource, poly, variable)
 
 
-def polygon_to_masked_array(nc, fname, poly, variable):
+def polygon_to_masked_array(nc, resource, poly, variable):
     """Applies a polygon mask to a variable read from a netCDF file,
     in addition to any masks specified in the file itself (_FillValue)
     Returns a numpy masked array with every time slice masked"""
 
-    mask, out_transform, window = polygon_to_mask(nc, fname, poly, variable)
+    def polygon_to_masked_array_helper(resource):
+        mask, out_transform, window = polygon_to_mask(nc, resource, poly, variable)
 
-    dst_name = 'NETCDF:"{}":{}'.format(fname, variable)
-    with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
-        # based on https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
-        height, width = mask.shape
-        out_shape = (raster.count, height, width)
+        dst_name = f'NETCDF:"{resource}":{variable}'
+        with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
+            # based on https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
+            height, width = mask.shape
+            out_shape = (raster.count, height, width)
 
-        array = raster.read(window=window, out_shape=out_shape, masked=True)
-        array.mask = array.mask | mask
+            array = raster.read(window=window, out_shape=out_shape, masked=True)
+            array.mask = array.mask | mask
 
-    # Weirdly rasterio's mask operation sets, but doesn't respect the
-    # scale_factor or add_offset
-    var = nc.variables[variable]
-    scale_factor = getattr(var, "scale_factor", 1.0)
-    add_offset = getattr(var, "add_offset", 0.0)
+        # Weirdly rasterio's mask operation sets, but doesn't respect the
+        # scale_factor or add_offset
+        var = nc.variables[variable]
+        scale_factor = getattr(var, "scale_factor", 1.0)
+        add_offset = getattr(var, "add_offset", 0.0)
 
-    return array * scale_factor + add_offset
+        return array * scale_factor + add_offset
+
+    if "dodsC" in resource:
+        with rasterio_thredds_helper(resource) as temp_name:
+            return polygon_to_masked_array_helper(temp_name)
+
+    return polygon_to_masked_array_helper(resource)
+
+
+@contextmanager
+def rasterio_thredds_helper(resource):
+    """Provides rasterio with a readable file from an online resource_name
+
+    As of 2020/08/23 rasterio is not capable of reading opendap urls. To get
+    around this, we can copy over the data from the url to a tempfile which can
+    then be read by rasterio.
+
+    The text replacement in the resource is changing the url output from opendap
+    to httpserver. The reason for this change is netCDF.Dataset is not capable
+    of reading the httpserver, thus we have to make a small adjustment here.
+    """
+    resource_name = resource.replace("dodsC", "fileServer")
+
+    try:
+        temp = NamedTemporaryFile(mode="wb", suffix=".nc", delete=False)
+        with requests.get(resource_name, stream=True) as file_source:
+            shutil.copyfileobj(file_source.raw, temp)
+        yield temp.name
+    finally:
+        temp.close()
+        os.remove(temp.name)

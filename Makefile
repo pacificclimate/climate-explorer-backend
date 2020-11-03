@@ -24,6 +24,7 @@ apt:
 	sudo apt-get install -y \
 		libpq-dev \
 		python3-dev \
+		python3-distutils \
 		libhdf5-dev \
 		libnetcdf-dev \
 		libgdal-dev
