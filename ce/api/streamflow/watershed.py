@@ -123,6 +123,8 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         raise ValueError("Flow direction and elevation do not have compatible grids")
     if not flow_direction.is_compatible(area):
         raise ValueError("Flow direction and area do not have compatible grids")
+    if elevation.units != "m" or area.units != "m2":
+        raise ValueError("Elevation and area do not have compatible units")
 
     # Compute lonlats of watershed whose mouth is at `station`
     # TODO: Refactor to accept a VicDataGrid?
@@ -158,13 +160,17 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
     )
 
+    elevation_min = min(ws_elevations)
+    elevation_max = max(ws_elevations)
+    total_area = sum(ws_areas)
+
     return {
         "elevation": {
             "units": elevation.units,
-            "minimum": min(ws_elevations),
-            "maximum": max(ws_elevations),
+            "minimum": elevation_min,
+            "maximum": elevation_max,
         },
-        "area": {"units": area.units, "value": sum(ws_areas)},
+        "area": {"units": area.units, "value": total_area},
         "hypsometric_curve": {
             "elevation_bin_start": hypso_params["bin_start"],
             "elevation_bin_width": hypso_params["bin_width"],
@@ -172,6 +178,10 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             "cumulative_areas": cumulative_areas,
             "elevation_units": elevation.units,
             "area_units": area.units,
+        },
+        "melton_ratio": {
+            "units": "km/km",
+            "value": (elevation_max - elevation_min) / math.sqrt(total_area),
         },
         "boundary": geojson_feature(
             outline,

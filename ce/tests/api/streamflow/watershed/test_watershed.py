@@ -20,6 +20,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m2",
                 },
+                "melton_ratio": {"units": "km/km", "value": 1.5118578920369088,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
@@ -47,6 +48,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m2",
                 },
+                "melton_ratio": {"units": "km/km", "value": 1.2247448713915892,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
@@ -74,6 +76,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m2",
                 },
+                "melton_ratio": {"units": "km/km", "value": 0.5773502691896258,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
