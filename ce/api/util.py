@@ -110,12 +110,12 @@ def mean_datetime(datetimes):
 
 
 # valid cell method parameters for the API. Add new ones here as needed.
-VALID_CELL_METHOD_PARAMETERS = ("mean", "standard_deviation", "percentile")
+VALID_CELL_METHODS_PARAMETERS = ("mean", "standard_deviation", "percentile")
 
 
-def is_valid_cell_method(cell_method):
+def is_valid_cell_methods_param(cell_methods):
     """Validate the cell_method parameter supplied by caller"""
-    return cell_method in VALID_CELL_METHOD_PARAMETERS
+    return cell_methods in VALID_CELL_METHODS_PARAMETERS
 
 
 def check_final_cell_method(cell_methods, target_method, default_to_mean=True):
@@ -129,7 +129,7 @@ def check_final_cell_method(cell_methods, target_method, default_to_mean=True):
     parsed = parse(cell_methods)
     if target_method == "mean" and default_to_mean:
         # determine means by process of elimination
-        nonmeans = [m for m in VALID_CELL_METHOD_PARAMETERS if m != "mean"]
+        nonmeans = [m for m in VALID_CELL_METHODS_PARAMETERS if m != "mean"]
         return parsed is None or parsed[-1].method.name not in nonmeans
     elif parsed is not None:
         return parsed[-1].method.name == target_method
@@ -170,8 +170,8 @@ def search_for_unique_ids(
     timescale="",
     cell_method="mean",
 ):
-    if not is_valid_cell_method(cell_method):
-        raise Exception("Unsupported cell_method: {}".format(cell_method))
+    if not is_valid_cell_methods_param(cell_method):
+        raise Exception("Unsupported cell_methods parameter: {}".format(cell_method))
 
     cell_methods = (
         sesh.query(mm.DataFileVariableGridded.variable_cell_methods)

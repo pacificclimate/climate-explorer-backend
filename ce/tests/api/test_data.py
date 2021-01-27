@@ -23,7 +23,7 @@ def test_data_bad_time(populateddb):
 
 @pytest.mark.online
 @pytest.mark.parametrize(
-    "variable,cell_method", (("tasmax", "standard_deviation"), ("tasmin", "mean"),)
+    "variable,cell_methods", (("tasmax", "standard_deviation"), ("tasmin", "mean"),)
 )
 @pytest.mark.parametrize(
     "timescale, time_idx, expected_ymd",
@@ -37,7 +37,7 @@ def test_data_single_file(
     populateddb,
     mock_thredds_url_root,
     variable,
-    cell_method,
+    cell_methods,
     timescale,
     time_idx,
     expected_ymd,
@@ -51,7 +51,7 @@ def test_data_single_file(
         timescale=timescale,
         time=time_idx,
         ensemble_name="ce",
-        cell_method=cell_method,
+        cell_methods=cell_methods,
     )
 
     assert len(rv) == 1
