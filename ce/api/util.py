@@ -109,6 +109,7 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 
+# valid cell method parameters for the API. Add new ones here as needed.
 VALID_CELL_METHOD_PARAMETERS = ("mean", "standard_deviation", "percentile")
 
 
@@ -117,7 +118,27 @@ def validate_cell_method(cell_method):
     return cell_method in VALID_CELL_METHOD_PARAMETERS
 
 
-def filter_by_statistical_transformation(cell_methods, target_method):
+def check_cell_method(cell_methods, target_method, default_to_mean=True):
+    """Determines whether the final method in a cell methods string
+    (corresponding to a statistical aggregation) matches the target.
+    If default_to_mean is true, treats errors and unrecognized methods
+    as though they are climatological means. This compensates for some
+    noisy cell_methods attributes in our data, all of which are
+    climatological means.
+    """
+    parsed = parse(cell_methods)
+    if target_method == "mean" and default_to_mean:
+        # determine means by process of elimination
+        nonmeans = [m for m in VALID_CELL_METHOD_PARAMETERS if m != "mean"]
+        return not parsed or parsed[-1].method.name not in nonmeans
+    elif parsed:
+        return parsed[-1].method.name == target_method
+    else:
+        # unparsable cell methods string
+        return False
+
+
+def filter_by_cell_method(cell_methods, target_method):
     """
     There are multiple types of statistical data available to the backend
     via the modelmeta database:
@@ -134,22 +155,7 @@ def filter_by_statistical_transformation(cell_methods, target_method):
     its cell_method attribute.
     """
 
-    def final_method(cell_method):
-        """return a string representing the last operation done on this data"""
-        parsed = parse(cell_method)
-        return parsed[-1].method.name if parsed else parsed
-
-    # cell methods for "mean" datasets are unreliable - determine "mean" by
-    # process of elimination
-    if target_method != "mean":
-        return [cm for cm in cell_methods if final_method(cm) == target_method]
-    else:
-        nonmeans = [m for m in VALID_CELL_METHOD_PARAMETERS if m != "mean"]
-        return [
-            cm
-            for cm in cell_methods
-            if not final_method or final_method(cm) not in nonmeans
-        ]
+    return [cm for cm in cell_methods if check_cell_method(cm, target_method, True)]
 
 
 def search_for_unique_ids(
@@ -171,7 +177,7 @@ def search_for_unique_ids(
         .all()
     )
 
-    matching_cell_methods = filter_by_statistical_transformation(
+    matching_cell_methods = filter_by_cell_method(
         [r[0] for r in cell_methods], cell_method
     )
 

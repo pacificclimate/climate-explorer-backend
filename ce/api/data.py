@@ -6,7 +6,7 @@ import os
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariableGridded, Ensemble
-from ce.api.util import get_array, get_units_from_run_object, open_nc
+from ce.api.util import get_array, get_units_from_run_object, open_nc, check_cell_method
 from distutils.util import strtobool
 
 
@@ -19,6 +19,7 @@ def data(
     variable,
     timescale="other",
     ensemble_name="ce_files",
+    cell_method="mean",
     is_thredds=False,
 ):
     """Delegate for performing data lookups across climatological files
@@ -49,6 +50,10 @@ def data(
             returned (e.g. "monthly" or "yearly")
 
         ensemble_name (str): Name of ensemble
+
+        cell_method (str): Statistical operation applied to variable in a
+            climatological dataset (e.g "mean", "standard_deviation",
+            "percentile). Defaulted to "mean".
 
         is_thredds (bool): If set to `True` the filepath will be searched for
             on THREDDS server. This flag is not needed when running the backend
@@ -162,8 +167,16 @@ def data(
     )
     data_file_variables = query.all()
 
+    # filter by cell methods parameter
+    data_file_variables = [
+        dfv
+        for dfv in data_file_variables
+        if check_cell_method(dfv.variable_cell_methods, cell_method, True)
+    ]
+
     result = {}
     for data_file_variable in data_file_variables:
+
         try:
             run_result = result[data_file_variable.file.run.name]
         except KeyError:

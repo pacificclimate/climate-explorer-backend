@@ -51,8 +51,8 @@ def multistats(
             returned (e.g. "monthly" or "yearly")
 
         cell_method (str): Statistical operation applied to variable in a
-            climatological dataset (e.g "mean" or "standard_deviation").
-            Defaulted to "mean".
+            climatological dataset (e.g "mean", "standard_deviation",
+            "percentile"). Defaulted to "mean".
 
         is_thredds (bool): If set to `True` the filepath will be searched for
             on THREDDS server. This flag is not needed when running the backend
