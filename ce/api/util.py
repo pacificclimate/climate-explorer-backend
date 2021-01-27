@@ -113,12 +113,12 @@ def mean_datetime(datetimes):
 VALID_CELL_METHOD_PARAMETERS = ("mean", "standard_deviation", "percentile")
 
 
-def validate_cell_method(cell_method):
+def is_valid_cell_method(cell_method):
     """Validate the cell_method parameter supplied by caller"""
     return cell_method in VALID_CELL_METHOD_PARAMETERS
 
 
-def check_cell_method(cell_methods, target_method, default_to_mean=True):
+def check_final_cell_method(cell_methods, target_method, default_to_mean=True):
     """Determines whether the final method in a cell methods string
     (corresponding to a statistical aggregation) matches the target.
     If default_to_mean is true, treats errors and unrecognized methods
@@ -130,8 +130,8 @@ def check_cell_method(cell_methods, target_method, default_to_mean=True):
     if target_method == "mean" and default_to_mean:
         # determine means by process of elimination
         nonmeans = [m for m in VALID_CELL_METHOD_PARAMETERS if m != "mean"]
-        return not parsed or parsed[-1].method.name not in nonmeans
-    elif parsed:
+        return parsed is None or parsed[-1].method.name not in nonmeans
+    elif parsed is not None:
         return parsed[-1].method.name == target_method
     else:
         # unparsable cell methods string
@@ -155,7 +155,9 @@ def filter_by_cell_method(cell_methods, target_method):
     its cell_method attribute.
     """
 
-    return [cm for cm in cell_methods if check_cell_method(cm, target_method, True)]
+    return [
+        cm for cm in cell_methods if check_final_cell_method(cm, target_method, True)
+    ]
 
 
 def search_for_unique_ids(
@@ -168,7 +170,7 @@ def search_for_unique_ids(
     timescale="",
     cell_method="mean",
 ):
-    if not validate_cell_method(cell_method):
+    if not is_valid_cell_method(cell_method):
         raise Exception("Unsupported cell_method: {}".format(cell_method))
 
     cell_methods = (

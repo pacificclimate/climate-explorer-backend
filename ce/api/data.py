@@ -6,7 +6,13 @@ import os
 
 from modelmeta import Run, Emission, Model, TimeSet, DataFile
 from modelmeta import DataFileVariableGridded, Ensemble
-from ce.api.util import get_array, get_units_from_run_object, open_nc, check_cell_method
+from ce.api.util import (
+    get_array,
+    get_units_from_run_object,
+    open_nc,
+    check_final_cell_method,
+    is_valid_cell_method,
+)
 from distutils.util import strtobool
 
 
@@ -112,6 +118,8 @@ def data(
         raise Exception(
             'time parameter "{}" not convertable to an integer.'.format(time)
         )
+    if not is_valid_cell_method(cell_method):
+        raise Exception("Unsupported cell_method: {}".format(cell_method))
 
     def get_spatially_averaged_data(data_file, time_idx, is_thredds):
         """
@@ -171,7 +179,7 @@ def data(
     data_file_variables = [
         dfv
         for dfv in data_file_variables
-        if check_cell_method(dfv.variable_cell_methods, cell_method, True)
+        if check_final_cell_method(dfv.variable_cell_methods, cell_method, True)
     ]
 
     result = {}
