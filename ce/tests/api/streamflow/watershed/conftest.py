@@ -48,5 +48,5 @@ def area_1(longitudes_1, latitudes_1):
         longitudes=longitudes_1,  # len = 3
         latitudes=latitudes_1,  # len = 4
         values=numpy.ones((4, 3)),
-        units="m2",
+        units="m^2",
     )
