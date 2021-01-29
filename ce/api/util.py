@@ -2,6 +2,7 @@ import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from itertools import product
+from cf_cell_methods import parse
 import operator
 import re
 
@@ -108,42 +109,55 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 
-def validate_cell_method(cell_method):
-    return cell_method in ("mean", "standard_deviation")
+# valid cell method parameters for the API. Add new ones here as needed.
+VALID_CELL_METHODS_PARAMETERS = ("mean", "standard_deviation", "percentile")
 
 
-def find_matching_cell_methods(cell_methods, target_method):
-    def filter_on_method(cell_method, target_method):
-        pattern = r"time:[a-z\s]*time:\s+{}\s+over\s+(days|years)".format(target_method)
-        return re.fullmatch(pattern, cell_method)
+def is_valid_cell_methods_param(cell_methods):
+    """Validate the cell_method parameter supplied by caller"""
+    return cell_methods in VALID_CELL_METHODS_PARAMETERS
 
-    # Older data sets were all climatological means and therefore the
-    # cell_method attribute never had to specify that they were such.  With the
-    # introduction of climatological standard deviation data sets the
-    # cell_method usage had to be updated such that we could differentiate
-    # between the different the data operations.  Thus any cell_method that
-    # doesn't match the updated version is considered to be a climatological
-    # mean.
-    #
-    # The conventions that were followed to create these cell_method attributes
-    # can be found here:
-    # http://cfconventions.org/cf-conventions/cf-conventions.html#cell-methods
-    if target_method == "mean":
-        return [
-            cell_method
-            for cell_method in cell_methods
-            if filter_on_method(cell_method, target_method)
-            or (
-                not filter_on_method(cell_method, target_method)
-                and not filter_on_method(cell_method, "standard_deviation")
-            )
-        ]
+
+def check_final_cell_method(cell_methods, target_method, default_to_mean=True):
+    """Determines whether the final method in a cell methods string
+    (corresponding to a statistical aggregation) matches the target.
+    If default_to_mean is true, treats errors and unrecognized methods
+    as though they are climatological means. This compensates for some
+    noisy cell_methods attributes in our data, all of which are
+    climatological means.
+    """
+    parsed = parse(cell_methods)
+    if target_method == "mean" and default_to_mean:
+        # determine means by process of elimination
+        nonmeans = [m for m in VALID_CELL_METHODS_PARAMETERS if m != "mean"]
+        return parsed is None or parsed[-1].method.name not in nonmeans
+    elif parsed is not None:
+        return parsed[-1].method.name == target_method
     else:
-        return [
-            cell_method
-            for cell_method in cell_methods
-            if filter_on_method(cell_method, target_method)
-        ]
+        # unparsable cell methods string
+        return False
+
+
+def filter_by_cell_method(cell_methods, target_method):
+    """
+    There are multiple types of statistical data available to the backend
+    via the modelmeta database:
+      * climatological means
+      * climatological standard deviations
+      * model ensemble means of climatological means
+      * model ensemble percentiles of climatological means
+      * time-invariant physical geography data
+    A caller may specify whether they are interested in climatological means
+    (including model ensemble means of climatological means), climatological
+    standard deviations, or percentiles of climatological means. (Physical
+    geography data should only be accessed by the /watershed API), and this
+    function will filter returned data to the desired category based on
+    its cell_method attribute.
+    """
+
+    return [
+        cm for cm in cell_methods if check_final_cell_method(cm, target_method, True)
+    ]
 
 
 def search_for_unique_ids(
@@ -156,8 +170,8 @@ def search_for_unique_ids(
     timescale="",
     cell_method="mean",
 ):
-    if not validate_cell_method(cell_method):
-        raise Exception("Unsupported cell_method: {}".format(cell_method))
+    if not is_valid_cell_methods_param(cell_method):
+        raise Exception("Unsupported cell_methods parameter: {}".format(cell_method))
 
     cell_methods = (
         sesh.query(mm.DataFileVariableGridded.variable_cell_methods)
@@ -165,7 +179,7 @@ def search_for_unique_ids(
         .all()
     )
 
-    matching_cell_methods = find_matching_cell_methods(
+    matching_cell_methods = filter_by_cell_method(
         [r[0] for r in cell_methods], cell_method
     )
 

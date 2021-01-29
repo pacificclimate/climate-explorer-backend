@@ -553,6 +553,7 @@ def multitime_db(cleandb,):
             file=file_,
             variable_alias=tasmax,
             grid=anuspline_grid,
+            variable_cell_methods="time: maximum time: mean over days",
         )
         for file_ in files
     ]
