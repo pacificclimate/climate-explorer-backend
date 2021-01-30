@@ -23,6 +23,7 @@ from flask import abort
 from sqlalchemy import distinct
 from shapely.geometry import Point
 from shapely.errors import WKTReadingError
+from pint import UnitRegistry
 
 from ce.api.geospatial import (
     geojson_feature,
@@ -119,10 +120,16 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             "bin_width": 100,
             "num_bins": 46,
         }
+    ureg = UnitRegistry()
+
     if not flow_direction.is_compatible(elevation):
         raise ValueError("Flow direction and elevation do not have compatible grids")
     if not flow_direction.is_compatible(area):
         raise ValueError("Flow direction and area do not have compatible grids")
+    if not ureg(elevation.units).check("[length]"):
+        raise ValueError("Elevation units not recognized: {}".format(elevation.units))
+    if not ureg(area.units).check("[length] [length]"):
+        raise ValueError("Area units not recognized: {}".format(elevation.units))
 
     # Compute lonlats of watershed whose mouth is at `station`
     # TODO: Refactor to accept a VicDataGrid?
@@ -158,13 +165,20 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
     )
 
+    elevation_min = min(ws_elevations)
+    elevation_max = max(ws_elevations)
+    total_area = sum(ws_areas)
+    m_ratio = compute_melton_ratio(
+        elevation_max, elevation_min, elevation.units, total_area, area.units
+    )
+
     return {
         "elevation": {
             "units": elevation.units,
-            "minimum": min(ws_elevations),
-            "maximum": max(ws_elevations),
+            "minimum": elevation_min,
+            "maximum": elevation_max,
         },
-        "area": {"units": area.units, "value": sum(ws_areas)},
+        "area": {"units": area.units, "value": total_area},
         "hypsometric_curve": {
             "elevation_bin_start": hypso_params["bin_start"],
             "elevation_bin_width": hypso_params["bin_width"],
@@ -173,6 +187,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             "elevation_units": elevation.units,
             "area_units": area.units,
         },
+        "melton_ratio": {"units": "km/km", "value": m_ratio,},
         "boundary": geojson_feature(
             outline,
             properties={
@@ -350,3 +365,22 @@ def hypsometry(elevations, areas, bin_start=0, bin_width=100, num_bins=46):
         cumulative_areas[bin] += area
 
     return cumulative_areas
+
+
+def compute_melton_ratio(
+    elevation_max, elevation_min, elevation_units, area, area_units
+):
+    """The change in elevation over a watershed divided by the square root of the watershed area"""
+    ureg = UnitRegistry()
+    elev_delta = elevation_max * ureg(elevation_units) - elevation_min * ureg(
+        elevation_units
+    )
+    area_sqrt = (area * ureg(area_units)) ** 0.5
+    melton_ratio = elev_delta / area_sqrt
+    if melton_ratio.check("[]"):  # ensure dimensionlessness
+        return melton_ratio.magnitude
+    raise Exception(
+        "Area and elevation units are not compatible: {} and {}".format(
+            elevation_units, area_units
+        )
+    )
