@@ -1,5 +1,11 @@
 # News / Release Notes
 
+## 3.3.0
+**2021-January-29**
+
+- Add calculation of the Melton Ratio (elevation delta over a stream divided by square root of area drained) to the `watershed` API [#174](https://github.com/pacificclimate/climate-explorer-backend/pull/174)
+- Extend filtering on cell methods, previously only available in the `multistats` API, to the `data` API and support new parameter value, `percentile` in anticipation of new data types [#176](https://github.com/pacificclimate/climate-explorer-backend/pull/176)
+
 ## 3.2.0
 **2020-November-9**
 
