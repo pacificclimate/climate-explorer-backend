@@ -9,10 +9,15 @@ from numpy.ma import MaskedArray
 from dateutil.parser import parse
 from netCDF4 import Dataset
 
-from ce.api.util import get_array, mean_datetime, open_nc, check_final_cell_method, get_units_from_run_object
+from ce.api.util import (
+    get_array,
+    mean_datetime,
+    open_nc,
+    check_final_cell_method,
+    get_units_from_run_object,
+)
 
 from modelmeta.v2 import Run
-
 
 
 @pytest.fixture(
@@ -98,6 +103,7 @@ def test_open_nc_exception(bad_path):
             # Test won't make it this far, but in case we do, let's fail the test
             assert False
 
+
 @pytest.mark.parametrize(
     ("run_name", "var_name", "ensemble_name", "expected_units"),
     [
@@ -106,10 +112,12 @@ def test_open_nc_exception(bad_path):
         ("r1i1p1", "pr", "ce", "kg d-1 m-2"),
     ],
 )
-def test_get_units_from_run_object(populateddb, run_name, var_name, ensemble_name, expected_units):
+def test_get_units_from_run_object(
+    populateddb, run_name, var_name, ensemble_name, expected_units
+):
     run_object = Run(name=run_name)
     units = get_units_from_run_object(populateddb.session, Run, var_name, ensemble_name)
-    assert(units == expected_units)
+    assert units == expected_units
 
 
 @pytest.mark.parametrize(

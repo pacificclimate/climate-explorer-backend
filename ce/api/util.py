@@ -45,10 +45,12 @@ def get_units_from_run_object(sesh, run, varname, ensemble_name):
         .filter(mm.DataFileVariableGridded.netcdf_variable_name == varname)
         .filter(mm.Run.name == run.name)
     )
-    
+
     if len(units.all()) != 1:
         raise Exception(
-            "Run {} for variable {} does not have consistent units {}".format(run, varname, units.all())
+            "Run {} for variable {} does not have consistent units {}".format(
+                run, varname, units.all()
+            )
         )
 
     return units.scalar()
