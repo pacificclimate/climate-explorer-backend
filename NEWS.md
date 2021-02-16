@@ -1,5 +1,10 @@
 # News / Release Notes
 
+## 3.3.1
+**2021-February-16**
+
+- Speed up the `data` API by streamlining units comparison done in `get_units_from_run_object()` [#180](https://github.com/pacificclimate/climate-explorer-backend/pull/180)
+
 ## 3.3.0
 **2021-January-29**
 
