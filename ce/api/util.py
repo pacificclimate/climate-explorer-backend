@@ -30,25 +30,30 @@ def get_units_from_netcdf_file(nc, variable):
     return nc.variables[variable].units
 
 
-def get_units_from_file_object(file_, varname):
-    for dfv in file_.data_file_variables:
-        if dfv.netcdf_variable_name == varname:
-            return dfv.variable_alias.units
-    raise Exception(
-        "Variable {} is not indexed for file {}".format(varname, file_.filename)
+def get_units_from_run_object(sesh, run, varname, ensemble_name):
+    units = (
+        sesh.query(mm.VariableAlias.units)
+        .distinct(mm.VariableAlias.units)
+        .join(
+            mm.DataFileVariableGridded,
+            mm.EnsembleDataFileVariables,
+            mm.Ensemble,
+            mm.DataFile,
+            mm.Run,
+        )
+        .filter(mm.Ensemble.name == ensemble_name)
+        .filter(mm.DataFileVariableGridded.netcdf_variable_name == varname)
+        .filter(mm.Run.name == run.name)
     )
 
-
-def get_units_from_run_object(run, varname, ensemble_name):
-    files = get_files_from_run_variable(run, varname, ensemble_name)
-    units = {get_units_from_file_object(file_, varname) for file_ in files}
-
-    if len(units) != 1:
+    if len(units.all()) != 1:
         raise Exception(
-            "File list {} does not have consistent units {}".format(run.files, units)
+            "Run {} for variable {} does not have consistent units {}".format(
+                run, varname, units.all()
+            )
         )
 
-    return units.pop()
+    return units.scalar()
 
 
 def get_grid_from_netcdf_file(nc):
@@ -162,7 +167,7 @@ def filter_by_cell_method(cell_methods, target_method):
 
 def search_for_unique_ids(
     sesh,
-    ensemble_name="ce",
+    ensemble_name="ce_files",
     model="",
     emission="",
     variable="",

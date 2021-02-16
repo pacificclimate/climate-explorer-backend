@@ -191,7 +191,7 @@ def data(
             run_result = result[data_file_variable.file.run.name] = {
                 "data": {},
                 "units": get_units_from_run_object(
-                    data_file_variable.file.run, variable, ensemble_name
+                    sesh, data_file_variable.file.run, variable, ensemble_name
                 ),
                 "modtime": data_file_variable.file.index_time,
             }
