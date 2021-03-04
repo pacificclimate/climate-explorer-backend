@@ -4,9 +4,10 @@
 from modelmeta import DataFile, Model, Emission, Run
 from modelmeta import DataFileVariableGridded, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
+from ce.api.util import check_final_cell_method, is_valid_cell_methods_param
 
 
-def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
+def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods="mean"):
     """Retrieve metadata for all data files in an ensemble
 
     The ``multimeta`` API call is available to retrieve summarized
@@ -31,6 +32,10 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
         extras (str): Comma-separated list of extra fields to be included in
             response. Currently responds to fields:
                 "filepath": in each dictionary item, filepath of data file
+
+        cell_methods(str): Statistical operation applied to variable in a
+            climatological dataset (e.g "mean", "standard_deviation",
+            "percentile"). Defaulted to "mean".
 
     Returns:
         A dictionary keyed by unique_id for all unique_ids in the
@@ -64,6 +69,9 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
 
     """
 
+    if not is_valid_cell_methods_param(cell_methods):
+        raise Exception("Unsupported cell_methods parameter: {}".format(cell_methods))
+
     q = (
         sesh.query(
             DataFile.unique_id.label("unique_id"),
@@ -74,6 +82,7 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
             Emission.short_name.label("experiment"),
             Run.name.label("ensemble_member"),
             DataFileVariableGridded.netcdf_variable_name.label("netcdf_variable_name"),
+            DataFileVariableGridded.variable_cell_methods.label("cell_methods"),
             VariableAlias.long_name.label("variable_long_name"),
             VariableAlias.units.label("units"),
             TimeSet.time_resolution.label("timescale"),
@@ -101,6 +110,13 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras=""):
         q = q.filter(Model.short_name == model)
 
     results = q.all()
+    
+    # filter by cell methods parameter
+    results = [
+        dataset
+        for dataset in results
+        if check_final_cell_method(dataset.cell_methods, cell_methods, True)
+    ]
 
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
