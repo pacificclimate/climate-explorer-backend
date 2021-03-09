@@ -110,7 +110,7 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods=
         q = q.filter(Model.short_name == model)
 
     results = q.all()
-    
+
     # filter by cell methods parameter
     results = [
         dataset

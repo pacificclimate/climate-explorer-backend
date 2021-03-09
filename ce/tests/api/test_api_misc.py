@@ -84,7 +84,12 @@ from test_utils import check_dict_subset
         ),
         (
             "multimeta",
-            {"ensemble_name": "ce", "model": "", "extras": "filepath", "cell_methods": "standard_deviation"},
+            {
+                "ensemble_name": "ce",
+                "model": "",
+                "extras": "filepath",
+                "cell_methods": "standard_deviation",
+            },
             {
                 "CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc": {
                     "filepath": re.compile(

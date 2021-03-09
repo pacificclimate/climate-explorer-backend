@@ -8,7 +8,10 @@ from ce.api import multimeta
 @pytest.mark.parametrize(
     "cell_methods,unique_id",
     [
-        ("standard_deviation", "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"),
+        (
+            "standard_deviation",
+            "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+        ),
         ("mean", "tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"),
     ],
 )
@@ -16,7 +19,9 @@ from ce.api import multimeta
 def test_multimeta(populateddb, model, cell_methods, unique_id, extras):
     sesh = populateddb.session
     # Multimeta is wrapped for caching. Call the wrapped function
-    rv = multimeta(sesh, ensemble_name="ce", model=model, extras=extras, cell_methods=cell_methods)
+    rv = multimeta(
+        sesh, ensemble_name="ce", model=model, extras=extras, cell_methods=cell_methods
+    )
     assert unique_id in rv
     file_metadata = rv[unique_id]
 
