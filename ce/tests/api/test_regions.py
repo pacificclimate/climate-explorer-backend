@@ -15,7 +15,7 @@ def test_stored_data(populateddb):
     # "stored data" CSV during testing as well.
     removed_id = "removed"
     current_id = "pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
-    outdated_id = "tasmax_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
+    outdated_id = "tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
     region_dir = os.getenv("REGION_DATA_DIRECTORY").rstrip("/")
     with open("{}/test_region.csv".format(region_dir), "w") as outfile:
         outcsv = DictWriter(outfile, fieldnames=["unique_id", "modtime"])
