@@ -1,5 +1,10 @@
 # News / Release Notes
 
+## 3.3.2
+**2021-March-10**
+
+- Add filtering on cell_methods parameter to `multimeta` API. [#182](https://github.com/pacificclimate/climate-explorer-backend/pull/182)
+
 ## 3.3.1
 **2021-February-16**
 
