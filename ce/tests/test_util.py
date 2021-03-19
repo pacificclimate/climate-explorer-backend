@@ -13,7 +13,7 @@ from ce.api.util import (
     get_array,
     mean_datetime,
     open_nc,
-    check_final_cell_method,
+    check_climatological_statistic,
     get_units_from_run_object,
 )
 
@@ -121,7 +121,7 @@ def test_get_units_from_run_object(
 
 
 @pytest.mark.parametrize(
-    ("cell_methods", "target_method", "default_to_mean", "expected"),
+    ("cell_methods", "climatological_statistic", "default_to_mean", "expected"),
     (
         # standard_deviation dataset
         (
@@ -285,9 +285,11 @@ def test_get_units_from_run_object(
     ),
 )
 def test_check_final_cell_method(
-    cell_methods, target_method, default_to_mean, expected
+    cell_methods, climatological_statistic, default_to_mean, expected
 ):
     assert (
-        check_final_cell_method(cell_methods, target_method, default_to_mean)
+        check_climatological_statistic(
+            cell_methods, climatological_statistic, default_to_mean
+        )
         == expected
     )

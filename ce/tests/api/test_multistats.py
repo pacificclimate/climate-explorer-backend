@@ -7,14 +7,14 @@ from ce.api import multistats
     ("filters", "keys"),
     (
         (
-            {"variable": "tasmax", "cell_methods": "standard_deviation"},
+            {"variable": "tasmax", "climatological_statistic": "standard_deviation"},
             ("CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc", "file2"),
         ),
         (
             {
                 "variable": "tasmax",
                 "model": "BNU-ESM",
-                "cell_methods": "standard_deviation",
+                "climatological_statistic": "standard_deviation",
             },
             ["tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"],
         ),
@@ -22,16 +22,20 @@ from ce.api import multistats
             {
                 "variable": "tasmax",
                 "timescale": "seasonal",
-                "cell_methods": "standard_deviation",
+                "climatological_statistic": "standard_deviation",
             },
             ["tasmax_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230"],
         ),
         (
-            {"variable": "tasmin", "model": "BNU-ESM", "cell_methods": "mean"},
+            {
+                "variable": "tasmin",
+                "model": "BNU-ESM",
+                "climatological_statistic": "mean",
+            },
             ["tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"],
         ),
         (
-            {"variable": "pr", "model": "BNU-ESM", "cell_methods": "mean"},
+            {"variable": "pr", "model": "BNU-ESM", "climatological_statistic": "mean"},
             ["pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"],
         ),
     ),
