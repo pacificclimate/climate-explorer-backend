@@ -75,7 +75,6 @@ def multimeta(
 
     """
 
-    print("in multimeta!")
     if not is_valid_clim_stat_param(climatological_statistic):
         raise Exception(
             "Unsupported climatological_statistic parameter: {}".format(
@@ -172,7 +171,6 @@ def multimeta(
             result.netcdf_variable_name
         ] = result.variable_long_name
         rv[unique_id]["units"][result.netcdf_variable_name] = result.units
-        print("multi_year_mean = {}".format(result.multi_year_mean))
         if result.multi_year_mean:
             rv[unique_id]["climatological_statistic"] = get_climatological_statistic(
                 result.cell_methods
