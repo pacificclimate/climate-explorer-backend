@@ -157,7 +157,13 @@ def get_climatological_statistic(cell_methods, default_to_mean=True):
         if check_climatological_statistic(cell_methods, clim_stat, default_to_mean):
             climatological_statistic = clim_stat
 
-    #    if climatological_statistic == "percentile":
+    # return percentile number, if relevant
+    if climatological_statistic == "percentile":
+        cm_parsed = parse(cell_methods)
+        percentile_num = cm_parsed[-1].method.params[0]
+        climatological_statistic = "{}[{}]".format(
+            climatological_statistic, percentile_num
+        )
 
     return climatological_statistic
 

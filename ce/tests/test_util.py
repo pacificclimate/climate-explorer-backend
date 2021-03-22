@@ -312,12 +312,22 @@ def test_check_climatological_statistic(
         (
             "time: mean within days time: max over days time: mean over days models: percentile[5]",
             True,
-            "percentile",
+            "percentile[5.0]",
         ),
         (
             "time: mean within days time: max over days time: mean over days models: percentile[5]",
             False,
-            "percentile",
+            "percentile[5.0]",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            True,
+            "percentile[95.0]",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            False,
+            "percentile[95.0]",
         ),
         ("time: maximum time: mean over days", True, "mean",),
         ("time: maximum time: mean over days", False, "mean"),
