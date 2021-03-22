@@ -4,10 +4,16 @@
 from modelmeta import DataFile, Model, Emission, Run
 from modelmeta import DataFileVariableGridded, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
-from ce.api.util import check_final_cell_method, is_valid_cell_methods_param
+from ce.api.util import (
+    check_climatological_statistic,
+    is_valid_clim_stat_param,
+    get_climatological_statistic,
+)
 
 
-def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods="mean"):
+def multimeta(
+    sesh, ensemble_name="ce_files", model="", extras="", climatological_statistic="mean"
+):
     """Retrieve metadata for all data files in an ensemble
 
     The ``multimeta`` API call is available to retrieve summarized
@@ -33,7 +39,7 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods=
             response. Currently responds to fields:
                 "filepath": in each dictionary item, filepath of data file
 
-        cell_methods(str): Statistical operation applied to variable in a
+        climatological_statistic(str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile"). Defaulted to "mean".
 
@@ -69,8 +75,12 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods=
 
     """
 
-    if not is_valid_cell_methods_param(cell_methods):
-        raise Exception("Unsupported cell_methods parameter: {}".format(cell_methods))
+    if not is_valid_clim_stat_param(climatological_statistic):
+        raise Exception(
+            "Unsupported climatological_statistic parameter: {}".format(
+                climatological_statistic
+            )
+        )
 
     q = (
         sesh.query(
@@ -115,7 +125,9 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods=
     results = [
         dataset
         for dataset in results
-        if check_final_cell_method(dataset.cell_methods, cell_methods, True)
+        if check_climatological_statistic(
+            dataset.cell_methods, climatological_statistic, True
+        )
     ]
 
     # FIXME: aggregation of the variables can be done in database with the
@@ -159,5 +171,9 @@ def multimeta(sesh, ensemble_name="ce_files", model="", extras="", cell_methods=
             result.netcdf_variable_name
         ] = result.variable_long_name
         rv[unique_id]["units"][result.netcdf_variable_name] = result.units
+        if result.multi_year_mean:
+            rv[unique_id]["climatological_statistic"] = get_climatological_statistic(
+                result.cell_methods
+            )
 
     return rv

@@ -6,7 +6,7 @@ from ce.api import multimeta
 
 @pytest.mark.parametrize("model", ("BNU-ESM", "",))
 @pytest.mark.parametrize(
-    "cell_methods,unique_id",
+    "climatological_statistic,unique_id",
     [
         (
             "standard_deviation",
@@ -16,11 +16,15 @@ from ce.api import multimeta
     ],
 )
 @pytest.mark.parametrize("extras", (None, "", "filepath", "filepath,obviouslywrong"))
-def test_multimeta(populateddb, model, cell_methods, unique_id, extras):
+def test_multimeta(populateddb, model, climatological_statistic, unique_id, extras):
     sesh = populateddb.session
     # Multimeta is wrapped for caching. Call the wrapped function
     rv = multimeta(
-        sesh, ensemble_name="ce", model=model, extras=extras, cell_methods=cell_methods
+        sesh,
+        ensemble_name="ce",
+        model=model,
+        extras=extras,
+        climatological_statistic=climatological_statistic,
     )
     assert unique_id in rv
     file_metadata = rv[unique_id]
@@ -38,6 +42,7 @@ def test_multimeta(populateddb, model, cell_methods, unique_id, extras):
         "start_date",
         "end_date",
         "modtime",
+        "climatological_statistic",
     ]:
         assert key in file_metadata
 

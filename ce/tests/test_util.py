@@ -13,7 +13,8 @@ from ce.api.util import (
     get_array,
     mean_datetime,
     open_nc,
-    check_final_cell_method,
+    check_climatological_statistic,
+    get_climatological_statistic,
     get_units_from_run_object,
 )
 
@@ -121,7 +122,7 @@ def test_get_units_from_run_object(
 
 
 @pytest.mark.parametrize(
-    ("cell_methods", "target_method", "default_to_mean", "expected"),
+    ("cell_methods", "climatological_statistic", "default_to_mean", "expected"),
     (
         # standard_deviation dataset
         (
@@ -284,10 +285,69 @@ def test_get_units_from_run_object(
         ),
     ),
 )
-def test_check_final_cell_method(
-    cell_methods, target_method, default_to_mean, expected
+def test_check_climatological_statistic(
+    cell_methods, climatological_statistic, default_to_mean, expected
 ):
     assert (
-        check_final_cell_method(cell_methods, target_method, default_to_mean)
+        check_climatological_statistic(
+            cell_methods, climatological_statistic, default_to_mean
+        )
         == expected
     )
+
+
+@pytest.mark.parametrize(
+    ("cell_methods", "default_to_mean", "expected"),
+    (
+        (
+            "time: minimum time: standard_deviation over days",
+            True,
+            "standard_deviation",
+        ),
+        (
+            "time: minimum time: standard_deviation over days",
+            False,
+            "standard_deviation",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            True,
+            "percentile[5.0]",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            False,
+            "percentile[5.0]",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            True,
+            "percentile[95.0]",
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            False,
+            "percentile[95.0]",
+        ),
+        ("time: maximum time: mean over days", True, "mean",),
+        ("time: maximum time: mean over days", False, "mean"),
+        ("time: maximum time: mean over days models: mean", True, "mean",),
+        ("time: maximum time: mean over days models: mean", False, "mean",),
+        (
+            "time: minimum within days time: count within years where > 25 C",
+            True,
+            "mean",
+        ),
+        (
+            "time: minimum within days time: count within years where > 25 C",
+            False,
+            False,
+        ),
+        ("unspecified", True, "mean",),
+        ("unspecified", False, False,),
+        ("time: standard_deviation over days time: mean over days", True, "mean",),
+        ("time: standard_deviation over days time: mean over days", False, "mean",),
+    ),
+)
+def test_get_climatological_statistic(cell_methods, default_to_mean, expected):
+    assert get_climatological_statistic(cell_methods, default_to_mean) == expected

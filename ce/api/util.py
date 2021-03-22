@@ -114,36 +114,61 @@ def mean_datetime(datetimes):
     return datetime.fromtimestamp(mean, tz=timezone.utc)
 
 
-# valid cell method parameters for the API. Add new ones here as needed.
-VALID_CELL_METHODS_PARAMETERS = ("mean", "standard_deviation", "percentile")
+# valid climatological statistic method parameters for the API. Add new ones here as needed.
+VALID_CLIM_STAT_PARAMETERS = ("mean", "standard_deviation", "percentile")
 
 
-def is_valid_cell_methods_param(cell_methods):
-    """Validate the cell_method parameter supplied by caller"""
-    return cell_methods in VALID_CELL_METHODS_PARAMETERS
+def is_valid_clim_stat_param(climatological_statistic):
+    """Validate the climatological_statistic parameter supplied by caller"""
+    return climatological_statistic in VALID_CLIM_STAT_PARAMETERS
 
 
-def check_final_cell_method(cell_methods, target_method, default_to_mean=True):
+def check_climatological_statistic(
+    cell_methods, climatological_statistic, default_to_mean=True
+):
     """Determines whether the final method in a cell methods string
-    (corresponding to a statistical aggregation) matches the target.
+    (corresponding to a statistical aggregation) matches the target
+    climatological statistic.
     If default_to_mean is true, treats errors and unrecognized methods
     as though they are climatological means. This compensates for some
     noisy cell_methods attributes in our data, all of which are
     climatological means.
     """
     parsed = parse(cell_methods)
-    if target_method == "mean" and default_to_mean:
+    if climatological_statistic == "mean" and default_to_mean:
         # determine means by process of elimination
-        nonmeans = [m for m in VALID_CELL_METHODS_PARAMETERS if m != "mean"]
+        nonmeans = [m for m in VALID_CLIM_STAT_PARAMETERS if m != "mean"]
         return parsed is None or parsed[-1].method.name not in nonmeans
     elif parsed is not None:
-        return parsed[-1].method.name == target_method
+        return parsed[-1].method.name == climatological_statistic
     else:
         # unparsable cell methods string
         return False
 
 
-def filter_by_cell_method(cell_methods, target_method):
+def get_climatological_statistic(cell_methods, default_to_mean=True):
+    """Given a cell_methods string, returns a description of the
+    statistical process used to make the climatology, currently either
+    'mean', 'standard_deviation', or 'percentile[number]'.
+    If default_to_mean is true, unparsable and unrecognizable cell
+    methods strings will be treated as means."""
+    climatological_statistic = False
+    for clim_stat in VALID_CLIM_STAT_PARAMETERS:
+        if check_climatological_statistic(cell_methods, clim_stat, default_to_mean):
+            climatological_statistic = clim_stat
+
+    # return percentile number, if relevant
+    if climatological_statistic == "percentile":
+        cm_parsed = parse(cell_methods)
+        percentile_num = cm_parsed[-1].method.params[0]
+        climatological_statistic = "{}[{}]".format(
+            climatological_statistic, percentile_num
+        )
+
+    return climatological_statistic
+
+
+def filter_by_climatological_statistic(cell_methods, climatological_statistic):
     """
     There are multiple types of statistical data available to the backend
     via the modelmeta database:
@@ -161,7 +186,9 @@ def filter_by_cell_method(cell_methods, target_method):
     """
 
     return [
-        cm for cm in cell_methods if check_final_cell_method(cm, target_method, True)
+        cm
+        for cm in cell_methods
+        if check_climatological_statistic(cm, climatological_statistic, True)
     ]
 
 
@@ -173,10 +200,14 @@ def search_for_unique_ids(
     variable="",
     time=0,
     timescale="",
-    cell_method="mean",
+    climatological_statistic="mean",
 ):
-    if not is_valid_cell_methods_param(cell_method):
-        raise Exception("Unsupported cell_methods parameter: {}".format(cell_method))
+    if not is_valid_clim_stat_param(climatological_statistic):
+        raise Exception(
+            "Unsupported climatological_statistic parameter: {}".format(
+                clmatological_statistic
+            )
+        )
 
     cell_methods = (
         sesh.query(mm.DataFileVariableGridded.variable_cell_methods)
@@ -184,8 +215,8 @@ def search_for_unique_ids(
         .all()
     )
 
-    matching_cell_methods = filter_by_cell_method(
-        [r[0] for r in cell_methods], cell_method
+    matching_cell_methods = filter_by_climatological_statistic(
+        [r[0] for r in cell_methods], climatological_statistic
     )
 
     query = (
