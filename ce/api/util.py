@@ -146,6 +146,22 @@ def check_climatological_statistic(
         return False
 
 
+def get_climatological_statistic(cell_methods, default_to_mean=True):
+    """Given a cell_methods string, returns a description of the
+    statistical process used to make the climatology, currently either
+    'mean', 'standard_deviation', or 'percentile[number]'.
+    If default_to_mean is true, unparsable and unrecognizable cell
+    methods strings will be treated as means."""
+    climatological_statistic = False
+    for clim_stat in VALID_CLIM_STAT_PARAMETERS:
+        if check_climatological_statistic(cell_methods, clim_stat, default_to_mean):
+            climatological_statistic = clim_stat
+
+    #    if climatological_statistic == "percentile":
+
+    return climatological_statistic
+
+
 def filter_by_climatological_statistic(cell_methods, climatological_statistic):
     """
     There are multiple types of statistical data available to the backend

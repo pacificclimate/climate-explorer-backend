@@ -4,7 +4,11 @@
 from modelmeta import DataFile, Model, Emission, Run
 from modelmeta import DataFileVariableGridded, VariableAlias, TimeSet
 from modelmeta import EnsembleDataFileVariables, Ensemble
-from ce.api.util import check_climatological_statistic, is_valid_clim_stat_param
+from ce.api.util import (
+    check_climatological_statistic,
+    is_valid_clim_stat_param,
+    get_climatological_statistic,
+)
 
 
 def multimeta(
@@ -126,7 +130,6 @@ def multimeta(
             dataset.cell_methods, climatological_statistic, True
         )
     ]
-    print("banana climatological statistic = {}".format(climatological_statistic))
 
     # FIXME: aggregation of the variables can be done in database with the
     # array_agg() function. Change this when SQLAlchemy supports it
@@ -169,5 +172,10 @@ def multimeta(
             result.netcdf_variable_name
         ] = result.variable_long_name
         rv[unique_id]["units"][result.netcdf_variable_name] = result.units
+        print("multi_year_mean = {}".format(result.multi_year_mean))
+        if result.multi_year_mean:
+            rv[unique_id]["climatological_statistic"] = get_climatological_statistic(
+                result.cell_methods
+            )
 
     return rv

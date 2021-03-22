@@ -42,6 +42,7 @@ def test_multimeta(populateddb, model, climatological_statistic, unique_id, extr
         "start_date",
         "end_date",
         "modtime",
+        "climatological_statistic",
     ]:
         assert key in file_metadata
 
