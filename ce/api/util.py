@@ -124,7 +124,7 @@ def is_valid_clim_stat_param(climatological_statistic):
 
 
 def check_climatological_statistic(
-    cell_methods, climatological_statistic, default_to_mean=True
+    cell_methods, climatological_statistic, default_to_mean=True, match_percentile=None
 ):
     """Determines whether the final method in a cell methods string
     (corresponding to a statistical aggregation) matches the target
@@ -133,14 +133,39 @@ def check_climatological_statistic(
     as though they are climatological means. This compensates for some
     noisy cell_methods attributes in our data, all of which are
     climatological means.
+    If a "match_percentile" float is supplied, will only return true for
+    percentile datasets that match that specific percentile. Otherwise
+    will return true for any percentile dataset. match_percentile is
+    ignored if climatological_statistic is not "percentile".
     """
+
+    def final_method(p):
+        """get the name of the final cell method, corresponding 
+        to climatological aggregation (usually)"""
+        return p[-1].method.name
+
+    def final_params(p):
+        """get the parameters of the final cell method, providing details
+        of the climatological aggregation (ie, percentile value)"""
+        return p[-1].method.params
+
     parsed = parse(cell_methods)
+
     if climatological_statistic == "mean" and default_to_mean:
         # determine means by process of elimination
         nonmeans = [m for m in VALID_CLIM_STAT_PARAMETERS if m != "mean"]
-        return parsed is None or parsed[-1].method.name not in nonmeans
+        return parsed is None or final_method(parsed) not in nonmeans
+    elif (
+        parsed is not None
+        and climatological_statistic == "percentile"
+        and match_percentile is not None
+    ):
+        return (
+            final_method(parsed) == "percentile"
+            and final_params(parsed)[0] == match_percentile
+        )
     elif parsed is not None:
-        return parsed[-1].method.name == climatological_statistic
+        return final_method(parsed) == climatological_statistic
     else:
         # unparsable cell methods string
         return False

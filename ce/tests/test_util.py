@@ -297,6 +297,95 @@ def test_check_climatological_statistic(
 
 
 @pytest.mark.parametrize(
+    ("cell_methods, climatological_statistic, match_percentile, expected"),
+    (
+        (
+            "time: minimum time: standard_deviation over days",
+            "standard_deviation",
+            None,
+            True,
+        ),
+        ("time: minimum time: standard_deviation over days", "percentile", None, False),
+        ("time: minimum time: standard_deviation over days", "percentile", 5, False),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            "standard_deviation",
+            None,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            "standard_deviation",
+            5,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            "percentile",
+            None,
+            True,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            "percentile",
+            5,
+            True,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[5]",
+            "percentile",
+            95,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            "standard_deviation",
+            None,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            "standard_deviation",
+            5,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            "percentile",
+            None,
+            True,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            "percentile",
+            5,
+            False,
+        ),
+        (
+            "time: mean within days time: max over days time: mean over days models: percentile[95]",
+            "percentile",
+            95,
+            True,
+        ),
+        ("time: minimum time: standard_deviation over days[5]", "percentile", 5, False),
+        ("time: minimum time: standard_deviation[5] over days", "percentile", 5, False),
+    ),
+)
+def test_check_climatological_statistic_percentiles(
+    cell_methods, climatological_statistic, match_percentile, expected
+):
+    assert (
+        check_climatological_statistic(
+            cell_methods,
+            climatological_statistic,
+            default_to_mean=True,
+            match_percentile=match_percentile,
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
     ("cell_methods", "default_to_mean", "expected"),
     (
         (
