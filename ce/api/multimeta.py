@@ -12,7 +12,12 @@ from ce.api.util import (
 
 
 def multimeta(
-    sesh, ensemble_name="ce_files", model="", extras="", climatological_statistic="mean"
+    sesh,
+    ensemble_name="ce_files",
+    model="",
+    extras="",
+    climatological_statistic="mean",
+    percentile=None,
 ):
     """Retrieve metadata for all data files in an ensemble
 
@@ -42,6 +47,8 @@ def multimeta(
         climatological_statistic(str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile"). Defaulted to "mean".
+        
+        percentile(float): optionally, specify a a single percentile values to filter on.
 
     Returns:
         A dictionary keyed by unique_id for all unique_ids in the
@@ -75,12 +82,20 @@ def multimeta(
 
     """
 
+    # validate input parameters
     if not is_valid_clim_stat_param(climatological_statistic):
         raise Exception(
             "Unsupported climatological_statistic parameter: {}".format(
                 climatological_statistic
             )
         )
+    if percentile is not None:
+        try:
+            percentile = float(percentile)
+        except ValueError:
+            raise Exception(
+                "Percentile parameter {} not convertable to a number".format(percentile)
+            )
 
     q = (
         sesh.query(
@@ -126,7 +141,10 @@ def multimeta(
         dataset
         for dataset in results
         if check_climatological_statistic(
-            dataset.cell_methods, climatological_statistic, True
+            dataset.cell_methods,
+            climatological_statistic,
+            default_to_mean=True,
+            match_percentile=percentile,
         )
     ]
 

@@ -193,7 +193,9 @@ def get_climatological_statistic(cell_methods, default_to_mean=True):
     return climatological_statistic
 
 
-def filter_by_climatological_statistic(cell_methods, climatological_statistic):
+def filter_by_climatological_statistic(
+    cell_methods, climatological_statistic, match_percentile=None
+):
     """
     There are multiple types of statistical data available to the backend
     via the modelmeta database:
@@ -213,7 +215,12 @@ def filter_by_climatological_statistic(cell_methods, climatological_statistic):
     return [
         cm
         for cm in cell_methods
-        if check_climatological_statistic(cm, climatological_statistic, True)
+        if check_climatological_statistic(
+            cm,
+            climatological_statistic,
+            default_to_mean=True,
+            match_percentile=match_percentile,
+        )
     ]
 
 
@@ -226,6 +233,7 @@ def search_for_unique_ids(
     time=0,
     timescale="",
     climatological_statistic="mean",
+    percentile=None,
 ):
     if not is_valid_clim_stat_param(climatological_statistic):
         raise Exception(
@@ -241,7 +249,9 @@ def search_for_unique_ids(
     )
 
     matching_cell_methods = filter_by_climatological_statistic(
-        [r[0] for r in cell_methods], climatological_statistic
+        [r[0] for r in cell_methods],
+        climatological_statistic,
+        match_percentile=percentile,
     )
 
     query = (

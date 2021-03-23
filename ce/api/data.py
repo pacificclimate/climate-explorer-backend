@@ -26,6 +26,7 @@ def data(
     timescale="other",
     ensemble_name="ce_files",
     climatological_statistic="mean",
+    percentile=None,
     is_thredds=False,
 ):
     """Delegate for performing data lookups across climatological files
@@ -60,6 +61,10 @@ def data(
         climatological_statistic (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile). Defaulted to "mean".
+        
+        percentile (float): if climatological_statistic is "percentile", specifies what
+            percentile value to use. A percentile value must be provided if the 
+            climatological_statistic is "percentile".
 
         is_thredds (bool): If set to `True` the filepath will be searched for
             on THREDDS server. This flag is not needed when running the backend
@@ -111,7 +116,6 @@ def data(
 
     """
     # Validate arguments
-
     try:
         time = int(time)
     except ValueError:
@@ -123,6 +127,21 @@ def data(
             "Unsupported climatological_statistic parameter: {}".format(
                 climatological_statistic
             )
+        )
+    if percentile is not None:
+        try:
+            percentile = float(percentile)
+        except ValueError:
+            raise Exception(
+                "Percentile parameter {} not convertable to a number".format(percentile)
+            )
+    if climatological_statistic == "percentile" and not percentile:
+        raise Exception(
+            "Percentile parameters must be specified to access percentile data"
+        )
+    if climatological_statistic != "percentile" and percentile:
+        raise Exception(
+            "Percentile parameter is only meaningful for percentile climatologies"
         )
 
     def get_spatially_averaged_data(data_file, time_idx, is_thredds):
@@ -184,7 +203,10 @@ def data(
         dfv
         for dfv in data_file_variables
         if check_climatological_statistic(
-            dfv.variable_cell_methods, climatological_statistic, True
+            dfv.variable_cell_methods,
+            climatological_statistic,
+            default_to_mean=True,
+            match_percentile=percentile,
         )
     ]
 
