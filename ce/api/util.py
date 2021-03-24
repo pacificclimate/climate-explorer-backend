@@ -233,12 +233,11 @@ def search_for_unique_ids(
     time=0,
     timescale="",
     climatological_statistic="mean",
-    percentile=None,
 ):
     if not is_valid_clim_stat_param(climatological_statistic):
         raise Exception(
             "Unsupported climatological_statistic parameter: {}".format(
-                clmatological_statistic
+                climatological_statistic
             )
         )
 
@@ -249,9 +248,7 @@ def search_for_unique_ids(
     )
 
     matching_cell_methods = filter_by_climatological_statistic(
-        [r[0] for r in cell_methods],
-        climatological_statistic,
-        match_percentile=percentile,
+        [r[0] for r in cell_methods], climatological_statistic,
     )
 
     query = (

@@ -15,7 +15,6 @@ def multistats(
     variable="",
     timescale="",
     climatological_statistic="mean",
-    percentile=None,
     is_thredds=False,
 ):
     """Request and calculate statistics for multiple models or scenarios
@@ -54,10 +53,6 @@ def multistats(
         climatological_statistic (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile"). Defaulted to "mean".
-            
-        percentile(float): the percentile value to filter on if the 
-            climatological_statistic is percentile. Required if climatological_statistic
-            is percentile.
 
         is_thredds (bool): If set to `True` the filepath will be searched for
             on THREDDS server. This flag is not needed when running the backend
@@ -100,21 +95,11 @@ def multistats(
             }
     """
 
-    # validate inputs
-    if percentile is not None:
-        try:
-            percentile = float(percentile)
-        except ValueError:
-            raise Exception(
-                "Percentile parameter {} not convertable to a number".format(percentile)
-            )
-    if climatological_statistic == "percentile" and not percentile:
-        raise Exception(
-            "Percentile parameters must be specified to access percentile data"
-        )
-    if climatological_statistic != "percentile" and percentile:
-        raise Exception(
-            "Percentile parameter is only meaningful for percentile climatologies"
+    # we don't want people requesting statistics on percentile datasets;
+    # that would be meaningless.
+    if climatological_statistic == "percentile":
+        raise Exceptions(
+            "Statistical calculations are not meaningful on percentile datasets."
         )
 
     ids = search_for_unique_ids(
@@ -126,6 +111,5 @@ def multistats(
         time,
         timescale,
         climatological_statistic,
-        percentile,
     )
     return {id_: stats(sesh, id_, time, area, variable, is_thredds)[id_] for id_ in ids}
