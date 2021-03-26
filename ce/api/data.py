@@ -112,18 +112,19 @@ def data(
             }
 
     Raises:
-        Exception: If `time` parameter cannot be converted to an integer
+        ValueError: If `time` or `percentile` parameters cannot be converted
+        to an integer, if climatological_statistic parameter is not recognized
 
     """
     # Validate arguments
     try:
         time = int(time)
     except ValueError:
-        raise Exception(
+        raise ValueError(
             'time parameter "{}" not convertable to an integer.'.format(time)
         )
     if not is_valid_clim_stat_param(climatological_statistic):
-        raise Exception(
+        raise ValueError(
             "Unsupported climatological_statistic parameter: {}".format(
                 climatological_statistic
             )
@@ -132,7 +133,7 @@ def data(
         try:
             percentile = float(percentile)
         except ValueError:
-            raise Exception(
+            raise ValueError(
                 "Percentile parameter {} not convertable to a number".format(percentile)
             )
     if climatological_statistic == "percentile" and not percentile:

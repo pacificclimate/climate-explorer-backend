@@ -98,7 +98,7 @@ def multistats(
     # we don't want people requesting statistics on percentile datasets;
     # that would be meaningless.
     if climatological_statistic == "percentile":
-        raise Exceptions(
+        raise ValueError(
             "Statistical calculations are not meaningful on percentile datasets."
         )
 

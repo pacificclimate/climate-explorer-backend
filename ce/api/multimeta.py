@@ -84,7 +84,7 @@ def multimeta(
 
     # validate input parameters
     if not is_valid_clim_stat_param(climatological_statistic):
-        raise Exception(
+        raise ValueError(
             "Unsupported climatological_statistic parameter: {}".format(
                 climatological_statistic
             )
@@ -93,7 +93,7 @@ def multimeta(
         try:
             percentile = float(percentile)
         except ValueError:
-            raise Exception(
+            raise ValueError(
                 "Percentile parameter {} not convertable to a number".format(percentile)
             )
 

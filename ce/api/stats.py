@@ -88,7 +88,7 @@ def stats(
         results dict will be missing the 'units' and 'time' keys.
 
     Raises:
-        Exception: If `time` parameter cannot be converted to an integer
+        ValueError: If `time` parameter cannot be converted to an integer
 
     """
     # Validate arguments
@@ -96,7 +96,7 @@ def stats(
         try:
             time = int(time)
         except ValueError:
-            raise Exception(
+            raise ValueError(
                 'time parameter "{}" not convertable to an integer.'.format(time)
             )
     else:
