@@ -379,7 +379,7 @@ def compute_melton_ratio(
     melton_ratio = elev_delta / area_sqrt
     if melton_ratio.check("[]"):  # ensure dimensionlessness
         return melton_ratio.magnitude
-    raise Exception(
+    raise ValueError(
         "Area and elevation units are not compatible: {} and {}".format(
             elevation_units, area_units
         )

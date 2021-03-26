@@ -95,6 +95,13 @@ def multistats(
             }
     """
 
+    # we don't want people requesting statistics on percentile datasets;
+    # that would be meaningless.
+    if climatological_statistic == "percentile":
+        raise ValueError(
+            "Statistical calculations are not meaningful on percentile datasets."
+        )
+
     ids = search_for_unique_ids(
         sesh,
         ensemble_name,
