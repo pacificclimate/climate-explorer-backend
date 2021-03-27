@@ -79,6 +79,10 @@ def watershed(sesh, station, ensemble_name):
     ) as flow_direction_ds, get_time_invariant_variable_dataset(
         sesh, ensemble_name, "elev"
     ) as elevation_ds, get_time_invariant_variable_dataset(
+        sesh, ensemble_name, "elevmin"
+    ) as elevation_min_ds, get_time_invariant_variable_dataset(
+        sesh, ensemble_name, "elevmax"
+    ) as elevation_max_ds, get_time_invariant_variable_dataset(
         sesh, ensemble_name, "area"
     ) as area_ds:
         try:
@@ -87,7 +91,9 @@ def watershed(sesh, station, ensemble_name):
                 flow_direction=VicDataGrid.from_nc_dataset(
                     flow_direction_ds, "flow_direction"
                 ),
-                elevation=VicDataGrid.from_nc_dataset(elevation_ds, "elev"),
+                elevation_mean=VicDataGrid.from_nc_dataset(elevation_ds, "elev"),
+                elevation_max=VicDataGrid.from_nc_dataset(elevation_max_ds, "elevmax"),
+                elevation_min=VicDataGrid.from_nc_dataset(elevation_min_ds, "elevmin"),
                 area=VicDataGrid.from_nc_dataset(area_ds, "area"),
             )
         except GeoDataGrid2DIndexError:
@@ -98,7 +104,15 @@ def watershed(sesh, station, ensemble_name):
             )
 
 
-def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
+def worker(
+    station_lonlat,
+    flow_direction,
+    elevation_mean,
+    elevation_max,
+    elevation_min,
+    area,
+    hypso_params=None,
+):
     """Compute the watershed endpoint response.
 
     This function exists to make these computations more easily testable.
@@ -108,7 +122,9 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
 
     :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
     :param flow_direction: (VicDataGrid) Flow direction grid
-    :param elevation: (VicDataGrid) Elevation grid
+    :param elevation_mean: (VicDataGrid) Mean elevation per grid cell, used for hypsometry
+    :param elevation_max: Maximum elevation per grid cell, used for Melton Ratio
+    :param elevation_min: Minimum elevation per grid cell, used for Melton Ratio
     :param area: (VicDataGrid) Area grid
     :return: (dict) representation for JSON response object; see watershed() for details
     """
@@ -122,12 +138,33 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         }
     ureg = UnitRegistry()
 
-    if not flow_direction.is_compatible(elevation):
+    # check that all grids match
+    if not flow_direction.is_compatible(elevation_mean):
         raise ValueError("Flow direction and elevation do not have compatible grids")
     if not flow_direction.is_compatible(area):
         raise ValueError("Flow direction and area do not have compatible grids")
-    if not ureg(elevation.units).check("[length]"):
-        raise ValueError("Elevation units not recognized: {}".format(elevation.units))
+    if not flow_direction.is_compatible(elevation_max):
+        raise ValueError(
+            "Flow direction and elevation maximum do not have compatible grids"
+        )
+    if not flow_direction.is_compatible(elevation_min):
+        raise ValueError(
+            "Flow direction and elevation minimum do not have compatible grids"
+        )
+
+    # check that datasets have compatible units
+    if not ureg(elevation_mean.units).check("[length]"):
+        raise ValueError(
+            "Elevation units not recognized: {}".format(elevation_mean.units)
+        )
+    if not ureg(elevation_max.units).check("[length]"):
+        raise ValueError(
+            "Elevation maximum units not recognized: {}".format(elevation_max.units)
+        )
+    if not ureg(elevation_min.units).check("[length]"):
+        raise ValueError(
+            "Elevation units not recognized: {}".format(elevation_min.units)
+        )
     if not ureg(area.units).check("[length] [length]"):
         raise ValueError("Area units not recognized: {}".format(elevation.units))
 
@@ -152,10 +189,14 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
     watershed_lonlats = [flow_direction.xy_to_lonlat(xy) for xy in watershed_xys]
 
     #  Compute elevations at each lonlat of watershed
-    ws_elevations = elevation.get_values_at_lonlats(watershed_lonlats)
+    ws_elevations = elevation_mean.get_values_at_lonlats(watershed_lonlats)
 
     #  Compute area of each cell in watershed
     ws_areas = area.get_values_at_lonlats(watershed_lonlats)
+
+    #  Get the maximum and minimum elevation of each cell
+    ws_elevation_maximums = elevation_max.get_values_at_lonlats(watershed_lonlats)
+    ws_elevation_minimums = elevation_min.get_values_at_lonlats(watershed_lonlats)
 
     # Compute the elevation/area curve
     cumulative_areas = hypsometry(ws_elevations, ws_areas, **hypso_params)
@@ -165,18 +206,23 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
         watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
     )
 
-    elevation_min = min(ws_elevations)
-    elevation_max = max(ws_elevations)
+    outlet_elevation = min(ws_elevation_minimums)
+    source_elevation = max(ws_elevation_maximums)
     total_area = sum(ws_areas)
     m_ratio = compute_melton_ratio(
-        elevation_max, elevation_min, elevation.units, total_area, area.units
+        source_elevation,
+        elevation_max.units,
+        outlet_elevation,
+        elevation_min.units,
+        total_area,
+        area.units,
     )
 
     return {
         "elevation": {
-            "units": elevation.units,
-            "minimum": elevation_min,
-            "maximum": elevation_max,
+            "units": elevation_mean.units,
+            "minimum": outlet_elevation,
+            "maximum": source_elevation,
         },
         "area": {"units": area.units, "value": total_area},
         "hypsometric_curve": {
@@ -184,7 +230,7 @@ def worker(station_lonlat, flow_direction, elevation, area, hypso_params=None):
             "elevation_bin_width": hypso_params["bin_width"],
             "elevation_num_bins": hypso_params["num_bins"],
             "cumulative_areas": cumulative_areas,
-            "elevation_units": elevation.units,
+            "elevation_units": elevation_mean.units,
             "area_units": area.units,
         },
         "melton_ratio": {"units": "km/km", "value": m_ratio,},
@@ -368,19 +414,24 @@ def hypsometry(elevations, areas, bin_start=0, bin_width=100, num_bins=46):
 
 
 def compute_melton_ratio(
-    elevation_max, elevation_min, elevation_units, area, area_units
+    elevation_max,
+    elevation_max_units,
+    elevation_min,
+    elevation_min_units,
+    area,
+    area_units,
 ):
     """The change in elevation over a watershed divided by the square root of the watershed area"""
     ureg = UnitRegistry()
-    elev_delta = elevation_max * ureg(elevation_units) - elevation_min * ureg(
-        elevation_units
+    elev_delta = elevation_max * ureg(elevation_max_units) - elevation_min * ureg(
+        elevation_min_units
     )
     area_sqrt = (area * ureg(area_units)) ** 0.5
     melton_ratio = elev_delta / area_sqrt
     if melton_ratio.check("[]"):  # ensure dimensionlessness
         return melton_ratio.magnitude
     raise ValueError(
-        "Area and elevation units are not compatible: {} and {}".format(
-            elevation_units, area_units
+        "Area and elevation units are not compatible: {}, {}, and {}".format(
+            elevation_max_units, elevation_min_units, area_units
         )
     )

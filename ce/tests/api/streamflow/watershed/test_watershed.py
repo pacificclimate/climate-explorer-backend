@@ -10,7 +10,7 @@ from test_utils import check_dict_subset
             0.11,
             50.25,
             {
-                "elevation": {"units": "m", "minimum": 0, "maximum": 4},
+                "elevation": {"units": "m", "minimum": 0, "maximum": 4.1},
                 "area": {"units": "m^2", "value": 7},
                 "hypsometric_curve": {
                     "elevation_bin_start": 0,
@@ -20,7 +20,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m^2",
                 },
-                "melton_ratio": {"units": "km/km", "value": 1.5118578920369088,},
+                "melton_ratio": {"units": "km/km", "value": 1.5496543393378315,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
@@ -38,7 +38,7 @@ from test_utils import check_dict_subset
             0.19,
             50.47,
             {
-                "elevation": {"units": "m", "minimum": 1, "maximum": 4},
+                "elevation": {"units": "m", "minimum": 0.9, "maximum": 4.1},
                 "area": {"units": "m^2", "value": 6},
                 "hypsometric_curve": {
                     "elevation_bin_start": 0,
@@ -48,7 +48,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m^2",
                 },
-                "melton_ratio": {"units": "km/km", "value": 1.2247448713915892,},
+                "melton_ratio": {"units": "km/km", "value": 1.3063945294843617,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
@@ -66,7 +66,7 @@ from test_utils import check_dict_subset
             0.3,
             50.2,
             {
-                "elevation": {"units": "m", "minimum": 2, "maximum": 3},
+                "elevation": {"units": "m", "minimum": 1.9, "maximum": 3.1},
                 "area": {"units": "m^2", "value": 3},
                 "hypsometric_curve": {
                     "elevation_bin_start": 0,
@@ -76,7 +76,7 @@ from test_utils import check_dict_subset
                     "elevation_units": "m",
                     "area_units": "m^2",
                 },
-                "melton_ratio": {"units": "km/km", "value": 0.5773502691896258,},
+                "melton_ratio": {"units": "km/km", "value": 0.692820323027551,},
                 "boundary": {
                     # TODO: more here
                     "type": "Feature",
@@ -92,6 +92,22 @@ from test_utils import check_dict_subset
         ),
     ),
 )
-def test_worker(lon, lat, expected, flow_direction_1, elevation_1, area_1):
-    result = worker((lon, lat), flow_direction_1, elevation_1, area_1)
+def test_worker(
+    lon,
+    lat,
+    expected,
+    flow_direction_1,
+    elevation_1,
+    elevation_max_1,
+    elevation_min_1,
+    area_1,
+):
+    result = worker(
+        (lon, lat),
+        flow_direction_1,
+        elevation_mean=elevation_1,
+        elevation_max=elevation_max_1,
+        elevation_min=elevation_min_1,
+        area=area_1,
+    )
     check_dict_subset(expected, result)
