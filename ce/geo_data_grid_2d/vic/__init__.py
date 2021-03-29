@@ -67,11 +67,11 @@ class VicDataGrid(GeoDataGrid2D):
         """
 
         def is_int(value):
-            return math.isclose(value - round(value), 0)
+            return math.isclose(value - round(value), 0, abs_tol=0.0000001)
 
         return (
-            math.isclose(self.lon_step, other.lon_step)
-            and math.isclose(self.lat_step, other.lat_step)
+            math.isclose(abs(self.lon_step), abs(other.lon_step))
+            and math.isclose(abs(self.lat_step), abs(other.lat_step))
             and is_int((self.longitudes[0] - other.longitudes[0]) / self.lon_step)
             and is_int((self.latitudes[0] - other.latitudes[0]) / self.lat_step)
         )
