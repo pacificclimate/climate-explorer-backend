@@ -123,8 +123,8 @@ def worker(
     :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
     :param flow_direction: (VicDataGrid) Flow direction grid
     :param elevation_mean: (VicDataGrid) Mean elevation per grid cell, used for hypsometry
-    :param elevation_max: Maximum elevation per grid cell, used for Melton Ratio
-    :param elevation_min: Minimum elevation per grid cell, used for Melton Ratio
+    :param elevation_max: (VicDataGrid) Maximum elevation per grid cell, used for Melton Ratio
+    :param elevation_min: (VicDataGrid) Minimum elevation per grid cell, used for Melton Ratio
     :param area: (VicDataGrid) Area grid
     :return: (dict) representation for JSON response object; see watershed() for details
     """
