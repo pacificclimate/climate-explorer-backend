@@ -1,5 +1,14 @@
 # News / Release Notes
 
+## 3.4.0
+**2021-March-29**
+
+- Change the way Melton ratio is calculated for better accuracy [#190](https://github.com/pacificclimate/climate-explorer-backend/pull/190)
+
+- Allow filtering by Nth percentile in data and multimeta[#188](https://github.com/pacificclimate/climate-explorer-backend/pull/188)
+
+- Rename "cell_methods" parameter "climatological_statistic" and add filtering on it to multimeta API [#187](https://github.com/pacificclimate/climate-explorer-backend/pull/187)
+
 ## 3.3.2
 **2021-March-10**
 
