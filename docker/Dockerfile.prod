@@ -10,6 +10,7 @@ WORKDIR /app
 RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
 RUN pip3 install gunicorn
 RUN pip3 install .
+RUN rm -rf /usr/lib/python3.8/site-packages/click-7.1.2.dist-info/
 
 EXPOSE 8000
 
