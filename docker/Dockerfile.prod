@@ -1,16 +1,16 @@
 FROM pcic/geospatial-python:gdal3
 
-RUN apk add postgresql-dev libxml2-dev libxslt-dev
-# Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
-RUN apk upgrade perl
+RUN apk add postgresql-dev libxml2-dev libxslt-dev && \
+    # Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
+    apk upgrade perl
 
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
-RUN pip3 install gunicorn
-RUN pip3 install .
-RUN rm -rf /usr/lib/python3.8/site-packages/click-7.1.2.dist-info/
+RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt gunicorn && \
+    pip3 install . && \
+    # Fix http://bazaar.launchpad.net/~click-hackers/click/devel/revision/587
+    rm -rf /usr/lib/python3.8/site-packages/click-7.1.2.dist-info/
 
 EXPOSE 8000
 
