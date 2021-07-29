@@ -74,23 +74,19 @@ export THREDDS_URL_ROOT=https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thr
 
 ### Installation
 
-Setup using virtual environment.
-Use Python 3 module `venv`, not `virtualenv`, which installs Python 2.
-Unit tests use `datetime.timezone`, which is available only in Python 3.
+Setup using `pipenv` which sets up the virtual environment automatically.
 
 ```bash
-$ python3 -m venv venv
-$ source venv/bin/activate
-(venv)$ pip install -U pip
-(venv)$ pip install -i https://pypi.pacificclimate.org/simple/ -r requirements.txt
-(venv)$ pip install -e .
+$ pip install -U pipenv
+$ pipenv install # --dev for development packages
+$ pipenv  
 ```
 
 #### Pre-commit hook
-The `pre-commit hook` will run checks against your code whenever you make a commit. This prevents styling from breaking the CI/CD actions pipeline. To install, run the following:
+The `pre-commit hook` will run checks against your code whenever you make a commit. This prevents styling from breaking the CI/CD actions pipeline. This will be automatically installed by the command above, but to do so manually run the following:
 ```bash
-(venv)$ pip install pre-commit
-(venv)$ pre-commit install
+$ pipenv install --dev pre-commit
+$ pipenv run pre-commit install
 ```
 
 ### Building the Documentation
@@ -98,8 +94,8 @@ The `pre-commit hook` will run checks against your code whenever you make a comm
 Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation.
 
 ```
-pip install -e .
-pyenv/bin/python setup.py build_sphinx
+pipenv install -e .
+pipenv run python setup.py build_sphinx
 ```
 
 HTML documentation will be in the `doc/build/html` directory.
@@ -130,8 +126,7 @@ The location of the precalculated regional datafiles is specified with the `REGI
 #### Within the virtual environment:
 
 ```bash
-pip install pytest
-py.test -v
+pipenv run py.test -v
 ```
 
 #### Using Docker container to test current directory:
