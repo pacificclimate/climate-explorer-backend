@@ -16,6 +16,12 @@ jobs:
         apk add libxml2-dev libxslt-dev
         pip install -U pip pipenv --ignore-installed
 
+    - id: cache-pipenv
+      uses: actions/cache@v2
+      with:
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
     - name: Install python packages
       run: |
         pipenv install --dev
