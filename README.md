@@ -78,9 +78,11 @@ Setup using `pipenv` which sets up the virtual environment automatically.
 
 ```bash
 $ pip install -U pipenv
-$ pipenv install # --dev for development packages
-$ pipenv  
+$ pipenv install # --dev to include development packages
+$ pipenv
 ```
+
+Development packages are listed as `dev-packages` in the `Pipfile`.
 
 #### Pre-commit hook
 The `pre-commit hook` will run checks against your code whenever you make a commit. This prevents styling from breaking the CI/CD actions pipeline. This will be automatically installed by the command above, but to do so manually run the following:
