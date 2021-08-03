@@ -7,9 +7,8 @@ RUN apk upgrade perl
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install -i https://pypi.pacificclimate.org/simple -r requirements.txt
-RUN pip3 install gunicorn
-RUN pip3 install .
+RUN pip3 install -U pipenv --ignore-installed && \
+    pipenv install
 
 EXPOSE 8000
 
@@ -20,4 +19,4 @@ EXPOSE 8000
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
 
-ENTRYPOINT ["gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
+ENTRYPOINT ["pipenv", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
