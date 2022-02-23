@@ -150,12 +150,6 @@ def worker(
     lines = MultiLineString(watershed_lonlats)
 
     return {
-        # "type": "Feature",
-        # "geometry": {
-        #    "type": "MultiLineString",
-        #    "coordinates": watershed_lonlats,
-        # },
-        # create shapely.geometry.multilinestring object, pass into geojson feature
         "streams": geojson_feature(lines,),
         "debug/test": {"watershed_streams": {"time": watershed_time.elapsed,}},
     }

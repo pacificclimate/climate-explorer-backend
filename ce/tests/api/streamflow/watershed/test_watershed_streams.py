@@ -7,6 +7,16 @@ from test_utils import check_dict_subset
     "lon, lat, expected",
     (
         (
+            0.1,
+            50.8,
+            {
+                "streams": {
+                    "type": "Feature",
+                    "geometry": {"coordinates": (), "type": "MultiLineString",},
+                },
+            },
+        ),
+        (
             0.11,
             50.25,
             {
