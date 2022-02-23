@@ -41,6 +41,7 @@ from modelmeta import (
     EnsembleDataFileVariables,
 )
 
+
 def downstream(sesh, station, ensemble_name):
     """Return the downstream watershed that drains from a specifiedpoint.
 
@@ -72,7 +73,7 @@ def downstream(sesh, station, ensemble_name):
                 station_lonlat,
                 flow_direction=VicDataGrid.from_nc_dataset(
                     flow_direction_ds, "flow_direction"
-                )
+                ),
             )
         except GeoDataGrid2DIndexError:
             abort(
@@ -83,8 +84,7 @@ def downstream(sesh, station, ensemble_name):
 
 
 def worker(
-    station_lonlat,
-    flow_direction,
+    station_lonlat, flow_direction,
 ):
     """Compute the watershed.
 
@@ -222,6 +222,7 @@ def VIC_direction_matrix(lat_step, lon_step):
         (lat_dir * lat_base, lon_dir * lon_base) for lat_base, lon_base in base
     )
 
+
 def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     """Locates and opens a time-invariant dataset.
     These datasets contain things like elevation or area of a grid cell -
@@ -244,4 +245,3 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
 
     file = query.one()  # Raises exception if n != 1 results found
     return Dataset(file.filename, "r")
-

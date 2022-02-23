@@ -1,6 +1,6 @@
 import shapely.wkt
 from shapely.geometry import Point, mapping, LineString
-from shapely.ops import cascaded_union, linemerge
+from shapely.ops import cascaded_union
 
 
 class GeospatialError(Exception):

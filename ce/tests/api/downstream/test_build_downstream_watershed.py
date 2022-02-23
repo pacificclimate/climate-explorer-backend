@@ -46,7 +46,12 @@ routing_loop_2x2_tri = np_array(((E, S), (S, NW),))
         ((1, 2), routing_fc_4x4, direction_map, index_set(4, 4)),
         ((2, 2), routing_fc_4x4, direction_map, index_set(4, 4) - {(1, 2)}),
         # Partly connected watersheds
-        ((2, 1), routing_pc_3x3, direction_map, index_set(3, 2) - {(0, 1), (1, 0), (2, 0)}),
+        (
+            (2, 1),
+            routing_pc_3x3,
+            direction_map,
+            index_set(3, 2) - {(0, 1), (1, 0), (2, 0)},
+        ),
         ((2, 2), routing_pc_3x3, direction_map, {(2, 2)}),
         # Watersheds with loops
         ((0, 0), routing_loop_1x2, direction_map, index_set(1, 2)),
