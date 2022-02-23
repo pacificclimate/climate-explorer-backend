@@ -10,43 +10,52 @@ from test_utils import check_dict_subset
             0.11,
             50.25,
             {
-                "geometry": {
-                    "type": "MultiLineString",
-                    "coordinates": [
-                        [(0.1, 50.8)],
-                        [(0.2, 50.8)],
-                        [(0.2, 50.4), (0.3, 50.6), (0.2, 50.6), (0.1, 50.2)],
-                        [(0.3, 50.8)],
-                    ],
+                "streams": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": (
+                            ((0.2, 50.6), (0.1, 50.8)),
+                            ((0.2, 50.8), (0.2, 50.6)),
+                            ((0.2, 50.4), (0.3, 50.6), (0.2, 50.6), (0.1, 50.2)),
+                            ((0.3, 50.8), (0.2, 50.6)),
+                        ),
+                    },
                 },
-                "type": "Feature",
             },
         ),
         (
             0.19,
             50.47,
             {
-                "geometry": {
-                    "type": "MultiLineString",
-                    "coordinates": [
-                        [(0.1, 50.8)],
-                        [(0.2, 50.8)],
-                        [(0.2, 50.4), (0.2, 50.6), (0.3, 50.6)],
-                        [(0.3, 50.8)],
-                    ],
+                "streams": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": (
+                            ((0.2, 50.6), (0.1, 50.8)),
+                            ((0.2, 50.8), (0.2, 50.6)),
+                            ((0.2, 50.4), (0.2, 50.6), (0.3, 50.6)),
+                            ((0.3, 50.8), (0.2, 50.6)),
+                        ),
+                    },
                 },
-                "type": "Feature",
             },
         ),
         (
             0.3,
             50.2,
             {
-                "geometry": {
-                    "type": "MultiLineString",
-                    "coordinates": [[(0.3, 50.2), (0.3, 50.4)], [(0.2, 50.2)]],
+                "streams": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": (
+                            ((0.3, 50.2), (0.3, 50.4)),
+                            ((0.2, 50.2), (0.3, 50.2)),
+                        ),
+                    },
                 },
-                "type": "Feature",
             },
         ),
     ),

@@ -21,7 +21,7 @@ from contexttimer import Timer
 
 from flask import abort
 from sqlalchemy import distinct
-from shapely.geometry import Point
+from shapely.geometry import Point, MultiLineString
 from shapely.errors import WKTReadingError
 from pint import UnitRegistry
 
@@ -147,6 +147,8 @@ def worker(
     if watershed_lonlats[-1] == []:
         watershed_lonlats.remove([])
 
+    lines = MultiLineString(watershed_lonlats)
+
     return {
         # "type": "Feature",
         # "geometry": {
@@ -154,7 +156,7 @@ def worker(
         #    "coordinates": watershed_lonlats,
         # },
         # create shapely.geometry.multilinestring object, pass into geojson feature
-        "streams": geojson_feature(watershed_lonlats,),
+        "streams": geojson_feature(lines,),
         "debug/test": {"watershed_streams": {"time": watershed_time.elapsed,}},
     }
 
@@ -214,7 +216,8 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
                 upstream(neighbour)
                 connection.append([])
                 i += 1
+                connection[i].append(cell)
         return connection
 
     connection = upstream(target)
-    return set(frozenset(i) for i in connection if i != [])
+    return set(frozenset(i) for i in connection if len(i) > 1)
