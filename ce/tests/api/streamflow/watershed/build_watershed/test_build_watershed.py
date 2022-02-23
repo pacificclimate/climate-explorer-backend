@@ -1,8 +1,10 @@
 import pytest
 from ce.api.streamflow.watershed import build_watershed
 from ce.api.util import index_set
+from test_utils import np_array, direction_map
 from test_utils import np_array, direction_map, N, E, S, SW, W, NW, OUTLET
 
+# Trivial routing arrays
 
 routing_0x0 = np_array((()))
 routing_1x1 = np_array(((N,),))

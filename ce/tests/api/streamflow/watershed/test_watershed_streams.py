@@ -1,0 +1,58 @@
+import pytest
+from ce.api.streamflow.watershed_streams import worker
+from test_utils import check_dict_subset
+
+
+@pytest.mark.parametrize(
+    "lon, lat, expected",
+    (
+        (
+            0.11,
+            50.25,
+            {
+                "geometry": {
+                    "type": "MultiLineString",
+                    "coordinates": [
+                        [(0.1, 50.8)],
+                        [(0.2, 50.8)],
+                        [(0.2, 50.4), (0.3, 50.6), (0.2, 50.6), (0.1, 50.2)],
+                        [(0.3, 50.8)],
+                    ],
+                },
+                "type": "Feature",
+            },
+        ),
+        (
+            0.19,
+            50.47,
+            {
+                "geometry": {
+                    "type": "MultiLineString",
+                    "coordinates": [
+                        [(0.1, 50.8)],
+                        [(0.2, 50.8)],
+                        [(0.2, 50.4), (0.2, 50.6), (0.3, 50.6)],
+                        [(0.3, 50.8)],
+                    ],
+                },
+                "type": "Feature",
+            },
+        ),
+        (
+            0.3,
+            50.2,
+            {
+                "geometry": {
+                    "type": "MultiLineString",
+                    "coordinates": [[(0.3, 50.2), (0.3, 50.4)], [(0.2, 50.2)]],
+                },
+                "type": "Feature",
+            },
+        ),
+    ),
+)
+def test_worker(
+    lon, lat, expected, flow_direction_1,
+):
+    result = worker((lon, lat), flow_direction_1,)
+    check_dict_subset(expected, result)
