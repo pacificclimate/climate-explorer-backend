@@ -17,20 +17,15 @@ dimension order accordingly.
 from contexttimer import Timer
 
 from flask import abort
-from shapely.geometry import Point, MultiLineString
+from shapely.geometry import MultiLineString
 from shapely.errors import WKTReadingError
-from pint import UnitRegistry
 
-from ce.api.geospatial import (
-    geojson_feature,
-    outline_cell_rect,
-    WKT_point_to_lonlat,
-    GeospatialTypeError,
-)
+from ce.api.geospatial import geojson_feature
 from ce.api.util import neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
 from ce.api.streamflow.shared import (
+    setup,
     is_upstream,
     VIC_direction_matrix,
     get_time_invariant_variable_dataset,
@@ -47,39 +42,17 @@ def watershed_streams(sesh, station, ensemble_name):
         providing data for this request.
     :return: dict representation for JSON response object with the following
         attributes:
-            area: Area of the watershed
-
-            elevation: Minimum and maximum elevations
-
-            shape: A GeoJSON object representing the outline of the watershed;
-                a concave hull of the cell rectangles.
-
-            hypsometric_curve: Elevation-area histogram of the watershed
+            Lines: A GeoJSON MultiLineString representing the streams of the watershed;
 
     This function is primarily responsible for finding the relevant data files
     and converting their contents to `VicDataGrid` objects for consumption by
     `worker`, which as its name suggests, does most of the work.
     """
-    try:
-        station_lonlat = WKT_point_to_lonlat(station)
-    except WKTReadingError:
-        abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
-        return
-    except GeospatialTypeError as e:
-        print("##### GeospatialTypeError")
-        abort(400, description="Station must be a WKT POINT: {}".format(e.message))
+    station_lonlat = setup(station)
 
     with get_time_invariant_variable_dataset(
         sesh, ensemble_name, "flow_direction"
-    ) as flow_direction_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elev"
-    ) as elevation_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elevmin"
-    ) as elevation_min_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elevmax"
-    ) as elevation_max_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "area"
-    ) as area_ds:
+    ) as flow_direction_ds:
         try:
             return worker(
                 station_lonlat,

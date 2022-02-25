@@ -22,16 +22,12 @@ from shapely.geometry import Point
 from shapely.errors import WKTReadingError
 from pint import UnitRegistry
 
-from ce.api.geospatial import (
-    geojson_feature,
-    outline_cell_rect,
-    WKT_point_to_lonlat,
-    GeospatialTypeError,
-)
+from ce.api.geospatial import geojson_feature, outline_cell_rect
 from ce.api.util import neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
 from ce.api.streamflow.shared import (
+    setup,
     is_upstream,
     VIC_direction_matrix,
     get_time_invariant_variable_dataset,
@@ -61,14 +57,7 @@ def watershed(sesh, station, ensemble_name):
     and converting their contents to `VicDataGrid` objects for consumption by
     `worker`, which as its name suggests, does most of the work.
     """
-    try:
-        station_lonlat = WKT_point_to_lonlat(station)
-    except WKTReadingError:
-        abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
-        return
-    except GeospatialTypeError as e:
-        print("##### GeospatialTypeError")
-        abort(400, description="Station must be a WKT POINT: {}".format(e.message))
+    station_lonlat = setup(station)
 
     with get_time_invariant_variable_dataset(
         sesh, ensemble_name, "flow_direction"

@@ -6,6 +6,7 @@ import math
 
 from sqlalchemy import distinct
 
+from ce.api.geospatial import WKT_point_to_lonlat, GeospatialTypeError
 from ce.api.util import is_valid_index, vec_add, neighbours
 from modelmeta import (
     DataFile,
@@ -13,6 +14,18 @@ from modelmeta import (
     Ensemble,
     EnsembleDataFileVariables,
 )
+
+
+def setup(station):
+    try:
+        station_lonlat = WKT_point_to_lonlat(station)
+    except WKTReadingError:
+        abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
+        return
+    except GeospatialTypeError as e:
+        print("##### GeospatialTypeError")
+        abort(400, description="Station must be a WKT POINT: {}".format(e.message))
+    return station_lonlat
 
 
 def is_upstream(neighbour, cell, routing, direction_map):
