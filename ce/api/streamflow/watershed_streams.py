@@ -14,13 +14,9 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
-from netCDF4 import Dataset
-import numpy as np
-import math
 from contexttimer import Timer
 
 from flask import abort
-from sqlalchemy import distinct
 from shapely.geometry import Point, MultiLineString
 from shapely.errors import WKTReadingError
 from pint import UnitRegistry
@@ -31,16 +27,11 @@ from ce.api.geospatial import (
     WKT_point_to_lonlat,
     GeospatialTypeError,
 )
-from ce.api.util import is_valid_index, vec_add, neighbours
+from ce.api.util import neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
-from modelmeta import (
-    DataFile,
-    DataFileVariableGridded,
-    Ensemble,
-    EnsembleDataFileVariables,
-)
-from ce.api.streamflow.watershed import (
+from ce.api.streamflow.shared import (
+    is_upstream,
     VIC_direction_matrix,
     get_time_invariant_variable_dataset,
 )
@@ -184,18 +175,6 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
     i = 0
     connection = [[]]
 
-    def is_upstream(neighbour, cell):
-        """Return a boolean indicating whether `neighbour` is upstream of `cell`
-        according to the routing matrix and direction map."""
-        # Eliminate invalid cases
-        if not is_valid_index(neighbour, routing.shape):
-            return False
-        neighbour_routing = routing[neighbour]
-        if neighbour_routing is np.ma.masked:
-            return False
-        # `neighbour` is upstream if its routing points back at `cell`
-        return vec_add(neighbour, direction_map[int(neighbour_routing)]) == cell
-
     def upstream(cell):
         """Return graph description of how the stream is connected
         by movement of water"""
@@ -206,7 +185,9 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
         visited |= {cell}
         connection[i].append(cell)
         for neighbour in neighbours(cell):
-            if neighbour not in visited and is_upstream(neighbour, cell):
+            if neighbour not in visited and is_upstream(
+                neighbour, cell, routing, direction_map
+            ):
                 upstream(neighbour)
                 connection.append([])
                 i += 1

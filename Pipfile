@@ -23,7 +23,6 @@ cf-cell-methods = "==0.1.0"
 Sphinx = "==3.2.1"
 m2r2 = "==0.2.5"
 modelmeta = "*"
-ce = {editable = true, path = "."}
 gunicorn = "*"
 
 [dev-packages]
@@ -32,6 +31,7 @@ python-dateutil = "*"
 pytest-env = "*"
 black = "==19.10b0"
 pre-commit = "*"
+ce = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"
