@@ -8,6 +8,19 @@ from test_utils import check_dict_subset
     (
         (
             0.1,
+            50.6,
+            {
+                "streams": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "MultiLineString",
+                        "coordinates": (((0.1, 50.4), (0.1, 50.6)),),
+                    },
+                },
+            },
+        ),
+        (
+            0.1,
             50.8,
             {
                 "streams": {
