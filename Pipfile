@@ -32,7 +32,6 @@ python-dateutil = "*"
 pytest-env = "*"
 black = "==19.10b0"
 pre-commit = "*"
-ce = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"
