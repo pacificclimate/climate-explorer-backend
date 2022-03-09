@@ -54,7 +54,7 @@ def downstream(sesh, station, ensemble_name):
             shape: A GeoJSON object representing the downstream watershed.
     This function is primarily responsible for finding the relevant data files
     and converting their contents to `VicDataGrid` objects for consumption by
-    `worker`, which as its name suggests, does most of the work.
+    `downstream_worker`, which as its name suggests, does most of the work.
     """
     try:
         station_lonlat = WKT_point_to_lonlat(station)
