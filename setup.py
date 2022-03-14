@@ -43,7 +43,7 @@ setup(
     ],
     package_dir={"ce": "ce"},
     package_data={
-        "ce": ["tests/data/*.nc", "templates/*.html"]
+        "ce": ["tests/data/*.nc", "templates/*.html", "tests/data/prism_pr_small.nc"]
         + recursive_list("ce/", "ce/static"),
     },
     cmdclass={"build_sphinx": BuildDoc},
