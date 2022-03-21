@@ -33,8 +33,8 @@ from ce.api.streamflow.shared import (
 
 
 def watershed_streams(sesh, station, ensemble_name):
-    """Return information describing the watershed that drains to a specified
-    point.
+    """Return a GeoJSON multi line string object representing the different streams
+    in a watershed that are upstream of the inputted point.
 
     :param sesh: (sqlalchemy.orm.session.Session) A database Session object
     :param station: (string) Location of drainage point, WKT POINT format
@@ -71,12 +71,10 @@ def watershed_streams(sesh, station, ensemble_name):
 def worker(
     station_lonlat, flow_direction,
 ):
-    """Compute the watershed streamflow.
-
-    This function exists to make these computations more easily testable.
-    (Specifically, data *files* are not required, only the relevant contents
-    of those files passed as `VicDataGrid` objects. `VicDataGrid`s are much easier to
-    construct for tests.)
+    """Returns the same as watershed_streams, this function exists to make 
+    these computations more easily testable. (Specifically, data *files* are not 
+    required, only the relevant contents of those files passed as `VicDataGrid` objects.
+    `VicDataGrid`s are much easier to construct for tests.)
 
     :param station_lonlat: (tuple) Location of drainage point, (lon, lat)
     :param flow_direction: (VicDataGrid) Flow direction grid
@@ -100,16 +98,10 @@ def worker(
     # `watershed_lonlats` must be an ordered collection (not sets) because
     # a multi line string is an array (python list) of linestrings
     watershed_lonlats = [[]]
-    counter = 0
 
-    for frozen in watershed_xys:
-        for xy in frozen:
-            watershed_lonlats[counter].append(flow_direction.xy_to_lonlat(xy))
-        counter += 1
-        watershed_lonlats.append([])
-
-    if watershed_lonlats[-1] == []:
-        watershed_lonlats.remove([])
+    watershed_lonlats = [
+        [flow_direction.xy_to_lonlat(xy) for xy in stream] for stream in watershed_xys
+    ]
 
     lines = MultiLineString(watershed_lonlats)
 
@@ -121,7 +113,8 @@ def worker(
 
 def build_watershed_streams(target, routing, direction_map, debug=False):
     """
-    Return set of all paths of cells that drain into `target`.
+    Returns a set of frozensets, each frozenset representing a path of cells that
+    drain into `target`.
 
     :param target: An xy index representing the cell of interest.
     :param routing: A numpy array representing water flow using VIC direction
@@ -145,27 +138,27 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
     not to repeat that subgraph.
     """
     visited = set()
-    i = 0
+    counter = 0
     connection = [[]]
 
     def upstream(cell):
-        """Return graph description of how the stream is connected
-        by movement of water"""
+        """Return list of lists, each list being a stream of cells upstream of
+        the inputted cell"""
         nonlocal visited
-        nonlocal i
+        nonlocal counter
         nonlocal connection
 
         visited |= {cell}
-        connection[i].append(cell)
+        connection[counter].append(cell)
         for neighbour in neighbours(cell):
             if neighbour not in visited and is_upstream(
                 neighbour, cell, routing, direction_map
             ):
                 upstream(neighbour)
                 connection.append([])
-                i += 1
-                connection[i].append(cell)
+                counter += 1
+                connection[counter].append(cell)
         return connection
 
     connection = upstream(target)
-    return set(frozenset(i) for i in connection if len(i) > 1)
+    return set(frozenset(stream) for stream in connection if len(stream) > 1)
