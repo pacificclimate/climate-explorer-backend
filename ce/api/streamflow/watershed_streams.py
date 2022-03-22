@@ -97,8 +97,6 @@ def worker(
 
     # `watershed_lonlats` must be an ordered collection (not sets) because
     # a multi line string is an array (python list) of linestrings
-    watershed_lonlats = [[]]
-
     watershed_lonlats = [
         [flow_direction.xy_to_lonlat(xy) for xy in stream] for stream in watershed_xys
     ]
@@ -155,10 +153,9 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
                 neighbour, cell, routing, direction_map
             ):
                 upstream(neighbour)
-                connection.append([])
+                connection.append([cell])
                 counter += 1
-                connection[counter].append(cell)
-        return connection
 
-    connection = upstream(target)
-    return set(frozenset(stream) for stream in connection if len(stream) > 1)
+    upstream(target)
+    return [stream for stream in connection if len(stream) > 1]
+    # return set(frozenset(stream) for stream in connection if len(stream) > 1)

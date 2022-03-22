@@ -14,7 +14,7 @@ from test_utils import check_dict_subset
                     "type": "Feature",
                     "geometry": {
                         "type": "MultiLineString",
-                        "coordinates": (((0.1, 50.4), (0.1, 50.6)),),
+                        "coordinates": (((0.1, 50.6), (0.1, 50.4)),),
                     },
                 },
             },
@@ -38,10 +38,10 @@ from test_utils import check_dict_subset
                     "geometry": {
                         "type": "MultiLineString",
                         "coordinates": (
+                            ((0.1, 50.2), (0.2, 50.4), (0.2, 50.6), (0.3, 50.6)),
+                            ((0.2, 50.6), (0.3, 50.8)),
                             ((0.2, 50.6), (0.1, 50.8)),
-                            ((0.2, 50.8), (0.2, 50.6)),
-                            ((0.2, 50.4), (0.3, 50.6), (0.2, 50.6), (0.1, 50.2)),
-                            ((0.3, 50.8), (0.2, 50.6)),
+                            ((0.2, 50.6), (0.2, 50.8)),
                         ),
                     },
                 },
@@ -56,10 +56,10 @@ from test_utils import check_dict_subset
                     "geometry": {
                         "type": "MultiLineString",
                         "coordinates": (
-                            ((0.2, 50.6), (0.1, 50.8)),
-                            ((0.2, 50.8), (0.2, 50.6)),
                             ((0.2, 50.4), (0.2, 50.6), (0.3, 50.6)),
-                            ((0.3, 50.8), (0.2, 50.6)),
+                            ((0.2, 50.6), (0.3, 50.8)),
+                            ((0.2, 50.6), (0.1, 50.8)),
+                            ((0.2, 50.6), (0.2, 50.8)),
                         ),
                     },
                 },
@@ -75,7 +75,7 @@ from test_utils import check_dict_subset
                         "type": "MultiLineString",
                         "coordinates": (
                             ((0.3, 50.2), (0.3, 50.4)),
-                            ((0.2, 50.2), (0.3, 50.2)),
+                            ((0.3, 50.2), (0.2, 50.2)),
                         ),
                     },
                 },
