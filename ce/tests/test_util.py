@@ -26,8 +26,10 @@ from modelmeta.v2 import Run
         ("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc", "tasmax"),
         ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc", "tasmin"),
         ("prism_pr_small.nc", "pr"),  # a file with masked values
+        ("anuspline_na.nc", "tasmax"),
+        ("CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc", "tasmax"),
     ),
-    ids=("bnu-tasmax", "bnu-tasmin", "prism_pr_small"),
+    ids=("bnu-tasmax", "bnu-tasmin", "prism_pr_small", "anuspline", "canesm",),
     scope="function",
 )
 def ncfilevar(request):
@@ -50,6 +52,10 @@ def nctuple(request, ncfilevar):
 
 def test_get_array(request, nctuple, polygon):
     nc, fname, var = nctuple
+    if "prism_pr_small.nc" in fname and "/github" in fname:
+        pytest.skip(
+            "Test does not work with GitHub Actions CI. See issue 206: https://github.com/pacificclimate/climate-explorer-backend/issues/206"
+        )
     t0 = time()
     x = get_array(nc, fname, 0, polygon, var)
     t = time() - t0

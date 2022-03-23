@@ -1,4 +1,5 @@
-FROM pcic/geospatial-python:gdal3
+# Image with gdal 3.2.0
+FROM pcic/geospatial-python:3.2.0
 
 RUN apk add postgresql-dev libxml2-dev libxslt-dev
 # Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
