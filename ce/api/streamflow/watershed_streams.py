@@ -123,7 +123,7 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
         TODO: Compute this internally?
     :param debug: Boolean indicating whether this function should compute
         and return debug information.
-    :return: Set of frozensets of cells (streams) that drain into `target`.
+    :return: A list of lists of cells that drain into `target`.
 
     Notes:
 
@@ -133,28 +133,64 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
     is used to determine whether a cell has already been visited during the
     traversal of the routing graph, i.e., whether we are cycling, and if so
     not to repeat that subgraph.
+
+    - Variable streams is a list of streams, where each stream is a list of
+    cells that drain into the target
+
+    - Variable 'flag' is a boolean flag that is true when the current cell is
+    also the target cell. This is used in the case that the target cell has no
+    upstream neighbours
+
+    - Variable 'number_of_streams' counts the number of streams in the watershed. 
+    This variable is used to ensure the cells are inserted into the right stream
     """
     visited = set()
-    counter = 0
-    connection = [[]]
+    streams = []
+    flag = True
+    number_of_streams = 0
 
-    def upstream(cell):
-        """Return list of lists, each list being a stream of cells upstream of
-        the inputted cell"""
+    def upstream(cell, flag):
+        """Generates list of lists, each list being a stream of cells upstream of
+        the inputted cell. This list is named 'streams', a nonlocal variable.
+
+        - Variable 'eligible' is generated for each cell, and is a list of all
+        'eligible' neighbours. Eligible is defined as a neighbour that is
+        upstream of the current cell and that also has not been visited.
+        """
         nonlocal visited
-        nonlocal counter
-        nonlocal connection
+        nonlocal number_of_streams
+        nonlocal streams
 
         visited |= {cell}
-        connection[counter].append(cell)
-        for neighbour in neighbours(cell):
-            if neighbour not in visited and is_upstream(
-                neighbour, cell, routing, direction_map
-            ):
-                upstream(neighbour)
-                connection.append([cell])
-                counter += 1
+        eligible = [
+            neighbour
+            for neighbour in neighbours(cell)
+            if neighbour not in visited
+            and is_upstream(neighbour, cell, routing, direction_map)
+        ]
 
-    upstream(target)
-    return [stream for stream in connection if len(stream) > 1]
-    # return set(frozenset(stream) for stream in connection if len(stream) > 1)
+        # If there are no eligible neighbours for the first cell, connection
+        # should be []. If there are eligible neighbours, the first stream
+        # must be started. Otherwise, the cell is a part of a stream and can
+        # be added to the current stream.
+        if eligible == [] and flag == True:
+            return
+        elif flag == True:
+            streams.append([cell])
+        else:
+            streams[number_of_streams].append(cell)
+
+        # At this point, the first cell is finished, so the flag is no longer
+        # true
+        flag = False
+
+        # For each eligible neighbour, we want to add them to a stream and
+        # move upstream on those neighbours (call the function again)
+        for neighbour in eligible:
+            upstream(neighbour, flag)
+            if neighbour != eligible[-1]:
+                streams.append([cell])
+                number_of_streams += 1
+
+    upstream(target, flag)
+    return streams
