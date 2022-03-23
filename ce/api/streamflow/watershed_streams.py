@@ -137,7 +137,7 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
     - Variable streams is a list of streams, where each stream is a list of
     cells that drain into the target
 
-    - Variable 'flag' is a boolean flag that is true when the current cell is
+    - Variable 'first' is a boolean flag that is true when the current cell is
     also the target cell. This is used in the case that the target cell has no
     upstream neighbours
 
@@ -146,10 +146,9 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
     """
     visited = set()
     streams = []
-    flag = True
     number_of_streams = 0
 
-    def upstream(cell, flag):
+    def upstream(cell, first):
         """Generates list of lists, each list being a stream of cells upstream of
         the inputted cell. This list is named 'streams', a nonlocal variable.
 
@@ -173,24 +172,23 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
         # should be []. If there are eligible neighbours, the first stream
         # must be started. Otherwise, the cell is a part of a stream and can
         # be added to the current stream.
-        if eligible == [] and flag == True:
+        if eligible == [] and first:
             return
-        elif flag == True:
+        elif first:
             streams.append([cell])
         else:
             streams[number_of_streams].append(cell)
 
         # At this point, the first cell is finished, so the flag is no longer
         # true
-        flag = False
 
         # For each eligible neighbour, we want to add them to a stream and
         # move upstream on those neighbours (call the function again)
         for neighbour in eligible:
-            upstream(neighbour, flag)
+            upstream(neighbour, False)
             if neighbour != eligible[-1]:
                 streams.append([cell])
                 number_of_streams += 1
 
-    upstream(target, flag)
+    upstream(target, True)
     return streams
