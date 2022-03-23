@@ -152,15 +152,19 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
         """Generates list of lists, each list being a stream of cells upstream of
         the inputted cell. This list is named 'streams', a nonlocal variable.
 
-        - Variable 'eligible' is generated for each cell, and is a list of all
-        'eligible' neighbours. Eligible is defined as a neighbour that is
-        upstream of the current cell and that also has not been visited.
+        :param first: a boolean that when true indicates the current cell is the
+        target cell
         """
         nonlocal visited
         nonlocal number_of_streams
         nonlocal streams
 
         visited |= {cell}
+
+        # Variable 'eligible' is generated for each cell, and is a list of all
+        # 'eligible' neighbours. Eligible is defined as a neighbour that is
+        # upstream of the current cell and that also has not been visited.
+
         eligible = [
             neighbour
             for neighbour in neighbours(cell)
@@ -179,13 +183,14 @@ def build_watershed_streams(target, routing, direction_map, debug=False):
         else:
             streams[number_of_streams].append(cell)
 
-        # At this point, the first cell is finished, so the flag is no longer
-        # true
-
         # For each eligible neighbour, we want to add them to a stream and
-        # move upstream on those neighbours (call the function again)
+        # move upstream on those neighbours (call the function again). The
+        # first neighbour is added to the current stream, and all following
+        # neighbours are added to different streams
         for neighbour in eligible:
             upstream(neighbour, False)
+            # Can't start another stream when on the last cell, as this would
+            # create a stream of length 1
             if neighbour != eligible[-1]:
                 streams.append([cell])
                 number_of_streams += 1
