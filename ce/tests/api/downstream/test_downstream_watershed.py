@@ -1,5 +1,5 @@
 import pytest
-from ce.api.streamflow.downstream import worker
+from ce.api.streamflow.downstream import downstream_worker
 from test_utils import check_dict_subset
 
 
@@ -11,7 +11,6 @@ from test_utils import check_dict_subset
             50.8,
             {
                 "boundary": {
-                    # TODO: more here
                     "type": "Feature",
                     "properties": {
                         "starting point": {
@@ -27,7 +26,6 @@ from test_utils import check_dict_subset
             50.78,
             {
                 "boundary": {
-                    # TODO: more here
                     "type": "Feature",
                     "properties": {
                         "starting point": {
@@ -43,7 +41,6 @@ from test_utils import check_dict_subset
             50.6,
             {
                 "boundary": {
-                    # TODO: more here
                     "type": "Feature",
                     "properties": {
                         "starting point": {
@@ -59,5 +56,5 @@ from test_utils import check_dict_subset
 def test_downstream_worker(
     lon, lat, expected, flow_direction_1,
 ):
-    result = worker((lon, lat), flow_direction_1,)
+    result = downstream_worker((lon, lat), flow_direction_1,)
     check_dict_subset(expected, result)

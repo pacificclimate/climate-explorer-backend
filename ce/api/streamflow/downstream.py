@@ -69,7 +69,7 @@ def downstream(sesh, station, ensemble_name):
         sesh, ensemble_name, "flow_direction"
     ) as flow_direction_ds:
         try:
-            return worker(
+            return downstream_worker(
                 station_lonlat,
                 flow_direction=VicDataGrid.from_nc_dataset(
                     flow_direction_ds, "flow_direction"
@@ -83,7 +83,7 @@ def downstream(sesh, station, ensemble_name):
             )
 
 
-def worker(
+def downstream_worker(
     station_lonlat, flow_direction,
 ):
     """Compute the watershed.
