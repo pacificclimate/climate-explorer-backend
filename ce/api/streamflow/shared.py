@@ -5,6 +5,7 @@ import numpy as np
 import math
 
 from sqlalchemy import distinct
+from shapely.errors import WKTReadingError
 
 from ce.api.geospatial import WKT_point_to_lonlat, GeospatialTypeError
 from ce.api.util import is_valid_index, vec_add, neighbours
