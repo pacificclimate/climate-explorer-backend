@@ -18,18 +18,18 @@ from contexttimer import Timer
 
 from flask import abort
 from shapely.geometry import Point
-from shapely.errors import WKTReadingError
 
 from ce.api.geospatial import (
     geojson_feature,
     path_line,
 )
-from ce.api.util import is_valid_index, vec_add, neighbours
+from ce.api.util import neighbours
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
 
 from ce.api.streamflow.shared import (
     setup,
+    is_downstream,
     VIC_direction_matrix,
     get_time_invariant_variable_dataset,
 )
@@ -145,16 +145,6 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
     """
     visited = set()
 
-    def is_downstream(neighbour, cell):
-        """Return a boolean indicating whether `neighbour` is downstream of `cell`
-        according to the routing matrix and direction map."""
-        # Eliminate invalid cases
-        if not is_valid_index(neighbour, routing.shape):
-            return False
-        cell_routing = routing[cell]
-        # `neighbour` is downstream of `cell` if `cell`'s routing points at `neighbour`
-        return vec_add(cell, direction_map[int(cell_routing)]) == neighbour
-
     def downstream(cell):
         """Return all cells downstream of `cell`.
         This is the closure of downstream over cell neighbours.
@@ -165,7 +155,7 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
             *(
                 downstream(neighbour)
                 for neighbour in neighbours(cell)
-                if neighbour not in visited and is_downstream(neighbour, cell)
+                if neighbour not in visited and is_downstream(neighbour, cell, routing, direction_map)
             )
         )
 
