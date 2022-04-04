@@ -14,6 +14,7 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
+from this import d
 from contexttimer import Timer
 
 from flask import abort
@@ -23,7 +24,7 @@ from ce.api.geospatial import (
     geojson_feature,
     path_line,
 )
-from ce.api.util import neighbours
+from ce.api.util import is_valid_index, vec_add
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
 
@@ -132,31 +133,36 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
         represented by an offset of +1 or -1, respectively.
     :param debug: Boolean indicating whether this function should compute
         and return debug information.
-    :return: Set of cells (cell indices) that drain from `target`.
+    :return: Tuple of cells (cell indices as tuples) that drain from `target` in 
+        a downstream flow order.
 
     Notes:
 
     - In this function, a cell is represented by an (x, y) index pair.
 
-    - Routing graphs can and in practice do contain cycles. Variable `visited`
-    is used to determine whether a cell has already been visited during the
-    traversal of the routing graph, i.e., whether we are cycling, and if so
-    not to repeat that subgraph.
+    - Routing graphs can and in practice do contain cycles. Variable 
+    `downstream tuple` is used to check whether a cell has already been 
+    visited during the traversal of the routing graph, i.e., whether we 
+    are cycling, and if so not to repeat that subgraph.
     """
-    visited = set()
+    downstream_tuple = ()
 
     def downstream(cell):
         """Return all cells downstream of `cell`.
-        This is the closure of downstream over cell neighbours.
+        This is the closure of downstream via flow direction.
         """
-        nonlocal visited
-        visited |= {cell}
-        return {cell}.union(
-            *(
-                downstream(neighbour)
-                for neighbour in neighbours(cell)
-                if neighbour not in visited and is_downstream(neighbour, cell, routing, direction_map)
-            )
-        )
+        nonlocal downstream_tuple
+
+        downstream_tuple += (cell,)
+
+        if not is_valid_index(cell, routing.shape) or direction_map == None or routing[cell]==9:
+            return downstream_tuple
+
+        cell_routing = routing[cell]
+        downstream_neighbour = vec_add(cell, direction_map[int(cell_routing)])
+
+        if is_valid_index(downstream_neighbour, routing.shape) and downstream_neighbour not in downstream_tuple:
+            return downstream(downstream_neighbour)
+        return downstream_tuple
 
     return downstream(target)

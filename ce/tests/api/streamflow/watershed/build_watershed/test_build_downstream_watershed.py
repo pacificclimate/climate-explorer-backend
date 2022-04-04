@@ -33,33 +33,27 @@ routing_loop_2x2_quad = np_array(((E, S), (N, W),))
 routing_loop_2x2_tri = np_array(((E, S), (S, NW),))
 
 
-@pytest.mark.parametrize(
-    "mouth, routing, direction_map, expected",
+@pytest.mark.parametrize("mouth, routing, direction_map, expected",
     (
         # Trivial cases
-        ((0, 0), routing_0x0, None, {(0, 0)}),
-        ((0, 0), routing_1x1, None, {(0, 0)}),
+        ((0, 0), routing_0x0, None, ((0, 0),)),
+        ((0, 0), routing_1x1, None, ((0, 0),)),
         # Fully connected watersheds
-        ((0, 0), routing_fc_3x3, direction_map, {(0, 0)}),
-        ((1, 1), routing_fc_3x3, direction_map, {(0, 0), (1, 1)}),
-        ((0, 0), routing_fc_4x4, direction_map, {(0, 0)}),
-        ((1, 2), routing_fc_4x4, direction_map, index_set(4, 4)),
-        ((2, 2), routing_fc_4x4, direction_map, index_set(4, 4) - {(1, 2)}),
+        ((0, 0), routing_fc_3x3, direction_map, ((0, 0),)),
+        ((1, 1), routing_fc_3x3, direction_map, ((1, 1), (0, 0))),
+        ((0, 0), routing_fc_4x4, direction_map, ((0, 0),)),
+        ((1, 2), routing_fc_4x4, direction_map, ((1, 2), (2, 2), (2, 1), (1, 1), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1), (3, 0), (2, 0), (1, 0), (0, 0))),
+        ((2, 2), routing_fc_4x4, direction_map, ((2, 2), (2, 1), (1, 1), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1), (3, 0), (2, 0), (1, 0), (0, 0))),
         # Partly connected watersheds
-        (
-            (2, 1),
-            routing_pc_3x3,
-            direction_map,
-            index_set(3, 2) - {(0, 1), (1, 0), (2, 0)},
-        ),
-        ((2, 2), routing_pc_3x3, direction_map, {(2, 2)}),
+        ((2, 1), routing_pc_3x3, direction_map, ((2, 1), (1, 1), (0, 0))),
+        ((2, 2), routing_pc_3x3, direction_map, ((2, 2),)),
         # Watersheds with loops
-        ((0, 0), routing_loop_1x2, direction_map, index_set(1, 2)),
-        ((0, 1), routing_loop_1x2, direction_map, index_set(1, 2)),
-        ((0, 0), routing_loop_2x2_quad, direction_map, index_set(2, 2)),
-        ((1, 1), routing_loop_2x2_quad, direction_map, index_set(2, 2)),
-        ((0, 0), routing_loop_2x2_tri, direction_map, {(0, 0)}),
-        ((1, 1), routing_loop_2x2_tri, direction_map, index_set(2, 2) - {(0, 0)}),
+        ((0, 0), routing_loop_1x2, direction_map, ((0, 0), (0, 1))),
+        ((0, 1), routing_loop_1x2, direction_map, ((0, 1), (0, 0))),
+        ((0, 0), routing_loop_2x2_quad, direction_map, ((0, 0), (1, 0), (1, 1), (0, 1))),
+        ((1, 1), routing_loop_2x2_quad, direction_map, ((1, 1), (0, 1), (0, 0), (1, 0))),
+        ((0, 0), routing_loop_2x2_tri, direction_map, ((0, 0),)),
+        ((1, 1), routing_loop_2x2_tri, direction_map, ((1, 1), (0, 1), (1, 0))),
     ),
 )
 def test_build_downstream_watershed(mouth, routing, direction_map, expected):
