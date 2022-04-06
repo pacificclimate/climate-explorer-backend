@@ -14,6 +14,7 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
+from gettext import dpgettext
 from this import d
 from contexttimer import Timer
 
@@ -147,22 +148,19 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
     """
     downstream_tuple = ()
 
-    def downstream(cell):
-        """Return all cells downstream of `cell`.
-        This is the closure of downstream via flow direction.
-        """
-        nonlocal downstream_tuple
+    def downstream(downstream_tuple, cell):
+        if direction_map == None:
+            return (cell,)
+
+        if (cell) in downstream_tuple or not is_valid_index(cell, routing.shape):
+            return downstream_tuple
 
         downstream_tuple += (cell,)
-
-        if not is_valid_index(cell, routing.shape) or direction_map == None or routing[cell]==9:
-            return downstream_tuple
 
         cell_routing = routing[cell]
         downstream_neighbour = vec_add(cell, direction_map[int(cell_routing)])
 
-        if is_valid_index(downstream_neighbour, routing.shape) and downstream_neighbour not in downstream_tuple:
-            return downstream(downstream_neighbour)
-        return downstream_tuple
+        return downstream(downstream_tuple, downstream_neighbour)
+    
 
-    return downstream(target)
+    return downstream(downstream_tuple, target)
