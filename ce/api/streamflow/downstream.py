@@ -146,21 +146,18 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
     visited during the traversal of the routing graph, i.e., whether we 
     are cycling, and if so not to repeat that subgraph.
     """
-    downstream_tuple = ()
 
-    def downstream(downstream_tuple, cell):
+    def downstream(downstream_tuple):
         if direction_map == None:
-            return (cell,)
-
-        if (cell) in downstream_tuple or not is_valid_index(cell, routing.shape):
             return downstream_tuple
 
-        downstream_tuple += (cell,)
+        cell_routing = routing[downstream_tuple[-1]]
+        downstream_neighbour = vec_add(downstream_tuple[-1], direction_map[int(cell_routing)])
 
-        cell_routing = routing[cell]
-        downstream_neighbour = vec_add(cell, direction_map[int(cell_routing)])
+        if downstream_neighbour in downstream_tuple or not is_valid_index(downstream_neighbour, routing.shape):
+            return downstream_tuple
 
-        return downstream(downstream_tuple, downstream_neighbour)
-    
-
-    return downstream(downstream_tuple, target)
+        downstream_tuple += (downstream_neighbour,)
+        return downstream(downstream_tuple)
+        
+    return downstream((target,))
