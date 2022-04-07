@@ -5,9 +5,11 @@ import numpy as np
 import math
 
 from sqlalchemy import distinct
+from shapely.errors import WKTReadingError
 
+from flask import abort
 from ce.api.geospatial import WKT_point_to_lonlat, GeospatialTypeError
-from ce.api.util import is_valid_index, vec_add, neighbours
+from ce.api.util import is_valid_index, vec_add
 from modelmeta import (
     DataFile,
     DataFileVariableGridded,
@@ -39,6 +41,17 @@ def is_upstream(neighbour, cell, routing, direction_map):
         return False
     # `neighbour` is upstream if its routing points back at `cell`
     return vec_add(neighbour, direction_map[int(neighbour_routing)]) == cell
+
+
+def is_downstream(neighbour, cell, routing, direction_map):
+    """Return a boolean indicating whether `neighbour` is downstream of `cell`
+    according to the routing matrix and direction map."""
+    # Eliminate invalid cases
+    if not is_valid_index(neighbour, routing.shape):
+        return False
+    cell_routing = routing[cell]
+    # `neighbour` is downstream of `cell` if `cell`'s routing points at `neighbour`
+    return vec_add(cell, direction_map[int(cell_routing)]) == neighbour
 
 
 def VIC_direction_matrix(lat_step, lon_step):

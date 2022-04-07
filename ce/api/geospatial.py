@@ -1,5 +1,5 @@
 import shapely.wkt
-from shapely.geometry import Point, mapping
+from shapely.geometry import Point, mapping, LineString
 from shapely.ops import cascaded_union
 
 
@@ -43,6 +43,11 @@ def outline_cell_rect(centres, height, width):
     return cascaded_union(
         [shapely.geometry.box(x - dx, y - dy, x + dx, y + dy) for x, y in centres]
     )
+
+
+def path_line(points):
+    """Returns a shapely LineString, that is the downstream path"""
+    return LineString(points)
 
 
 def WKT_point_to_lonlat(text):

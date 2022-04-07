@@ -24,6 +24,7 @@ from ce.api.grid import grid
 from ce.api.percentileanomaly import percentileanomaly
 from ce.api.streamflow.watershed import watershed
 from ce.api.streamflow.watershed_streams import watershed_streams
+from ce.api.streamflow.downstream import downstream
 from ce.api.health.regions import regions
 
 
@@ -40,6 +41,7 @@ methods = {
     "percentileanomaly": percentileanomaly,
     "watershed": watershed,
     "watershed_streams": watershed_streams,
+    "downstream": downstream,
     "regions": regions,
 }
 

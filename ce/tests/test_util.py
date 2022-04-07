@@ -1,6 +1,7 @@
 from pkg_resources import resource_filename
 from datetime import timezone
 
+from os import getenv
 from time import time
 
 import pytest
@@ -52,7 +53,7 @@ def nctuple(request, ncfilevar):
 
 def test_get_array(request, nctuple, polygon):
     nc, fname, var = nctuple
-    if "prism_pr_small.nc" in fname and "/github" in fname:
+    if "prism_pr_small.nc" in fname and getenv("GITHUB_ACTIONS"):
         pytest.skip(
             "Test does not work with GitHub Actions CI. See issue 206: https://github.com/pacificclimate/climate-explorer-backend/issues/206"
         )

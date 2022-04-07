@@ -18,7 +18,6 @@ from contexttimer import Timer
 
 from flask import abort
 from shapely.geometry import MultiLineString
-from shapely.errors import WKTReadingError
 
 from ce.api.geospatial import geojson_feature
 from ce.api.util import neighbours
