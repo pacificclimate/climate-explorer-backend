@@ -147,17 +147,17 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
     are cycling, and if so not to repeat that subgraph.
     """
 
-    def downstream(downstream_tuple):
+    def downstream(stream):
         if direction_map == None:
-            return downstream_tuple
+            return stream
 
-        cell_routing = routing[downstream_tuple[-1]]
-        downstream_neighbour = vec_add(downstream_tuple[-1], direction_map[int(cell_routing)])
+        cell_routing = routing[stream[-1]]
+        downstream_neighbour = vec_add(stream[-1], direction_map[int(cell_routing)])
 
-        if downstream_neighbour in downstream_tuple or not is_valid_index(downstream_neighbour, routing.shape):
-            return downstream_tuple
+        if downstream_neighbour in stream or not is_valid_index(downstream_neighbour, routing.shape):
+            return stream
 
-        downstream_tuple += (downstream_neighbour,)
-        return downstream(downstream_tuple)
+        stream += (downstream_neighbour,)
+        return downstream(stream)
         
     return downstream((target,))
