@@ -142,7 +142,7 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
     - In this function, a cell is represented by an (x, y) index pair.
 
     - Routing graphs can and in practice do contain cycles. Variable 
-    `downstream tuple` is used to check whether a cell has already been 
+    `stream` is used to check whether a cell has already been 
     visited during the traversal of the routing graph, i.e., whether we 
     are cycling, and if so not to repeat that subgraph.
     """
