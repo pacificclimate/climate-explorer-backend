@@ -1,5 +1,17 @@
 # News / Release Notes
 
+## 3.5.0
+**2022-April-26**
+
+- Switch install method to pipenv [#194](https://github.com/pacificclimate/climate-explorer-backend/pull/194)
+
+- Replace anchore scanner with snyk [#196](https://github.com/pacificclimate/climate-explorer-backend/pull/196)
+
+- Add a downstream API that returns the path from a selected stream to the sea or the edge of the file. [#199](https://github.com/pacificclimate/climate-explorer-backend/pull/199)
+
+- Add a watershed_streams API that returns the network of streamflow connectivity with a watershed defined by all grid cells upstream of a selected point [#200](https://github.com/pacificclimate/climate-explorer-backend/pull/200), [#207](https://github.com/pacificclimate/climate-explorer-backend/pull/207)
+
+
 ## 3.4.0
 **2021-March-29**
 
