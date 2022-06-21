@@ -16,6 +16,7 @@ dimension order accordingly.
 """
 import math
 from contexttimer import Timer
+import numpy as np
 
 from flask import abort
 from shapely.geometry import Point
@@ -23,7 +24,7 @@ from shapely.errors import WKTReadingError
 from pint import UnitRegistry
 
 from ce.api.geospatial import geojson_feature, outline_cell_rect
-from ce.api.util import neighbours
+from ce.api.util import neighbours, get_array
 from ce.geo_data_grid_2d import GeoDataGrid2DIndexError
 from ce.geo_data_grid_2d.vic import VicDataGrid
 from ce.api.streamflow.shared import (
@@ -80,6 +81,8 @@ def watershed(sesh, station, ensemble_name):
                 elevation_max=VicDataGrid.from_nc_dataset(elevation_max_ds, "elevmax"),
                 elevation_min=VicDataGrid.from_nc_dataset(elevation_min_ds, "elevmin"),
                 area=VicDataGrid.from_nc_dataset(area_ds, "area"),
+                elevation_min_ds=elevation_min_ds,
+                elevation_max_ds=elevation_max_ds
             )
         except GeoDataGrid2DIndexError:
             abort(
@@ -96,6 +99,8 @@ def worker(
     elevation_max,
     elevation_min,
     area,
+    elevation_min_ds,
+    elevation_max_ds,
     hypso_params=None,
 ):
     """Compute the watershed endpoint response.
@@ -172,6 +177,11 @@ def worker(
     # coordinates (lonlats) for `elevations[i]` and `areas[i]` be equal for
     # all `i`.
     watershed_lonlats = [flow_direction.xy_to_lonlat(xy) for xy in watershed_xys]
+    
+    # Compute outline of watershed as a GeoJSON feature
+    outline = outline_cell_rect(
+        watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
+    )
 
     #  Compute elevations at each lonlat of watershed
     ws_elevations = elevation_mean.get_values_at_lonlats(watershed_lonlats)
@@ -179,20 +189,22 @@ def worker(
     #  Compute area of each cell in watershed
     ws_areas = area.get_values_at_lonlats(watershed_lonlats)
 
-    #  Get the maximum and minimum elevation of each cell
-    ws_elevation_maximums = elevation_max.get_values_at_lonlats(watershed_lonlats)
-    ws_elevation_minimums = elevation_min.get_values_at_lonlats(watershed_lonlats)
+    #  Get the maximum and minimum elevation of each cell using the stat API
+    #  and a WKT area
+    wkt_boundary = outline.wkt
+    ws_elevation_maximums = get_array(elevation_max_ds, elevation_max_ds.filepath(), None, wkt_boundary, "elevmax")
+    ws_elevation_minimums = get_array(elevation_min_ds, elevation_min_ds.filepath(), None, wkt_boundary, "elevmin")
+
+    #ws_elevation_maximums = elevation_max.get_values_at_lonlats(watershed_lonlats)
+    #ws_elevation_minimums = elevation_min.get_values_at_lonlats(watershed_lonlats)
 
     # Compute the elevation/area curve
     cumulative_areas = hypsometry(ws_elevations, ws_areas, **hypso_params)
 
-    # Compute outline of watershed as a GeoJSON feature
-    outline = outline_cell_rect(
-        watershed_lonlats, flow_direction.lat_step, flow_direction.lon_step
-    )
 
-    outlet_elevation = min(ws_elevation_minimums)
-    source_elevation = max(ws_elevation_maximums)
+
+    outlet_elevation = np.min(ws_elevation_minimums)
+    source_elevation = np.max(ws_elevation_maximums)
     total_area = sum(ws_areas)
     m_ratio = compute_melton_ratio(
         source_elevation,
