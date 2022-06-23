@@ -44,7 +44,7 @@ class GeoDataGrid2D:
         return cls(
             dataset.variables["lon"],
             dataset.variables["lat"],
-            dataset.variables[variable_name],
+            dataset.variables[variable_name][:],
             dataset.variables[variable_name].units,
         )
 
