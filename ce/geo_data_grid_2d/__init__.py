@@ -42,8 +42,8 @@ class GeoDataGrid2D:
         """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
         with standard contents and returns it as a `DataGrid`."""
         return cls(
-            dataset.variables["lon"],
-            dataset.variables["lat"],
+            dataset.variables["lon"][:],
+            dataset.variables["lat"][:],
             dataset.variables[variable_name][:],
             dataset.variables[variable_name].units,
         )
