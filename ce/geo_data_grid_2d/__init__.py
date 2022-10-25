@@ -40,9 +40,9 @@ class GeoDataGrid2D:
     @classmethod
     def from_nc_dataset(cls, dataset, variable_name):
         """Factory method. Extracts relevant data from a netcdf file (`Dataset`)
-        with standard contents and returns it as a `DataGrid`. Unlike a Dataset,
-        numerical data is preloaded into numpy arrays to cut down on file access
-        time."""
+        with standard contents and returns it as a `DataGrid`. Unlike a standard
+        Dataset, numerical data is preloaded into numpy arrays to cut down on
+        file access time."""
         return cls(
             dataset.variables["lon"][:],
             dataset.variables["lat"][:],
