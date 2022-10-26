@@ -14,7 +14,8 @@ jobs:
       run: |
         apk upgrade
         apk add libxml2-dev libxslt-dev
-        pip install -U pip pipenv --ignore-installed
+        pip install -U pip 
+        pip install pipenv==2021.5.29 --ignore-installed
 
     - id: cache-pipenv
       uses: actions/cache@v2
