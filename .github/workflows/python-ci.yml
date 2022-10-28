@@ -14,7 +14,8 @@ jobs:
       run: |
         apk upgrade
         apk add libxml2-dev libxslt-dev
-        pip install -U pip pipenv --ignore-installed
+        pip install -U pip 
+        pip install pipenv==2021.5.29 --ignore-installed
 
     - id: cache-pipenv
       uses: actions/cache@v2
@@ -25,15 +26,15 @@ jobs:
     - name: Install dependencies if changed
       if: steps.cache-pipenv.outputs.cache-hit != 'true'
       run: |
-        pipenv install --deploy --dev --system --site-packages
-        pip install .
+        pipenv install --deploy --dev
+        pipenv run pip install .
     
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       run: |
-        py.test -m "not online" -v
+        pipenv run py.test -m "not online" -v
     
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
-        py.test -m "not online and not slow" -v
+        pipenv run py.test -m "not online and not slow" -v

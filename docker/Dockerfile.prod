@@ -8,7 +8,7 @@ RUN apk upgrade perl
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install -U pipenv --ignore-installed && \
+RUN pip3 install pipenv==2021.5.29 --ignore-installed && \
     pipenv install
 
 EXPOSE 8000
