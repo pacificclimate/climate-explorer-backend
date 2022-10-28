@@ -26,15 +26,15 @@ jobs:
     - name: Install dependencies if changed
       if: steps.cache-pipenv.outputs.cache-hit != 'true'
       run: |
-        pipenv install --deploy --dev --system --site-packages
-        pip install .
+        pipenv install --deploy --dev
+        pipenv run pip install .
     
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       run: |
-        py.test -m "not online" -v
+        pipenv run py.test -m "not online" -v
     
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
-        py.test -m "not online and not slow" -v
+        pipenv run py.test -m "not online and not slow" -v
