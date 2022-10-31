@@ -1,5 +1,13 @@
 # News / Release Notes
 
+## 3.5.1
+**2022-October-31**
+
+- Update documentation for watershed-related APIs. [#218](https://github.com/pacificclimate/climate-explorer-backend/pull/218)
+
+- Speed up the process of building a drainage area in watershed APIs by preloading data instead of repeatedly accessing the file. [#214](https://github.com/pacificclimate/climate-explorer-backend/pull/214)
+
+
 ## 3.5.0
 **2022-April-26**
 
