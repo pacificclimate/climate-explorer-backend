@@ -1,0 +1,3 @@
+This API endpoint provides a GeoJSON multiline object representing stream network connectivity upstream of the selected point. It is intended to allow the network of streams that drains to a specific outlet to be visualized on a map. No data about the size of the streams is provided, and streams are approximated as straight line segments connecting the centers of grid cells.
+
+The resolution of the network is limited by the resolution of the grid used to calculate the network. Each grid cell is defined as draining into one specific other grid cell. If there are multiple small streams in a grid cell, or small creeks or culverts smaller than a single grid cell, the stream network object returned by this API will not represent them accurately.

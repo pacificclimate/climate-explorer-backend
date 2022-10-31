@@ -1,0 +1,1 @@
+This API endpoint provides a GeoJSON object representing the path taken by water flowing downstream from the selected point. This downstream path will terminate either at the ocean, or, in cases where only partial flow network data is available, at the edge of the available data. If the selected point is not within the dataset, a 404 Not Found error will be returned.
