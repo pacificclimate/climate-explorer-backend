@@ -19,3 +19,11 @@ However, for small areas with steep topography, it is common to see some of the 
 Consider the most extreme case of `n = 2` cells that happen to be positioned at the edge of a steep sided valley. One cell is in the valley bottom with an average elevation of 100 m. The other is cell, just adjacent to it, mostly covers the highland above with an average elevation of 500 m. In a histogram with 100 m bin width, we'd see non-zero areas for the 100 m bin and the 500 m bin, but zero areas for the 200 m, 300 m, and 400 m elevation bins, and in the graph these would look like gaps.
 
 We can see a similar effect for other small values of `n > 2` in steep terrain too. Once `n` becomes large enough, then the likelihood of an elevation bin not having some cells is quite low and these gaps do not appear.
+
+## Melton Ratio
+
+The Melton Ratio (ratio of watershed relief to the square of the area) is used to characterize a location as being dominated by either flooding (Melton ratios <0.3) or debris flows (Melton ratios >0.6) (Wilford et al., 2004).
+
+The watershed API delineates a watershed boundary, or drainage polygon, based on a pour point of interest in combination with VIC-GL’s flow network. The drainage polygon is used to select the minimum and maximum elevations, compute the watershed relief and area.
+
+Watershed relief is defined as maximum elevation minus minimum elevation. Minimum and maximum elevations are extracted from the GMTED2010 7.5 arc-second DEM (Danielson and Gesch, 2011).
