@@ -18,4 +18,6 @@ API Documentation
    stats <stats-api>
    timeseries <timeseries-api>
    watershed <watershed-api>
+   watershed-streams <watershed-streams-api>
+   downstream <downstream-api>
    regions <regions-api>
