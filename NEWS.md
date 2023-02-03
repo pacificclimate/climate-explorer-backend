@@ -1,5 +1,18 @@
 # News / Release Notes
 
+## 3.6.1
+**2023-Feb-03**
+
+- Add pre-ping param to engine creation (seems to solve problem of database 
+  connections being closed and causing 500s).
+  [#223](https://github.com/pacificclimate/climate-explorer-backend/pull/223)
+
+
+## 3.6.0
+**2023-Feb-03**
+
+ERRONEOUS - DO NOT USE
+
 ## 3.5.1
 **2022-October-31**
 
