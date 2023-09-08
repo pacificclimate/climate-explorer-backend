@@ -34,13 +34,11 @@ def get_units_from_run_object(sesh, run, varname, ensemble_name):
     units = (
         sesh.query(mm.VariableAlias.units)
         .distinct(mm.VariableAlias.units)
-        .join(
-            mm.DataFileVariableGridded,
-            mm.EnsembleDataFileVariables,
-            mm.Ensemble,
-            mm.DataFile,
-            mm.Run,
-        )
+        .join(mm.DataFileVariableGridded)
+        .join(mm.EnsembleDataFileVariables)
+        .join(mm.Ensemble)
+        .join(mm.DataFile)
+        .join(mm.Run)
         .filter(mm.Ensemble.name == ensemble_name)
         .filter(mm.DataFileVariableGridded.netcdf_variable_name == varname)
         .filter(mm.Run.name == run.name)
@@ -79,7 +77,6 @@ def open_nc(resource):
 
 
 def get_array(nc, resource, time, area, variable):
-
     if variable not in nc.variables:
         raise Exception(f"Resource {resource} does not have variable {variable}.")
 
@@ -140,7 +137,7 @@ def check_climatological_statistic(
     """
 
     def final_method(p):
-        """get the name of the final cell method, corresponding 
+        """get the name of the final cell method, corresponding
         to climatological aggregation (usually)"""
         return p[-1].method.name
 
@@ -248,22 +245,21 @@ def search_for_unique_ids(
     )
 
     matching_cell_methods = filter_by_climatological_statistic(
-        [r[0] for r in cell_methods], climatological_statistic,
+        [r[0] for r in cell_methods],
+        climatological_statistic,
     )
 
     query = (
         sesh.query(mm.DataFile.unique_id)
         .distinct(mm.DataFile.unique_id)
-        .join(
-            mm.DataFileVariableGridded,
-            mm.EnsembleDataFileVariables,
-            mm.Ensemble,
-            mm.Run,
-            mm.Model,
-            mm.Emission,
-            mm.TimeSet,
-            mm.Time,
-        )
+        .join(mm.DataFileVariableGridded)
+        .join(mm.EnsembleDataFileVariables)
+        .join(mm.Ensemble)
+        .join(mm.Run)
+        .join(mm.Model)
+        .join(mm.Emission)
+        .join(mm.TimeSet)
+        .join(mm.Time)
         .filter(mm.Ensemble.name == ensemble_name)
         .filter(mm.DataFileVariableGridded.netcdf_variable_name == variable)
         .filter(
