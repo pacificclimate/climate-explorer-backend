@@ -1,14 +1,14 @@
 # Image with gdal 3.2.0
 FROM pcic/geospatial-python:3.2.0
 
-RUN apk add postgresql-dev libxml2-dev libxslt-dev
+RUN apk add postgresql-dev libxml2-dev libxslt-dev geos-dev
 # Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
 RUN apk upgrade perl
-
+RUN pip install shapely
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install pipenv==2021.5.29 --ignore-installed && \
+RUN pip3 install pipenv==2022.3.28 --ignore-installed && \
     pipenv install
 
 EXPOSE 8000
