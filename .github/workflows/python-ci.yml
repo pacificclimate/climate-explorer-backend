@@ -10,21 +10,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         apk upgrade
         apk add libxml2-dev libxslt-dev
         pip install -U pip 
-        pip install pipenv==2021.5.29 --ignore-installed
+        pip install pipenv==2022.3.28 --ignore-installed
 
-    - id: cache-pipenv
-      uses: actions/cache@v2
-      with:
-        path: ~/.local/share/virtualenvs
-        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
-
-    - name: Install dependencies if changed
-      if: steps.cache-pipenv.outputs.cache-hit != 'true'
+    - name: Install python dependencies 
       run: |
         pipenv install --deploy --dev
         pipenv run pip install .
