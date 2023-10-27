@@ -21,8 +21,8 @@ def data(
     model,
     emission,
     time,
-    area,
     variable,
+    area=None,
     timescale="other",
     ensemble_name="ce_files",
     climatological_statistic="mean",
@@ -61,9 +61,9 @@ def data(
         climatological_statistic (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile). Defaulted to "mean".
-        
+
         percentile (float): if climatological_statistic is "percentile", specifies what
-            percentile value to use. A percentile value must be provided if the 
+            percentile value to use. A percentile value must be provided if the
             climatological_statistic is "percentile".
 
         is_thredds (bool): If set to `True` the filepath will be searched for

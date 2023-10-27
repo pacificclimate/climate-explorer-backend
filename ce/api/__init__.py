@@ -50,16 +50,16 @@ __all__ = list(methods.keys()) + ["call"]
 
 def call(session, request_type, item=None):
     """Extracts request query parameters, checks for required arguments
-       and delegates to helper functions to fetch the results from
-       storage
+    and delegates to helper functions to fetch the results from
+    storage
 
-       Args:
-          session (sqlalchemy.orm.session.Session): A database Session object
-          request_type(str): name of the API endpoint to call
-          item(str): name of an individual item for a REST API
+    Args:
+       session (sqlalchemy.orm.session.Session): A database Session object
+       request_type(str): name of the API endpoint to call
+       item(str): name of an individual item for a REST API
 
-       Returns:
-          werkzeug.wrappers.Response.  A JSON encoded response object
+    Returns:
+       werkzeug.wrappers.Response.  A JSON encoded response object
     """
 
     try:
@@ -74,6 +74,7 @@ def call(session, request_type, item=None):
     else:
         required_params = set(get_required_args(func)).difference(["sesh"])
     provided_params = set(request.args.keys())
+
     optional_params = set(get_keyword_args(func))
     missing = required_params.difference(provided_params)
     if missing:
@@ -91,6 +92,29 @@ def call(session, request_type, item=None):
         for key in optional_params
         if request.args.get(key) is not None
     }
+
+    # Sometimes the "area" parameter, a WKT string describing a polygon,
+    # is too long to include in the URL. In those cases, the requesting
+    # front end may use an "area_key" URL parameter (to facilitate caching),
+    # and send the polygon in the request body. Add this polygon to the
+    # arguments if applicable.
+    if (
+        "area_key" in request.args.keys()
+        and "area" in optional_params
+        and "area" not in kwargs
+    ):
+        if request.data:
+            print("area_key detected")
+            print("data is {}".format(request.data.decode("utf-8")))
+            kwargs["area"] = request.data.decode("utf-8")
+        else:
+            return Response(
+                "Missing area payload for area_key {}".format(
+                    request.args.get("area_key")
+                ),
+                status=400,
+            )
+
     args.update(kwargs)
     # Note: all arguments to the delegate functions are necessarily strings
     # at this point, since they're all coming through the URL query

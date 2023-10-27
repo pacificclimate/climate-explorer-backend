@@ -9,7 +9,7 @@ from modelmeta import DataFile
 from ce.api.util import get_array, get_units_from_netcdf_file, open_nc
 
 
-def timeseries(sesh, id_, area, variable):
+def timeseries(sesh, id_, variable, area=None):
     """Delegate for performing data lookups within a single file
 
     Opens the data file specified by the id_ parameter and returns the
