@@ -140,7 +140,7 @@ def test_dates_are_formatted(test_client, populateddb):
     ("endpoint", "missing_params"),
     [
         ("/api/metadata", ["model_id"]),
-        ("/api/data", ("model", "emission", "time", "area", "variable")),
+        ("/api/data", ("model", "emission", "time", "variable")),
     ],
 )
 def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
