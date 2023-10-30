@@ -31,7 +31,7 @@ def test_stats(
     populateddb, polygon, mock_thredds_url_root, unique_id, var_name, is_thredds
 ):
     sesh = populateddb.session
-    rv = stats(sesh, unique_id, None, polygon, var_name, is_thredds)
+    rv = stats(sesh, unique_id, None, var_name, polygon, is_thredds)
     statistics = rv[unique_id]
     for attr in ("min", "max", "mean", "median", "stdev"):
         value = statistics[attr]
@@ -59,7 +59,7 @@ def test_stats(
 def test_stats_bad_params(populateddb, unique_id, var):
     sesh = populateddb.session
 
-    rv = stats(sesh, unique_id, None, None, var)
+    rv = stats(sesh, unique_id, None, var, None)
     assert math.isnan(rv[unique_id]["max"])
     assert "time" not in rv[unique_id]
     assert "units" not in rv[unique_id]

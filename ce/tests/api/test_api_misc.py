@@ -180,3 +180,21 @@ def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
 )
 def test_find_modtime(obj, expected):
     assert find_modtime(obj) == expected
+
+
+def test_area_payload(test_client, populateddb):
+    unique_id = "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
+    var = "tasmax"
+    polygon = """POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))"""
+    url = "/api/timeseries"
+
+    params_plain = {"id_": unique_id, "variable": var}
+    params_area = {"id_": unique_id, "variable": var, "area": polygon}
+    params_key = {"id_": unique_id, "variable": var, "area_key": "abcdef"}
+
+    no_area =  test_client.get(url, query_string=params_plain)
+    param_area = test_client.get(url, query_string=params_area)
+    payload_area = test_client.get(url, query_string=params_key, data=polygon)
+
+    assert param_area.data == payload_area.data
+    assert param_area.data != no_area.data

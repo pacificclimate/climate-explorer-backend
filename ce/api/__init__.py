@@ -104,8 +104,6 @@ def call(session, request_type, item=None):
         and "area" not in kwargs
     ):
         if request.data:
-            print("area_key detected")
-            print("data is {}".format(request.data.decode("utf-8")))
             kwargs["area"] = request.data.decode("utf-8")
         else:
             return Response(
