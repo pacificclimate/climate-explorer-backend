@@ -1,5 +1,5 @@
 from datetime import datetime
-from json import loads
+from json import loads, dumps
 from dateutil.parser import parse
 import re
 import pytest
@@ -187,14 +187,33 @@ def test_area_payload(test_client, populateddb):
     var = "tasmax"
     polygon = """POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))"""
     url = "/api/timeseries"
+    hash= "08b95f67927114fcb45ddf1dae47c2f47114da11"
 
     params_plain = {"id_": unique_id, "variable": var}
     params_area = {"id_": unique_id, "variable": var, "area": polygon}
-    params_key = {"id_": unique_id, "variable": var, "area_key": "abcdef"}
+    params_key = {"id_": unique_id, "variable": var, "area_hash": hash}
+    data = dumps({"area": polygon})
 
     no_area =  test_client.get(url, query_string=params_plain)
     param_area = test_client.get(url, query_string=params_area)
-    payload_area = test_client.get(url, query_string=params_key, data=polygon)
+    payload_area = test_client.get(url, query_string=params_key, data=data)
 
     assert param_area.data == payload_area.data
     assert param_area.data != no_area.data
+    
+def test_area_hash(test_client, populateddb):
+    params = {
+        "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+        "variable": "tasmax"
+        }
+        
+    data = dumps({ "area": """POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))"""})
+    url = "/api/timeseries"
+    
+    params["area_hash"] = '08b95f67927114fcb45ddf1dae47c2f47114da11'
+    correct_hash = test_client.get(url, query_string=params, data=data)
+    assert correct_hash.status_code == 200
+    
+    params["area_hash"] = 'banana'
+    wrong_hash = test_client.get(url, query_string=params, data=data)
+    assert wrong_hash.status_code == 400

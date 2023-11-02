@@ -7,8 +7,9 @@
 
 import inspect
 from datetime import datetime
+import hashlib
 
-from json import dumps
+from json import dumps, loads
 from werkzeug.wrappers import Response
 from flask import request
 
@@ -99,16 +100,29 @@ def call(session, request_type, item=None):
     # and send the polygon in the request body. Add this polygon to the
     # arguments if applicable.
     if (
-        "area_key" in request.args.keys()
-        and "area" in optional_params
-        and "area" not in kwargs
+        "area_hash" in request.args.keys() # user sent area_hash
+        and "area" in optional_params # API accepts areas
+        and "area" not in kwargs #user hasn't sent an area
     ):
-        if request.data:
-            kwargs["area"] = request.data.decode("utf-8")
+        if request.data and "area" in loads(request.data.decode("utf-8")):
+            req_area = loads(request.data.decode("utf-8"))["area"]
+            expected_hash = hashlib.sha1(req_area.encode()).hexdigest()
+            
+            if expected_hash == request.args.get("area_hash"):
+                kwargs["area"] = req_area
+            else:
+                return Response(
+                    "Area_hash {} does not match payload area. Please use an sha1 hash".format(
+                        request.args.get("area_hash")
+                    ),
+                 status=400,
+                )
+
+            
         else:
             return Response(
-                "Missing area payload for area_key {}".format(
-                    request.args.get("area_key")
+                "Missing area payload for area_hash {}".format(
+                    request.args.get("area_hash")
                 ),
                 status=400,
             )

@@ -14,6 +14,8 @@ The API function return values are converted to JSON for the endpoint response.
 
 ## Querying Complex Polygons
 
-Several APIs accept an `area` parameter, which is a WKT string describing a polygon representing the spatial extent of desired data. WKT strings that including many vetices and would result in a URL longer than the standard 4096 bytes may be queried by sending the string in the payload of a `GET` request and including a unique `area_key` parameter in the URL.
+Several APIs accept an `area` parameter, which is a WKT string describing a polygon representing the spatial extent of desired data. If the WKT string includes so many vertices that the resulting URL exceeds the standard 4096 bytes, it can instead be sent in the payload of the GET request along with the sha1 hash of the WKT string as the `area_hash` parameter. Providing the hash ensures response caching works correctly.
+
+WKT strings that including many vetices and would result in a URL longer than the standard 4096 bytes may be queried by sending the string in the payload of a `GET` request and including a unique `area_key` parameter in the URL.
 
 It is best to simplify request polygons to the extent possible. The server may time out if asked to return data from a polygon of more than a hundred vertices.
