@@ -50,22 +50,22 @@ __all__ = list(methods.keys()) + ["call"]
 
 def call(session, request_type, item=None):
     """Extracts request query parameters, checks for required arguments
-       and delegates to helper functions to fetch the results from
-       storage
+    and delegates to helper functions to fetch the results from
+    storage
 
-       Args:
-          session (sqlalchemy.orm.session.Session): A database Session object
-          request_type(str): name of the API endpoint to call
-          item(str): name of an individual item for a REST API
+    Args:
+       session (sqlalchemy.orm.session.Session): A database Session object
+       request_type(str): name of the API endpoint to call
+       item(str): name of an individual item for a REST API
 
-       Returns:
-          werkzeug.wrappers.Response.  A JSON encoded response object
+    Returns:
+       werkzeug.wrappers.Response.  A JSON encoded response object
     """
 
     try:
         func = methods[request_type]
     except KeyError:
-        return Response("Bad Request", status=400)
+        return Response("Invalid API Endpoint", status=400)
 
     # Check that required args are included in the query params, excluding the
     # REST item, if there is one
@@ -73,8 +73,23 @@ def call(session, request_type, item=None):
         required_params = set(get_required_args(func)).difference(["sesh", "item"])
     else:
         required_params = set(get_required_args(func)).difference(["sesh"])
-    provided_params = set(request.args.keys())
+
     optional_params = set(get_keyword_args(func))
+
+    # Clients may submit parameters either encoded in the URL string
+    # for GET methods, or in the body of a POST request.
+    # Clients should use GET when possible, to take
+    # advantage of caching, and produce links that can be shared.
+    # However, in some cases, the 'area' parameter, which is a WKT
+    # string describing the polygon the client requests data describing,
+    # is too long to fit in the unofficial standard URL length of
+    # 4096 characters. Clients may send a POST request in this case.
+
+    # flask.request's "values" attribute contains dictionaries of
+    # both URL and body parameters; we can use it to build the list
+    # of function arguments whether the request is a POST or GET.
+
+    provided_params = set(request.values.keys())
     missing = required_params.difference(provided_params)
     if missing:
         return Response(
@@ -85,12 +100,13 @@ def call(session, request_type, item=None):
         )
 
     # FIXME: Sanitize input
-    args = {key: request.args.get(key) for key in required_params}
+    args = {key: request.values.get(key) for key in required_params}
     kwargs = {
-        key: request.args.get(key)
+        key: request.values.get(key)
         for key in optional_params
-        if request.args.get(key) is not None
+        if request.values.get(key) is not None
     }
+
     args.update(kwargs)
     # Note: all arguments to the delegate functions are necessarily strings
     # at this point, since they're all coming through the URL query
