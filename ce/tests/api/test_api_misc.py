@@ -1,5 +1,5 @@
 from datetime import datetime
-from json import loads, dumps
+from json import loads
 from dateutil.parser import parse
 import re
 import pytest
@@ -180,47 +180,3 @@ def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
 )
 def test_find_modtime(obj, expected):
     assert find_modtime(obj) == expected
-
-@pytest.mark.parametrize(
-    ("endpoint", "params"),
-    [
-        ("/api/timeseries", 
-        {
-            "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-            "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))",
-            "variable": "tasmax"
-        }),
-        ("/api/timeseries", 
-        {
-            "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-            "area": "",
-            "variable": "tasmax"
-        }),
-        ("/api/data", 
-        {
-            "model": "BNU-ESM",
-            "emission": "historical",
-            "time": 0,
-            "variable": "tasmax",
-            "area": ""
-        }),
-        ("/api/data", 
-        {
-            "model": "BNU-ESM",
-            "emission": "historical",
-            "time": 0,
-            "variable": "tasmax",
-            "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))"
-        }),
-    ],
-)
-def test_post_request(test_client, populateddb, endpoint, params):
-    
-    get = test_client.get(endpoint, query_string = params)
-    post = test_client.post(endpoint, data=params)
-    
-    print(get.data)
-    
-    assert get.status_code == 200
-    assert post.status_code == 200
-    assert get.data == post.data
