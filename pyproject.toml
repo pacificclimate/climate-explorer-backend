@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "ce"
+version = "3.6.1"
+description = "PCIC's Climate Explorer (CE)"
+authors = ["James Hiebert <hiebert@uvic.ca>"]
+license = "GPL3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4"
+Flask = "<3.0.0"
+Flask-SQLAlchemy = "<3.0.0" # minimum supported version of SQLAlchemy is 1.4.18
+Flask-Cors = "*"
+shapely = ">1.6"
+numpy = "~=1.20"
+GDAL = ">=3.3.0,<3.4"
+rasterio = "~=1.3"
+SQLAlchemy = "==1.3.17"
+contexttimer = "^0.3.3"
+Pint = "^0.16"
+gunicorn = "^20.1.0"
+nchelpers = {version = "^5.5.11", source = "pcic"}
+modelmeta = {version = "^1.0.1", source = "pcic"}
+cf-cell-methods = {version = "^0.1.0", source = "pcic"}
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=3.0.0"
+python-dateutil = "^2.8.2"
+black = "^23.11.0"
+pre-commit = "^3.5.0"
+
+
+[[tool.poetry.source]]
+name = "pcic"
+url = "https://pypi.pacificclimate.org/simple"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
