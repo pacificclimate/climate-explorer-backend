@@ -128,7 +128,7 @@ def test_dates_are_formatted(test_client, populateddb):
     }
     response = test_client.get(url, query_string=query_params)
     assert response.status_code == 200
-    content = loads(response.data.decode(response.charset))
+    content = response.json
 
     one_date = parse(content[query_params["model_id"]]["times"]["0"])
     assert isinstance(one_date, datetime)
@@ -146,7 +146,7 @@ def test_dates_are_formatted(test_client, populateddb):
 def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
     response = test_client.get(endpoint)
     assert response.status_code == 400
-    content = response.data.decode(response.charset)
+    content = response.text
     assert re.search("Missing query params?:", content)
     for param in missing_params:
         assert param in content
