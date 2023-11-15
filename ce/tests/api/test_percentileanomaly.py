@@ -253,13 +253,13 @@ def test_percentile_baselines(populateddb, bmodel, bclimatology):
 
 def test_missing_models(populateddb):
     sesh = populateddb.session
-    with pytest.raises(werkzeug.exceptions.InternalServerError):
+    with pytest.raises(werkzeug.exceptions.NotFound):
         percentileanomaly(sesh, "missing_data", default_climatology, default_variable)
 
 
 def test_extra_models(populateddb):
     sesh = populateddb.session
-    with pytest.raises(werkzeug.exceptions.InternalServerError):
+    with pytest.raises(werkzeug.exceptions.NotFound):
         percentileanomaly(sesh, "extra_data", default_climatology, default_variable)
 
 
