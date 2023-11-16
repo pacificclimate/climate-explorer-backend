@@ -32,4 +32,4 @@ jobs:
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
-        poetry run py.test -m "not online and not slow" -v
+        poetry run py.test -m "not online and not slow and not external_data" -v
