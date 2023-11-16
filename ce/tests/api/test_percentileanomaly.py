@@ -192,6 +192,7 @@ default_response = {
 }
 
 
+@pytest.mark.external_data
 @pytest.mark.parametrize("region, exists", [("bc", True), ("fake_region", False)])
 def test_percentile_anomaly_regions(populateddb, region, exists):
     sesh = populateddb.session
@@ -204,6 +205,7 @@ def test_percentile_anomaly_regions(populateddb, region, exists):
             )
 
 
+@pytest.mark.external_data
 @pytest.mark.parametrize("bmodel", ["anusplin", "fake_model", ""])
 @pytest.mark.parametrize("bclimatology", ["6190", "3000", ""])
 def test_percentile_baselines(populateddb, bmodel, bclimatology):
@@ -251,18 +253,21 @@ def test_percentile_baselines(populateddb, bmodel, bclimatology):
         )
 
 
+@pytest.mark.external_data
 def test_missing_models(populateddb):
     sesh = populateddb.session
     with pytest.raises(werkzeug.exceptions.NotFound):
         percentileanomaly(sesh, "missing_data", default_climatology, default_variable)
 
 
+@pytest.mark.external_data
 def test_extra_models(populateddb):
     sesh = populateddb.session
     with pytest.raises(werkzeug.exceptions.NotFound):
         percentileanomaly(sesh, "extra_data", default_climatology, default_variable)
 
 
+@pytest.mark.external_data
 @pytest.mark.parametrize("num_percentiles", [1, 2, 4, 5, 10])
 def test_percentile_calculation(populateddb, num_percentiles):
     sesh = populateddb.session

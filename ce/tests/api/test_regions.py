@@ -5,7 +5,9 @@ from datetime import datetime
 import os
 import flask
 
+import pytest
 
+@pytest.mark.external_data
 def test_stored_data(populateddb):
     app = flask.Flask(__name__)
     sesh = populateddb.session
