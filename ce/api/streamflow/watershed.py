@@ -19,7 +19,6 @@ from contexttimer import Timer
 
 from flask import abort
 from shapely.geometry import Point
-from shapely.errors import WKTReadingError
 from pint import UnitRegistry
 
 from ce.api.geospatial import geojson_feature, outline_cell_rect

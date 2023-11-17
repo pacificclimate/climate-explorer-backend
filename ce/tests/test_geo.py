@@ -10,7 +10,7 @@ from ce.api.geo import (
     rasterio_thredds_helper,
 )
 from shapely.wkt import loads
-from shapely.errors import ReadingError
+from shapely.errors import ShapelyError
 from collections import OrderedDict
 import rasterio
 
@@ -107,7 +107,7 @@ def test_clip_speed(ncobject, polygon):
     ncobject, fname = ncobject
     try:
         poly = loads(polygon)
-    except ReadingError:
+    except ShapelyError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
     polygon_to_masked_array(ncobject, fname, poly, "tasmax")
@@ -120,7 +120,7 @@ def test_make_mask_grid_key(ncobject, polygon):
     ncobject, fname = ncobject
     try:
         poly = loads(polygon)
-    except ReadingError:
+    except ShapelyError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
 
     result = make_mask_grid_key(ncobject, fname, poly, None)
