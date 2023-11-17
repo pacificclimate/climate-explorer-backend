@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 from sqlalchemy import distinct
-from shapely.errors import WKTReadingError
+from shapely.errors import ShapelyError
 
 from flask import abort
 from ce.api.geospatial import WKT_point_to_lonlat, GeospatialTypeError
@@ -21,7 +21,7 @@ from modelmeta import (
 def setup(station):
     try:
         station_lonlat = WKT_point_to_lonlat(station)
-    except WKTReadingError:
+    except ShapelyError:
         abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
         return
     except GeospatialTypeError as e:
