@@ -1,15 +1,15 @@
-# Image with gdal 3.2.0
-FROM pcic/geospatial-python:3.2.0
+# Image with gdal 3.3.0
+FROM pcic/geospatial-python:3.3.0
 
 RUN apk add postgresql-dev libxml2-dev libxslt-dev geos-dev
-# Fix https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-10878
-RUN apk upgrade perl
-RUN pip install shapely
+
 ADD . /app
 WORKDIR /app
 
-RUN pip3 install pipenv==2022.3.28 --ignore-installed && \
-    pipenv install
+RUN apk add libffi-dev
+RUN wget -O - https://install.python-poetry.org | python3 -
+ENV PATH=/root/.local/bin:$PATH
+RUN poetry install
 
 EXPOSE 8000
 
@@ -20,4 +20,4 @@ EXPOSE 8000
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
 
-ENTRYPOINT ["pipenv", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
+ENTRYPOINT ["poetry", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
