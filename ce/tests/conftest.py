@@ -3,7 +3,9 @@ import os
 import py.path
 import tempfile
 from datetime import datetime
-from pkg_resources import resource_filename
+from importlib import resources
+from contextlib import ExitStack
+import atexit
 
 from dateutil.relativedelta import relativedelta
 import pytest
@@ -69,12 +71,10 @@ def cleandb(app,):
 
 @pytest.fixture(scope="function")
 def netcdf_file():
-    fname = resource_filename(
-        "ce",
-        "tests/data/" "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-    )
-    with Dataset(fname) as nc:
-        yield nc, fname
+    ref = resources.files("ce") / "tests/data/" "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc"
+    with resources.as_file(ref) as path:
+        with Dataset(path) as nc:
+            yield nc, str(path)
 
 
 # @pytest.fixture(scope='function')
@@ -84,15 +84,14 @@ def netcdf_file():
 
 @pytest.fixture(
     params=(
-        resource_filename(
-            "ce",
-            "tests/data/" "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-        ),
-        resource_filename("ce", "tests/data/anuspline_na.nc",),
+        "tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
+        "tests/data/anuspline_na.nc",
     )
 )
 def ncfile(request,):
-    return request.param
+    ref = resources.files("ce") / request.param
+    with resources.as_file(ref) as path:
+        yield str(path)
 
 
 @pytest.fixture(scope="function")
@@ -168,7 +167,7 @@ def populateddb(cleandb,):
         if not filename:
             filename = "{}.nc".format(unique_id)
         if not filename.startswith("/"):
-            filename = resource_filename("ce", "tests/data/{}".format(filename),)
+            filename = file_path_to_be_cleaned("tests/data/{}".format(filename))
         return DataFile(
             filename=filename,
             unique_id=unique_id,
@@ -472,6 +471,13 @@ def db(app,):
     return SQLAlchemy(app)
 
 
+def file_path_to_be_cleaned(filename):
+    file_manager = ExitStack()
+    atexit.register(file_manager.close)
+    ref = resources.files("ce") / filename
+    return str(file_manager.enter_context(resources.as_file(ref)))
+
+
 @pytest.fixture
 def multitime_db(cleandb,):
     """A fixture which represents multiple runs where there exist
@@ -509,8 +515,7 @@ def multitime_db(cleandb,):
     # Create three files for each run
     files = [
         DataFile(
-            filename=resource_filename(
-                "ce",
+            filename=file_path_to_be_cleaned(
                 "tests/data/"
                 "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
             ),
@@ -565,8 +570,7 @@ def multitime_db(cleandb,):
     # Create file with different units
     files.append(
         DataFile(
-            filename=resource_filename(
-                "ce",
+            filename=file_path_to_be_cleaned(
                 "tests/data/"
                 "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
             ),
