@@ -45,5 +45,4 @@ markers = [
     "online: marks tests that use an online resource (deselect with '-m \"not online\"')",
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
-env = {REGION_DATA_DIRECTORY = "ce/tests/data/regions"}
 norecursedirs = ".git site-packages _build *.egg ce/tests/helpers"

@@ -31,6 +31,11 @@ from ce import get_app
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers",))
 
 
+@pytest.fixture(scope="session", autouse=True)
+def set_env():
+    os.environ["REGION_DATA_DIRECTORY"] = "ce/tests/data/regions"
+
+
 # From http://stackoverflow.com/q/25525202/
 # FIXME: Why is this fixture scoped 'function', not 'session'?
 @pytest.fixture(scope="function")
