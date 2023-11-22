@@ -2,7 +2,18 @@
 name = "ce"
 version = "3.6.1"
 description = "PCIC's Climate Explorer (CE)"
-authors = ["James Hiebert <hiebert@uvic.ca>"]
+authors = [
+   "Rod Glover <rglover@uvic.ca>",
+   "James Hiebert <hiebert@uvic.ca>",
+   "Nik Rados",
+   "Lee Zeman <lzeman@uvic.ca>",
+   "Jonathan Helfrich",
+   "Ada Sungar",
+   "Cairo Sanders",
+   "Quintin Sparks <quintins@uvic.ca>",
+   "Basil Veerman",
+   "Eric Yvorchuk <eyvorchuk@uvic.ca"
+]
 license = "GPL3"
 readme = "README.md"
 
