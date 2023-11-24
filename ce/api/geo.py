@@ -16,7 +16,8 @@ import os
 
 # From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
-from collections import Set, Mapping, deque
+from collections.abc import Set, Mapping
+from collections import deque
 
 from tempfile import NamedTemporaryFile
 
