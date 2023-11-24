@@ -54,19 +54,21 @@ def dsn(sessiondir,):
 
 @pytest.fixture
 def app(dsn,):
-    app = get_app()
-    app.config["TESTING"] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = dsn
-    app.config["SQLALCHEMY_ECHO"] = False
+    app = get_app({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": dsn,
+        "SQLALCHEMY_ECHO": False
+    })
     return app
 
 
 @pytest.fixture
 def cleandb(app,):
-    db = SQLAlchemy(app)
-    metadata.create_all(bind=db.engine)
-    db.create_all()
-    return db
+    with app.app_context():
+        db = app.extensions['sqlalchemy']
+        metadata.create_all(bind=db.engine)
+        db.create_all()
+        yield db
 
 
 @pytest.fixture(scope="function")
@@ -458,7 +460,7 @@ def populateddb(cleandb,):
     sesh.add_all(sesh.dirty)
 
     sesh.commit()
-    return populateable_db
+    yield populateable_db
 
 
 @pytest.fixture
