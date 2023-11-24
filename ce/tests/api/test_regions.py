@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import flask
 
+import pytest
 
 def test_stored_data(populateddb):
     app = flask.Flask(__name__)
@@ -17,6 +18,7 @@ def test_stored_data(populateddb):
     current_id = "pr_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
     outdated_id = "tasmin_aClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
     region_dir = os.getenv("REGION_DATA_DIRECTORY").rstrip("/")
+    # FIXME: Use TMPDIR for this!
     with open("{}/test_region.csv".format(region_dir), "w") as outfile:
         outcsv = DictWriter(outfile, fieldnames=["unique_id", "modtime"])
         outcsv.writeheader()

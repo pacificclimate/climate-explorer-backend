@@ -5,29 +5,31 @@ on: push
 jobs:
   test:
 
-    runs-on: ubuntu-20.04
-    container: pcic/geospatial-python:3.2.0
+    runs-on: ubuntu-22.04
+    container: pcic/geospatial-python:3.3.0
 
     steps:
     - uses: actions/checkout@v2
     - name: Install system dependencies
       run: |
         apk upgrade
-        apk add libxml2-dev libxslt-dev
-        pip install -U pip 
-        pip install pipenv==2022.3.28 --ignore-installed
+        apk add libxml2-dev libxslt-dev libffi-dev
 
-    - name: Install python dependencies 
+    - name: Install poetry
       run: |
-        pipenv install --deploy --dev
-        pipenv run pip install .
-    
+        wget -O - https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+    - name: Install python dependencies
+      run: |
+        poetry install --with=dev
+
     - name: Test with pytest (full)
       if: github.ref == 'refs/heads/master'
       run: |
-        pipenv run py.test -m "not online" -v
+        poetry run py.test -m "not online" -v
     
     - name: Test with pytest (fast)
       if: github.ref != 'refs/heads/master'
       run: |
-        pipenv run py.test -m "not online and not slow" -v
+        poetry run py.test -m "not online and not slow" -v

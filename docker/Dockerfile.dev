@@ -1,18 +1,20 @@
-FROM pcic/geospatial-python
+FROM pcic/geospatial-python:3.3.0
 
 RUN mkdir /app
-ADD requirements.txt /app
+ADD poetry.lock /app
+ADD pyproject.toml /app
 WORKDIR /app
-RUN pip3 install -U pip pipenv --ignore-installed
-RUN pipenv install
+
+RUN apk add libffi-dev
+RUN wget -O - https://install.python-poetry.org | python3 -
+ENV PATH=/root/.local/bin:$PATH
+RUN poetry install --with=dev
 
 ADD . /app/
-
-RUN pipenv run ./setup.py install
 
 EXPOSE 8000
 ENV FLASK_APP ce.wsgi:app
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-CMD pipenv run flask run -p 8000 -h 0.0.0.0 --no-reload
+CMD poetry run flask run -p 8000 -h 0.0.0.0 --no-reload
