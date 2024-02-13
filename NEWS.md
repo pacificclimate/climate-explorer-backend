@@ -1,5 +1,12 @@
 # News / Release Notes
 
+## 3.6.2
+**2024-Feb-13**
+
+- Updates the structure of sqlalchemy joins. [#226](https://github.com/pacificclimate/climate-explorer-backend/pull/226)
+
+- Accept POST requests to handle very long area strings [#229](https://github.com/pacificclimate/climate-explorer-backend/pull/229) 
+
 ## 3.6.1
 **2023-Feb-03**
 
