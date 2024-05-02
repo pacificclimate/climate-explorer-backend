@@ -1,8 +1,8 @@
 FROM pcic/geospatial-python:3.3.0
 
 RUN mkdir /app
-ADD poetry.lock /app
-ADD pyproject.toml /app
+COPY poetry.lock /app
+COPY pyproject.toml /app
 WORKDIR /app
 
 RUN apk add libffi-dev
@@ -10,14 +10,14 @@ RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
 RUN poetry install --with=dev
 
-ADD . /app/
+COPY . /app/
 
 EXPOSE 8000
 ENV FLASK_APP ce.wsgi:app
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-ADD docker/secrets.sh /app/secrets.sh
-ADD docker/entrypoint-dev.sh /app/entrypoint.sh
+COPY --chmod=755 docker/secrets.sh /app/secrets.sh
+COPY --chmod=755 docker/entrypoint-dev.sh /app/entrypoint.sh
 
-ENTRYPOINT ["./secrets.sh", "./entrypoint.sh"]
+ENTRYPOINT ["/app/secrets.sh", "/app/entrypoint.sh"]
