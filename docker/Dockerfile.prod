@@ -6,7 +6,7 @@ RUN apk add postgresql-dev libxml2-dev libxslt-dev geos-dev
 COPY . /app
 WORKDIR /app
 
-RUN apk add libffi-dev
+RUN apk add libffi-dev bash
 RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
 RUN poetry install
