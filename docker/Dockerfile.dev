@@ -17,4 +17,7 @@ ENV FLASK_APP ce.wsgi:app
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-CMD poetry run flask run -p 8000 -h 0.0.0.0 --no-reload
+ADD docker/secrets.sh /app/secrets.sh
+ADD docker/entrypoint-dev.sh /app/entrypoint.sh
+
+ENTRYPOINT ["./secrets.sh", "./entrypoint.sh"]

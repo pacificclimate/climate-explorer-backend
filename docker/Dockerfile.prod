@@ -20,4 +20,7 @@ EXPOSE 8000
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
 
-ENTRYPOINT ["poetry", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
+ADD docker/secrets.sh /app/secrets.sh
+ADD docker/entrypoint-dev.sh /app/entrypoint.sh
+
+ENTRYPOINT ["./secrets.sh", "./entrypoint.sh"]
