@@ -22,3 +22,6 @@ file_env() {
 
 # Load these secrets into the env from potential docker _FILE env vars
 file_env "MDDB_DSN"
+
+# run subsequent commands
+exec "$@"

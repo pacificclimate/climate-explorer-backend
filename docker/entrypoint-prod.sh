@@ -1,3 +1,4 @@
+#!/bin/bash
 # gunicorn.conf is set up so that one can tune gunicorn settings when
 # running the container by setting environment an variable
 # GUNICORN_[setting], where setting is any of the parameters in this
