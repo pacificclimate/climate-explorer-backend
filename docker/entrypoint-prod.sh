@@ -6,4 +6,6 @@
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
 
+echo $MDDB_DSN
+
 poetry run gunicorn --config docker/gunicorn.conf --log-config docker/logging.conf -b :8000 ce.wsgi:app
