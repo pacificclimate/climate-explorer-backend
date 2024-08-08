@@ -1,5 +1,10 @@
 # News / Release Notes
 
+## 3.6.3
+**2024-Aug-07**
+
+- Fixes a transient build error (no PR). 
+
 ## 3.6.2
 **2024-Feb-13**
 
