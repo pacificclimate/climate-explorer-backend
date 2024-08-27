@@ -3,7 +3,9 @@ FROM pcic/geospatial-python:3.3.0
 
 RUN apk update
 RUN echo "adding postgresql"
-RUN apk add postgresql
+RUN apk info postgresql
+RUN apk list | grep postgresql
+RUN apk add postgresql@12+214
 
 RUN apk add postgresql-dev libxml2-dev libxslt-dev geos-dev
 
