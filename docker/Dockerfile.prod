@@ -9,7 +9,8 @@ WORKDIR /app
 RUN apk add libffi-dev
 RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
-RUN poetry install
+#RUN poetry install
+RUN pip install -r requirements.txt
 
 EXPOSE 8000
 
