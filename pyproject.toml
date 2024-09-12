@@ -34,6 +34,7 @@ nchelpers = {version = "^5.5.11", source = "pcic"}
 modelmeta = {version = "^1.0.1", source = "pcic"}
 cf-cell-methods = {version = "^0.1.0", source = "pcic"}
 requests = "^2.31.0"
+netcdf4 = "1.6.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=3.0.0"
