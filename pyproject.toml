@@ -30,7 +30,7 @@ SQLAlchemy = "==1.3.17"
 contexttimer = "^0.3.3"
 Pint = "^0.16"
 gunicorn = "^20.1.0"
-nchelpers = {version = "^5.5.11", source = "pcic"}
+nchelpers = {git = "https://github.com/pacificclimate/nchelpers.git", rev = "pin-netcdf4"}
 modelmeta = {version = "^1.0.1", source = "pcic"}
 cf-cell-methods = {version = "^0.1.0", source = "pcic"}
 requests = "^2.31.0"
