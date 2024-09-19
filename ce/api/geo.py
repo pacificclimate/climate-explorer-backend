@@ -1,6 +1,6 @@
 import logging
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from threading import RLock
 from contextlib import ContextDecorator, contextmanager
 import shutil
@@ -16,7 +16,7 @@ import os
 
 # From http://stackoverflow.com/a/30316760/597593
 from numbers import Number
-from collections import Set, Mapping, deque
+from collections.abc import Set, Mapping
 
 from tempfile import NamedTemporaryFile
 

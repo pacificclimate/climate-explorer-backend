@@ -1,11 +1,11 @@
-FROM pcic/geospatial-python:3.3.0
+FROM pcic/geospatial-python:python-310
 
 RUN mkdir /app
 ADD poetry.lock /app
 ADD pyproject.toml /app
 WORKDIR /app
 
-RUN apk add libffi-dev
+RUN apt-get install libffi-dev
 RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
 RUN poetry install --with=dev
