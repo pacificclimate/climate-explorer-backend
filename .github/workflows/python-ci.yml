@@ -6,17 +6,14 @@ jobs:
   test:
 
     runs-on: ubuntu-22.04
-    container: pcic/geospatial-python:python-310
+    container: pcic/geospatial-python:3.4.0
 
     steps:
     - uses: actions/checkout@v2
     - name: Install system dependencies
       run: |
-        apt-get update
-        apt-get install -yq libxml2-dev
-        apt-get install -yq libxslt-dev
-        apt-get install -yq libffi-dev
-        apt-get install -yq wget
+        apt-get update 
+        apt-get install -yq libxml2-dev libxslt-dev libffi-dev wget
 
     - name: Install poetry
       run: |

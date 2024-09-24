@@ -1,19 +1,16 @@
 # Image with gdal 3.3.0
-FROM pcic/geospatial-python:python-310
+FROM pcic/geospatial-python:3.4.0
 
-RUN apt-get update
-# RUN apt list --installed
-# RUN apt-get install postgresql-dev
-RUN apt-get install libpq-dev
-RUN apt-get install libxml2-dev
-# RUN apt-get install libxslt-dev
-RUN apt-get install libgeos-dev
-RUN apt-get install wget
+RUN apt-get update && \
+    apt-get install libpq-dev \
+    libxml2-dev \
+    libgeos-dev \
+    libffi-dev \
+    wget
 
 ADD . /app
 WORKDIR /app
 
-RUN apt-get install libffi-dev
 RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
 RUN poetry install
