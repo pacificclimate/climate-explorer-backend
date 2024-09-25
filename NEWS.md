@@ -1,5 +1,10 @@
 # News / Release Notes
 
+## 3.6.4
+**2024-Sep-24**
+
+- Updated to python 3.10 [#247](https://github.com/pacificclimate/climate-explorer-backend/pull/247)
+
 ## 3.6.3
 **2024-Aug-07**
 
