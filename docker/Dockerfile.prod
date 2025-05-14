@@ -1,5 +1,5 @@
-# Image with gdal 3.3.0
-FROM pcic/geospatial-python:3.4.0
+# Image with ubuntu 24.04, python 3.12, gdal 3.8.4
+FROM pcic/geospatial-python:py-sprint-25q1
 
 RUN apt-get update && \
     apt-get install -yq libpq-dev \
