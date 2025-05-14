@@ -59,7 +59,7 @@ $ export C_INCLUDE_PATH=/usr/include/gdal
 If you plan to use a `THREDDS` server to provide the data you must set the root
 of the url in an environment variable.
 ```
-export THREDDS_URL_ROOT=https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets
+export THREDDS_URL_ROOT=https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/catalog/datasets/
 ```
 
 ## Development
