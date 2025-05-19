@@ -6,7 +6,7 @@ jobs:
   test:
 
     runs-on: ubuntu-24.04
-    container: pcic/geospatial-python:3.4.0
+    container: pcic/geospatial-python:py-sprint-25q1
 
     steps:
     - uses: actions/checkout@v2
