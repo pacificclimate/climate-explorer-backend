@@ -96,11 +96,11 @@ def test_cache_delete():
         cached_fibonacci(n)
         assert (f.get_size() / mb_conversion) <= cache_size_mb
         if previous_cache >= f.get_size():
-            return True
+            return None
         previous_cache = f.get_size()
 
     # make sure cache has stayed the same size or shrunk at least once.
-    assert 0
+    assert 0, "Items were supposed to have been deleted from the cache, but none were"
 
 
 def test_clip_speed(ncobject, polygon):
