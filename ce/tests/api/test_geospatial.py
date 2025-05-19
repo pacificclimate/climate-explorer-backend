@@ -1,5 +1,5 @@
 import pytest
-from shapely.errors import WKTReadingError
+from shapely.errors import ShapelyError
 from shapely.geometry import Polygon
 from ce.api.geospatial import (
     geojson_feature,
@@ -109,11 +109,11 @@ def test_outline(centres, height, width, expected):
 @pytest.mark.parametrize(
     "text, result",
     (
-        ("blerg", WKTReadingError),
-        ("POINT", WKTReadingError),
-        ("POINT(,)", WKTReadingError),
-        ("POINT(99,)", WKTReadingError),
-        ("POINT(,99)", WKTReadingError),
+        ("blerg", ShapelyError),
+        ("POINT", ShapelyError),
+        ("POINT(,)", ShapelyError),
+        ("POINT(99,)", ShapelyError),
+        ("POINT(,99)", ShapelyError),
         ("POLYGON ((0 2, 0 0, 1 1, 0 2))", GeospatialTypeError),
         ("POINT(1 -2)", (1, -2)),
     ),
