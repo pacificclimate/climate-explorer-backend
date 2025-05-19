@@ -2,7 +2,7 @@ import sys
 import os
 import py.path
 import tempfile
-from datetime import datetime
+from datetime import datetime, UTC
 from pkg_resources import resource_filename
 
 from dateutil.relativedelta import relativedelta
@@ -104,7 +104,7 @@ def ncobject(ncfile,):
 @pytest.fixture
 def populateddb(cleandb,):
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     populateable_db = cleandb
     sesh = populateable_db.session
@@ -487,7 +487,7 @@ def multitime_db(cleandb,):
     """
     dbcopy = cleandb
     sesh = dbcopy.session
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     ce_ens = Ensemble(name="ce", version=2.0, changes="", description="",)
     # Create diff ensemble to test unit consistency ensemble filter
