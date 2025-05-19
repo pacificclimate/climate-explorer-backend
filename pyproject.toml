@@ -28,7 +28,7 @@ GDAL = ">=3.3.0,<3.4"
 rasterio = "~=1.3"
 SQLAlchemy = "<2"
 contexttimer = "^0.3.3"
-Pint = "^0.16"
+Pint = "<1"
 gunicorn = "^20.1.0"
 nchelpers = {version = "^5.5.11", source = "pcic"}
 modelmeta = {version = "^1.0.1", source = "pcic"}
