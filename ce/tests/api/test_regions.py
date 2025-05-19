@@ -7,6 +7,7 @@ import flask
 
 import pytest
 
+
 def test_stored_data(populateddb_session):
     app = flask.Flask(__name__)
     sesh = populateddb_session
@@ -35,7 +36,6 @@ def test_stored_data(populateddb_session):
 
     # fake up the request url for RESTy URL munging
     with app.test_request_context("http://example.com/api/health/regions"):
-
         # test regions endpoint for status summary
         r = list(filter(lambda x: x["region"] == "test_region", regions(sesh)))
 

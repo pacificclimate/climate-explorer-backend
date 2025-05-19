@@ -30,7 +30,13 @@ from modelmeta.v2 import Run
         ("anuspline_na.nc", "tasmax"),
         ("CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc", "tasmax"),
     ),
-    ids=("bnu-tasmax", "bnu-tasmin", "prism_pr_small", "anuspline", "canesm",),
+    ids=(
+        "bnu-tasmax",
+        "bnu-tasmin",
+        "prism_pr_small",
+        "anuspline",
+        "canesm",
+    ),
     scope="function",
 )
 def ncfilevar(request):
@@ -425,10 +431,22 @@ def test_check_climatological_statistic_percentiles(
             False,
             "percentile[95.0]",
         ),
-        ("time: maximum time: mean over days", True, "mean",),
+        (
+            "time: maximum time: mean over days",
+            True,
+            "mean",
+        ),
         ("time: maximum time: mean over days", False, "mean"),
-        ("time: maximum time: mean over days models: mean", True, "mean",),
-        ("time: maximum time: mean over days models: mean", False, "mean",),
+        (
+            "time: maximum time: mean over days models: mean",
+            True,
+            "mean",
+        ),
+        (
+            "time: maximum time: mean over days models: mean",
+            False,
+            "mean",
+        ),
         (
             "time: minimum within days time: count within years where > 25 C",
             True,
@@ -439,10 +457,26 @@ def test_check_climatological_statistic_percentiles(
             False,
             False,
         ),
-        ("unspecified", True, "mean",),
-        ("unspecified", False, False,),
-        ("time: standard_deviation over days time: mean over days", True, "mean",),
-        ("time: standard_deviation over days time: mean over days", False, "mean",),
+        (
+            "unspecified",
+            True,
+            "mean",
+        ),
+        (
+            "unspecified",
+            False,
+            False,
+        ),
+        (
+            "time: standard_deviation over days time: mean over days",
+            True,
+            "mean",
+        ),
+        (
+            "time: standard_deviation over days time: mean over days",
+            False,
+            "mean",
+        ),
     ),
 )
 def test_get_climatological_statistic(cell_methods, default_to_mean, expected):

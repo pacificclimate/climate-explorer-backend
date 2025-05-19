@@ -24,7 +24,10 @@ def test_data_bad_time(populateddb_session):
 @pytest.mark.online
 @pytest.mark.parametrize(
     "variable,climatological_statistic",
-    (("tasmax", "standard_deviation"), ("tasmin", "mean"),),
+    (
+        ("tasmax", "standard_deviation"),
+        ("tasmin", "mean"),
+    ),
 )
 @pytest.mark.parametrize(
     "timescale, time_idx, expected_ymd",
