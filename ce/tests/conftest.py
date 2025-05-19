@@ -24,6 +24,8 @@ from modelmeta.v2 import (
     DataFileVariableGridded,
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from netCDF4 import Dataset
 
 from ce import get_app
@@ -66,11 +68,11 @@ def app(dsn,):
 
 
 @pytest.fixture
-def cleandb(app,):
-    db = SQLAlchemy(app)
-    metadata.create_all(bind=db.engine)
-    db.create_all()
-    return db
+def cleandb_session(app,):
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=app.config["SQLALCHEMY_ECHO"])
+    metadata.create_all(bind=engine)
+    with Session(engine) as session:
+        yield session
 
 
 @pytest.fixture(scope="function")
@@ -108,12 +110,11 @@ def ncobject(ncfile,):
 
 
 @pytest.fixture
-def populateddb(cleandb,):
+def populateddb_session(cleandb_session,):
 
     now = datetime.now(UTC)
 
-    populateable_db = cleandb
-    sesh = populateable_db.session
+    sesh = cleandb_session
 
     # Ensembles
 
@@ -465,7 +466,7 @@ def populateddb(cleandb,):
     sesh.add_all(sesh.dirty)
 
     sesh.commit()
-    return populateable_db
+    yield sesh
 
 
 @pytest.fixture
@@ -479,7 +480,7 @@ def db(app,):
 
 
 @pytest.fixture
-def multitime_db(cleandb,):
+def multitimedb_session(cleandb_session,):
     """A fixture which represents multiple runs where there exist
        multiple climatological time periods in each run
        This is realistic for a set of model output that we would be
@@ -491,8 +492,7 @@ def multitime_db(cleandb,):
        some particular multidecadal period (say, 1980s, 2010s, 2040s).
        Each of a run's 3 files, will point to a different timeset.
     """
-    dbcopy = cleandb
-    sesh = dbcopy.session
+    sesh = cleandb_session
     now = datetime.now(UTC)
 
     ce_ens = Ensemble(name="ce", version=2.0, changes="", description="",)
@@ -635,7 +635,7 @@ def multitime_db(cleandb,):
 
     sesh.commit()
 
-    return dbcopy
+    yield sesh
 
 
 polygons = {

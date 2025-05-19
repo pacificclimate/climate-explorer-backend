@@ -5,8 +5,8 @@ from ce.api import grid
 
 
 @pytest.mark.parametrize(("unique_id"), ("test_timeseries_speed",))
-def test_grid(populateddb, unique_id):
-    rv = grid(populateddb.session, unique_id)
+def test_grid(populateddb_session, unique_id):
+    rv = grid(populateddb_session, unique_id)
     for key in rv.keys():
         assert "latitudes" in rv[key]
         assert len(rv[key]["latitudes"]) > 0

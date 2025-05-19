@@ -12,8 +12,8 @@ from ce.api import metadata
     ),
 )
 @pytest.mark.parametrize("extras", (None, "", "filepath", "filepath,obviouslywrong"))
-def test_metadata(populateddb, unique_id, extras):
-    sesh = populateddb.session
+def test_metadata(populateddb_session, unique_id, extras):
+    sesh = populateddb_session
     rv = metadata(sesh, unique_id, extras=extras)
     assert unique_id in rv
     file_metadata = rv[unique_id]
@@ -55,12 +55,12 @@ def test_metadata(populateddb, unique_id, extras):
     assert isinstance(file_metadata["modtime"], datetime)
 
 
-def test_metadata_no_times(populateddb):
-    sesh = populateddb.session
+def test_metadata_no_times(populateddb_session):
+    sesh = populateddb_session
     rv = metadata(sesh, "file1")
     assert rv["file1"]["times"] == {}
 
 
-def test_metadata_empty(populateddb):
-    sesh = populateddb.session
+def test_metadata_empty(populateddb_session):
+    sesh = populateddb_session
     assert metadata(sesh, None) == {}

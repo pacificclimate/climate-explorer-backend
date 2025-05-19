@@ -7,9 +7,9 @@ import flask
 
 import pytest
 
-def test_stored_data(populateddb):
+def test_stored_data(populateddb_session):
     app = flask.Flask(__name__)
-    sesh = populateddb.session
+    sesh = populateddb_session
     mm = multimeta(sesh, "p2a_classic")
     # checking whether a file has been updated in the database is a little complicated,
     # because the database is rebuilt each time pytest is run. So we need to build the

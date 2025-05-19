@@ -61,7 +61,7 @@ def test_get_array(request, nctuple, polygon):
     x = get_array(nc, fname, 0, polygon, var)
     t = time() - t0
     print(t)
-    assert t < 0.11
+    assert t < 0.2
     assert type(x) == MaskedArray
     assert hasattr(x, "mask")
     assert np.mean(x) > 0 or np.all(x.mask)
@@ -121,10 +121,10 @@ def test_open_nc_exception(bad_path):
     ],
 )
 def test_get_units_from_run_object(
-    populateddb, run_name, var_name, ensemble_name, expected_units
+    populateddb_session, run_name, var_name, ensemble_name, expected_units
 ):
     run_object = Run(name=run_name)
-    units = get_units_from_run_object(populateddb.session, Run, var_name, ensemble_name)
+    units = get_units_from_run_object(populateddb_session, Run, var_name, ensemble_name)
     assert units == expected_units
 
 

@@ -107,7 +107,7 @@ from test_utils import check_dict_subset
         ("grid", {"id_": ""}, {},),
     ],
 )
-@pytest.mark.usefixtures("populateddb")
+@pytest.mark.usefixtures("populateddb_session")
 def test_api_endpoint_calls(
     test_client, endpoint, query_params, expected,
 ):
@@ -121,7 +121,7 @@ def test_api_endpoint_calls(
     check_dict_subset(expected, response.get_json())
 
 
-def test_dates_are_formatted(test_client, populateddb):
+def test_dates_are_formatted(test_client, populateddb_session):
     url = "/api/metadata"
     query_params = {
         "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
@@ -143,7 +143,7 @@ def test_dates_are_formatted(test_client, populateddb):
         ("/api/data", ("model", "emission", "time", "area", "variable")),
     ],
 )
-def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
+def test_missing_query_param(test_client, cleandb_session, endpoint, missing_params):
     response = test_client.get(endpoint)
     assert response.status_code == 400
     content = response.text
@@ -214,7 +214,7 @@ def test_find_modtime(obj, expected):
         }),
     ],
 )
-def test_post_request(test_client, populateddb, endpoint, params):
+def test_post_request(test_client, populateddb_session, endpoint, params):
     
     get = test_client.get(endpoint, query_string = params)
     post = test_client.post(endpoint, data=params)

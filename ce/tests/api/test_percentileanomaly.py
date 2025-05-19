@@ -193,8 +193,8 @@ default_response = {
 
 
 @pytest.mark.parametrize("region, exists", [("bc", True), ("fake_region", False)])
-def test_percentile_anomaly_regions(populateddb, region, exists):
-    sesh = populateddb.session
+def test_percentile_anomaly_regions(populateddb_session, region, exists):
+    sesh = populateddb_session
     if exists:
         percentileanomaly(sesh, region, default_climatology, default_variable)
     else:
@@ -206,8 +206,8 @@ def test_percentile_anomaly_regions(populateddb, region, exists):
 
 @pytest.mark.parametrize("bmodel", ["anusplin", "fake_model", ""])
 @pytest.mark.parametrize("bclimatology", ["6190", "3000", ""])
-def test_percentile_baselines(populateddb, bmodel, bclimatology):
-    sesh = populateddb.session
+def test_percentile_baselines(populateddb_session, bmodel, bclimatology):
+    sesh = populateddb_session
     if not bmodel and not bclimatology:  # no baseline! no anomaly data.
         results = percentileanomaly(
             sesh,
@@ -251,21 +251,21 @@ def test_percentile_baselines(populateddb, bmodel, bclimatology):
         )
 
 
-def test_missing_models(populateddb):
-    sesh = populateddb.session
+def test_missing_models(populateddb_session):
+    sesh = populateddb_session
     with pytest.raises(werkzeug.exceptions.InternalServerError):
         percentileanomaly(sesh, "missing_data", default_climatology, default_variable)
 
 
-def test_extra_models(populateddb):
-    sesh = populateddb.session
+def test_extra_models(populateddb_session):
+    sesh = populateddb_session
     with pytest.raises(werkzeug.exceptions.InternalServerError):
         percentileanomaly(sesh, "extra_data", default_climatology, default_variable)
 
 
 @pytest.mark.parametrize("num_percentiles", [1, 2, 4, 5, 10])
-def test_percentile_calculation(populateddb, num_percentiles):
-    sesh = populateddb.session
+def test_percentile_calculation(populateddb_session, num_percentiles):
+    sesh = populateddb_session
     step = math.floor(100 / num_percentiles)
     percentiles = range(0, 100, step)
     pstring = ""

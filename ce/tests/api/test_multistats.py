@@ -40,8 +40,8 @@ from ce.api import multistats
         ),
     ),
 )
-def test_multistats(populateddb, filters, keys):
-    sesh = populateddb.session
+def test_multistats(populateddb_session, filters, keys):
+    sesh = populateddb_session
     rv = multistats(sesh, "ce", **filters)
     for key in keys:
         assert key in rv

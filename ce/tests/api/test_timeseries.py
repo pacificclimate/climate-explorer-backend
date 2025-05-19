@@ -9,8 +9,8 @@ from ce.api import timeseries
     ("unique_id", "var"),
     (("tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmax"),),
 )
-def test_timeseries(populateddb, polygon, unique_id, var):
-    sesh = populateddb.session
+def test_timeseries(populateddb_session, polygon, unique_id, var):
+    sesh = populateddb_session
     rv = timeseries(sesh, unique_id, polygon, var)
     for key in ("id", "data", "units"):
         assert key in rv
@@ -46,8 +46,8 @@ def test_timeseries(populateddb, polygon, unique_id, var):
         ("tasmin_sClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
     ],
 )
-def test_timeseries_annual_variation(populateddb, unique_id, var):
-    sesh = populateddb.session
+def test_timeseries_annual_variation(populateddb_session, unique_id, var):
+    sesh = populateddb_session
     poly = """POLYGON((-265 65,-265 74,-276 74,-276 65,-265 65))"""
     rv = timeseries(sesh, unique_id, poly, var)
     values = set([])
@@ -57,8 +57,8 @@ def test_timeseries_annual_variation(populateddb, unique_id, var):
 
 
 @pytest.mark.parametrize(("unique_id"), (None, "", "does-not-exist"))
-def test_timeseries_bad_id(populateddb, unique_id):
-    rv = timeseries(populateddb.session, unique_id, None, None)
+def test_timeseries_bad_id(populateddb_session, unique_id):
+    rv = timeseries(populateddb_session, unique_id, None, None)
     assert rv == {}
 
 
@@ -69,8 +69,8 @@ def test_timeseries_bad_id(populateddb, unique_id):
         ("tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230", "tasmin"),
     ),
 )
-def test_timeseries_speed(populateddb, polygon, unique_id, var):
-    sesh = populateddb.session
+def test_timeseries_speed(populateddb_session, polygon, unique_id, var):
+    sesh = populateddb_session
     t0 = time()
     timeseries(sesh, unique_id, polygon, var)
     t = time() - t0
