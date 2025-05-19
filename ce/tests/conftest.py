@@ -3,7 +3,8 @@ import os
 import py.path
 import tempfile
 from datetime import datetime, UTC
-from pkg_resources import resource_filename
+from importlib import import_module
+from importlib.resources import files
 
 from dateutil.relativedelta import relativedelta
 import pytest
@@ -26,6 +27,11 @@ from flask_sqlalchemy import SQLAlchemy
 from netCDF4 import Dataset
 
 from ce import get_app
+
+
+def resource_filename(package, path):
+    return str(files(import_module(package)) / path)
+
 
 # Add helpers directory to pythonpath: See https://stackoverflow.com/a/33515264
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers",))
