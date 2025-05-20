@@ -71,10 +71,13 @@ def dsn(
 def app(
     dsn,
 ):
-    app = get_app()
-    app.config["TESTING"] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = dsn
-    app.config["SQLALCHEMY_ECHO"] = False
+    test_config = {
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": dsn,
+        "SQLALCHEMY_ECHO": False,
+    }
+    app = get_app(test_config)
+
     return app
 
 

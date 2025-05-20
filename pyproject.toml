@@ -18,9 +18,9 @@ license = "GPL3"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4"
-Flask = "<3.0.0"
-Flask-SQLAlchemy = "<3.0.0" # minimum supported version of SQLAlchemy is 1.4.54
+python = ">=3.9,<4"
+Flask = ">=3.1.1,<4"
+Flask-SQLAlchemy = ">=3.0.5,<4"
 Flask-Cors = "*"
 shapely = ">2.0,<3"
 numpy = "<2"
