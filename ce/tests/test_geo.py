@@ -132,19 +132,21 @@ def test_make_mask_grid_key(ncobject, polygon):
 
 @pytest.mark.online
 @pytest.mark.parametrize(
-    "local, online",
+    "local, online, variable",
     [
         (
             "ce/tests/data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/catalog/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "tasmin",
         ),
         (
             "ce/tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/catalog/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "tasmax",
         ),
     ],
 )
-def test_rasterio_thredds_helper(local, online):
-    with rasterio_thredds_helper(online) as temp_name:
-        with rasterio.open(temp_name) as result, rasterio.open(local) as expected:
+def test_rasterio_thredds_helper(local, online, variable):
+    with rasterio_thredds_helper(online, variable) as result:
+        with rasterio.open(f'NETCDF:"{local}":{variable}') as expected:
             assert result.profile == expected.profile

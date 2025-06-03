@@ -234,18 +234,14 @@ def polygon_to_masked_array(nc, resource, poly, variable):
     in addition to any masks specified in the file itself (_FillValue)
     Returns a numpy masked array with every time slice masked"""
 
-    def polygon_to_masked_array_helper(resource):
+    def polygon_to_masked_array_helper(raster):
         mask, out_transform, window = polygon_to_mask(nc, resource, poly, variable)
 
-        dst_name = f'NETCDF:"{resource}":{variable}'
-        with rasterio.open(dst_name, "r", driver="NetCDF") as raster:
-            # based on https://github.com/mapbox/rasterio/blob/master/rasterio/mask.py
-            height, width = mask.shape
-            out_shape = (raster.count, height, width)
+        height, width = mask.shape
+        out_shape = (raster.count, height, width)
 
-            array = raster.read(window=window, out_shape=out_shape, masked=True)
-            array.mask = array.mask | mask
-
+        array = raster.read(window=window, out_shape=out_shape, masked=True)
+        array.mask = array.mask | mask
         # Weirdly rasterio's mask operation sets, but doesn't respect the
         # scale_factor or add_offset
         var = nc.variables[variable]
@@ -255,31 +251,23 @@ def polygon_to_masked_array(nc, resource, poly, variable):
         return array * scale_factor + add_offset
 
     if "dodsC" in resource:
-        with rasterio_thredds_helper(resource) as temp_name:
-            return polygon_to_masked_array_helper(temp_name)
+        with rasterio_thredds_helper(resource, variable) as raster:
+            return polygon_to_masked_array_helper(raster)
 
-    return polygon_to_masked_array_helper(resource)
+    # Local file path case
+    with rasterio.open(
+        f'NETCDF:"{resource}":{variable}', "r", driver="NetCDF"
+    ) as raster:
+        return polygon_to_masked_array_helper(raster)
 
 
 @contextmanager
-def rasterio_thredds_helper(resource):
-    """Provides rasterio with a readable file from an online resource_name
-
-    As of 2020/08/23 rasterio is not capable of reading opendap urls. To get
-    around this, we can copy over the data from the url to a tempfile which can
-    then be read by rasterio.
-
-    The text replacement in the resource is changing the url output from opendap
-    to httpserver. The reason for this change is netCDF.Dataset is not capable
-    of reading the httpserver, thus we have to make a small adjustment here.
+def rasterio_thredds_helper(resource, variable):
     """
-    resource_name = resource.replace("dodsC", "fileServer")
-
-    try:
-        temp = NamedTemporaryFile(mode="wb", suffix=".nc", delete=False)
-        with requests.get(resource_name, stream=True) as file_source:
-            shutil.copyfileobj(file_source.raw, temp)
-        yield temp.name
-    finally:
-        temp.close()
-        os.remove(temp.name)
+    Opens a remote NetCDF resource for Rasterio, handling OpenDAP (dodsC) or fileServer as needed.
+    Assumes Rasterio has GDAL with OpenDAP support.
+    """
+    # Construct proper NetCDF subdataset path
+    dataset_url = f'NETCDF:"{resource}":{variable}'
+    with rasterio.open(dataset_url, mode="r", driver="NetCDF") as raster:
+        yield raster

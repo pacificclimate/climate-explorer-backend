@@ -106,7 +106,9 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     """
     query = (
         sesh.query(distinct(DataFile.filename).label("filename"))
-        .join(DataFileVariableGridded, EnsembleDataFileVariables, Ensemble,)
+        .join(DataFileVariableGridded)
+        .join(EnsembleDataFileVariables)
+        .join(Ensemble)
         .filter(Ensemble.name == ensemble_name)
         .filter(DataFileVariableGridded.netcdf_variable_name == variable)
         .filter(DataFile.time_set_id.is_(None))
