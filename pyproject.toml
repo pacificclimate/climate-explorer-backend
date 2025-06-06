@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ce"
-version = "3.6.4"
+version = "3.6.5"
 description = "PCIC's Climate Explorer (CE)"
 authors = [
     "Rod Glover <rglover@uvic.ca>",
@@ -12,13 +12,13 @@ authors = [
     "Cairo Sanders",
     "Quintin Sparks <quintins@uvic.ca>",
     "Basil Veerman",
-    "Eric Yvorchuk <eyvorchuk@uvic.ca",
+    "Eric Yvorchuk",
 ]
 license = "GPL3"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4"
+python = ">=3.11,<4"
 Flask = ">=3.1.1,<4"
 Flask-SQLAlchemy = ">=3.0.5,<4"
 Flask-Cors = "*"
@@ -41,6 +41,11 @@ python-dateutil = "^2.8.2"
 black = "^23.11.0"
 pre-commit = "^3.5.0"
 
+[tool.poetry.group.docs.dependencies]
+sphinx = "^8.2.3"
+sphinx-pyproject = "^0.3.0"
+m2r2 = "^0.3.4"
+poethepoet = "^0.34.0"
 
 [[tool.poetry.source]]
 name = "pcic"
@@ -57,3 +62,11 @@ markers = [
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 norecursedirs = ".git site-packages _build *.egg ce/tests/helpers"
+
+[tool.sphinx-pyproject]
+package_root = "ce"
+project = "ce"
+
+[tool.poe.tasks]
+document = "sphinx-build doc/source doc/build/html"
+pdf = "make latexpdf -C doc"

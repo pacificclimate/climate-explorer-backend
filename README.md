@@ -84,29 +84,29 @@ $ poetry add --group=dev pre-commit
 
 ### Building the Documentation
 
-FIXME: Sphinx no longer supports Python < 3.9, so docs will be broken
-until we upgrade (hopefully that will be the next step!). This section
-will be updated with the python3.9 update.
+You can install documentation requirements with
 
-Building the docs requires the package to be installed first, as docstrings from installed modules are used to generate code documentation.
-
-```
-pipenv install -e .
-pipenv run python setup.py build_sphinx
+```bash
+poetry install --with docs
 ```
 
-HTML documentation will be in the `doc/build/html` directory.
+And then build the HTML documentation in the `doc/build/html` directory with:
 
-Sphinx can also generate a PDF by invoking the TeXlive toolchain, if it is installed on your machine. On Ubuntu, you will to install the following packages before sphinx can successfully create a PDF:
+```
+poe document
+```
+
+There is also a script to generate PDF documentation.
+
+```
+poe pdf
+```
+
+In order to correctly generate a PDF, you will need the following font packages installed:
 * latexmk
 * texlive-latex-recommended
 * texlive-fonts-recommended
 * texlive-latex-extra
-
-You can then create a PDF from the `doc` directory with this command:
-```
-make latexpdf
-```
 
 ### Running the dev server
 
