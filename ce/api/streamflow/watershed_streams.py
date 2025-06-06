@@ -41,6 +41,7 @@ def watershed_streams(sesh, station, ensemble_name):
         providing data for this request.
     :return: dict representation for JSON response object with the following
         attributes:
+
             Lines: A GeoJSON MultiLineString representing the streams of the watershed;
 
     This function is primarily responsible for finding the relevant data files

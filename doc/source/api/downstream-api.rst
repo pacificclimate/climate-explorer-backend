@@ -3,7 +3,7 @@
 
 
 streamflow/downstream
-====================
+=====================
 .. mdinclude:: downstream-api-usage.md
 
 .. mdinclude:: sesh-not-needed.md
