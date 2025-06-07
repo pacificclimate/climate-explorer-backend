@@ -84,25 +84,25 @@ $ poetry add --group=dev pre-commit
 
 ### Building the Documentation
 
-You can install documentation requirements with
+You can install documentation requirements, including [poethepoet](https://poethepoet.natn.io/) to automaticaly run documentaion scripts, with
 
 ```bash
 poetry install --with docs
 ```
 
-And then build the HTML documentation in the `doc/build/html` directory with:
+And then use poe to build the HTML documentation in the `doc/build/html` directory:
 
 ```
 poe document
 ```
 
-There is also a script to generate PDF documentation.
+There is also a poe command to generate PDF documentation.
 
 ```
 poe pdf
 ```
 
-In order to correctly generate a PDF, you will need the following font packages installed:
+In order to correctly generate a PDF, you will need the following font packages installed on your system:
 * latexmk
 * texlive-latex-recommended
 * texlive-fonts-recommended

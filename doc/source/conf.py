@@ -16,17 +16,20 @@
 import sys
 import os
 
+# import some values from pyproject.toml
+from sphinx_pyproject import SphinxConfig
+
 sys.path.insert(0, os.path.abspath("../../ce"))
 
 # -- Project information -----------------------------------------------------
+# These values are loaded from pyproject.toml
 
-project = "climate-explorer-backend"
+config = SphinxConfig("../../pyproject.toml", globalns=globals())
+project = config.name
 copyright = "2019, James Hiebert"
-author = "James Hiebert"
-
-# The full version, including alpha/beta/rc tags
-release = "1.1.1"
-
+author = config.author
+release = config.version
+documentation_summary = config.description
 
 # -- General configuration ---------------------------------------------------
 
@@ -59,8 +62,3 @@ exclude_patterns = [
 # a list of builtin themes.
 #
 html_theme = "alabaster"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]

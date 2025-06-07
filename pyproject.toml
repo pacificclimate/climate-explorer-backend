@@ -1,39 +1,53 @@
-[tool.poetry]
+[project]
 name = "ce"
 version = "3.6.5"
+requires-python = ">=3.11,<4"
 description = "PCIC's Climate Explorer (CE)"
 authors = [
-    "Rod Glover <rglover@uvic.ca>",
-    "James Hiebert <hiebert@uvic.ca>",
-    "Nik Rados",
-    "Lee Zeman <lzeman@uvic.ca>",
-    "Jonathan Helfrich",
-    "Ada Sungar",
-    "Cairo Sanders",
-    "Quintin Sparks <quintins@uvic.ca>",
-    "Basil Veerman",
-    "Eric Yvorchuk",
+    {name = "Pacific Climate Impacts Consortium"},
+    {name = "Rod Glover", email = "<rglover@uvic.ca>"},
+    {name = "James Hiebert", email = "<hiebert@uvic.ca>"},
+    {name = "Nik Rados"},
+    {name = "Lee Zeman", email = "<lzeman@uvic.ca>"},
+    {name = "Jonathan Helfrich"},
+    {name = "Ada Sungar"},
+    {name = "Cairo Sanders"},
+    {name = "Quintin Sparks", email = "<quintins@uvic.ca>"},
+    {name = "Basil Veerman"},
+    {name = "Eric Yvorchuk"},
 ]
 license = "GPL3"
 readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+keywords = [
+    "sql",
+    "api",
+    "database",
+    "climate",
+]
+dependencies = [
+    "Flask>=3.1.1,<4",
 
-[tool.poetry.dependencies]
-python = ">=3.11,<4"
-Flask = ">=3.1.1,<4"
-Flask-SQLAlchemy = ">=3.0.5,<4"
-Flask-Cors = "*"
-shapely = ">2.0,<3"
-numpy = "<2"
-GDAL = ">=3.3.0,<3.4"
-rasterio = "~=1.3"
-SQLAlchemy = ">=2.0.40,<3.0.0"
-contexttimer = "^0.3.3"
-Pint = "<1"
-gunicorn = "=23.0.0"
-nchelpers = { git = "https://github.com/pacificclimate/nchelpers.git", rev = "py-sprint-25q1" }
-modelmeta = { git = "https://github.com/pacificclimate/modelmeta.git", rev = "py-sprint-25q1" }
-cf-cell-methods = { version = "^0.1.0", source = "pcic" }
-requests = ">=2.32,<3"
+"Flask-SQLAlchemy>=3.0.5,<4",
+    "Flask-Cors",
+    "shapely>2.0,<3",
+    "numpy<2",
+    "GDAL>=3.3.0,<3.4",
+    "rasterio~=1.3",
+    "SQLAlchemy>=2.0.40,<3.0.0",
+    "contexttimer==0.3.3",
+    "Pint<1",
+    "gunicorn==23.0.0",
+    "nchelpers @ git+https://github.com/pacificclimate/nchelpers.git@py-sprint-25q1",
+    "modelmeta @ git+https://github.com/pacificclimate/modelmeta.git@py-sprint-25q1",
+    "cf-cell-methods==0.1.0",
+    "requests>=2.32,<3",
+]
+
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=3.0.0"
@@ -62,10 +76,6 @@ markers = [
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 norecursedirs = ".git site-packages _build *.egg ce/tests/helpers"
-
-[tool.sphinx-pyproject]
-package_root = "ce"
-project = "ce"
 
 [tool.poe.tasks]
 document = "sphinx-build doc/source doc/build/html"
