@@ -1,6 +1,6 @@
 [project]
 name = "ce"
-version = "3.6.5"
+version = "3.6.6"
 requires-python = ">=3.11,<4"
 description = "PCIC's Climate Explorer (CE)"
 authors = [
