@@ -46,7 +46,9 @@ def downstream(sesh, station, ensemble_name):
         providing data for this request.
     :return: dict representation for JSON response object with the following
         attributes:
+
             shape: A GeoJSON object representing the downstream watershed.
+
     This function is primarily responsible for finding the relevant data files
     and converting their contents to `VicDataGrid` objects for consumption by
     `downstream_worker`, which as its name suggests, does most of the work.

@@ -16,13 +16,13 @@ from ce.api.streamflow.watershed import get_time_invariant_variable_dataset
         ("flow_direction", None),  # exists, time-invariant
     ),
 )
-def test_validation(populateddb, variable, exception):
+def test_validation(populateddb_session, variable, exception):
     if exception:
         with pytest.raises(exception):
             file = get_time_invariant_variable_dataset(
-                populateddb.session, "ce", variable
+                populateddb_session, "ce", variable
             )
             assert file is not None
     else:
-        file = get_time_invariant_variable_dataset(populateddb.session, "ce", variable)
+        file = get_time_invariant_variable_dataset(populateddb_session, "ce", variable)
         assert file is not None

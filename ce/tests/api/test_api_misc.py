@@ -11,17 +11,31 @@ from test_utils import check_dict_subset
 @pytest.mark.parametrize(
     "endpoint, query_params, expected",
     [
-        ("stats", {"id_": "", "time": "", "area": "", "variable": ""}, {},),
+        (
+            "stats",
+            {"id_": "", "time": "", "area": "", "variable": ""},
+            {},
+        ),
         (
             "data",
             {"model": "", "emission": "", "time": "0", "area": "", "variable": ""},
             {},
         ),
-        ("timeseries", {"id_": "", "area": "", "variable": ""}, {},),
-        ("models", {}, {},),
+        (
+            "timeseries",
+            {"id_": "", "area": "", "variable": ""},
+            {},
+        ),
+        (
+            "models",
+            {},
+            {},
+        ),
         (
             "metadata",
-            {"model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",},
+            {
+                "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+            },
             {
                 "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230": {
                     "institution": "BNU",
@@ -82,7 +96,9 @@ from test_utils import check_dict_subset
                     "multi_year_mean": True,
                     "start_date": "1971-01-01T00:00:00Z",
                     "end_date": "2000-12-31T00:00:00Z",
-                    "variables": {"tasmax": "Daily Maximum Temperature",},
+                    "variables": {
+                        "tasmax": "Daily Maximum Temperature",
+                    },
                 },
             },
         ),
@@ -103,13 +119,24 @@ from test_utils import check_dict_subset
                 },
             },
         ),
-        ("lister", {"model": ""}, {},),
-        ("grid", {"id_": ""}, {},),
+        (
+            "lister",
+            {"model": ""},
+            {},
+        ),
+        (
+            "grid",
+            {"id_": ""},
+            {},
+        ),
     ],
 )
-@pytest.mark.usefixtures("populateddb")
+@pytest.mark.usefixtures("populateddb_session")
 def test_api_endpoint_calls(
-    test_client, endpoint, query_params, expected,
+    test_client,
+    endpoint,
+    query_params,
+    expected,
 ):
     url = "/api/" + endpoint
     response = test_client.get(url, query_string=query_params)
@@ -121,7 +148,7 @@ def test_api_endpoint_calls(
     check_dict_subset(expected, response.get_json())
 
 
-def test_dates_are_formatted(test_client, populateddb):
+def test_dates_are_formatted(test_client, populateddb_session):
     url = "/api/metadata"
     query_params = {
         "model_id": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230"
@@ -143,7 +170,7 @@ def test_dates_are_formatted(test_client, populateddb):
         ("/api/data", ("model", "emission", "time", "area", "variable")),
     ],
 )
-def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
+def test_missing_query_param(test_client, cleandb_session, endpoint, missing_params):
     response = test_client.get(endpoint)
     assert response.status_code == 400
     content = response.text
@@ -181,46 +208,54 @@ def test_missing_query_param(test_client, cleandb, endpoint, missing_params):
 def test_find_modtime(obj, expected):
     assert find_modtime(obj) == expected
 
+
 @pytest.mark.parametrize(
     ("endpoint", "params"),
     [
-        ("/api/timeseries", 
-        {
-            "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-            "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))",
-            "variable": "tasmax"
-        }),
-        ("/api/timeseries", 
-        {
-            "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
-            "area": "",
-            "variable": "tasmax"
-        }),
-        ("/api/data", 
-        {
-            "model": "BNU-ESM",
-            "emission": "historical",
-            "time": 0,
-            "variable": "tasmax",
-            "area": ""
-        }),
-        ("/api/data", 
-        {
-            "model": "BNU-ESM",
-            "emission": "historical",
-            "time": 0,
-            "variable": "tasmax",
-            "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))"
-        }),
+        (
+            "/api/timeseries",
+            {
+                "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+                "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))",
+                "variable": "tasmax",
+            },
+        ),
+        (
+            "/api/timeseries",
+            {
+                "id_": "tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230",
+                "area": "",
+                "variable": "tasmax",
+            },
+        ),
+        (
+            "/api/data",
+            {
+                "model": "BNU-ESM",
+                "emission": "historical",
+                "time": 0,
+                "variable": "tasmax",
+                "area": "",
+            },
+        ),
+        (
+            "/api/data",
+            {
+                "model": "BNU-ESM",
+                "emission": "historical",
+                "time": 0,
+                "variable": "tasmax",
+                "area": "POLYGON((-265 65,-265 72,-276 72,-276 65,-265 65))",
+            },
+        ),
     ],
 )
-def test_post_request(test_client, populateddb, endpoint, params):
-    
-    get = test_client.get(endpoint, query_string = params)
+def test_post_request(test_client, populateddb_session, endpoint, params):
+    get = test_client.get(endpoint, query_string=params)
     post = test_client.post(endpoint, data=params)
-    
+
     print(get.data)
-    
+
     assert get.status_code == 200
     assert post.status_code == 200
     assert get.data == post.data

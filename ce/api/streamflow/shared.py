@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 from sqlalchemy import distinct
-from shapely.errors import WKTReadingError
+from shapely.errors import ShapelyError
 
 from flask import abort
 from ce.api.geospatial import WKT_point_to_lonlat, GeospatialTypeError
@@ -21,7 +21,7 @@ from modelmeta import (
 def setup(station):
     try:
         station_lonlat = WKT_point_to_lonlat(station)
-    except WKTReadingError:
+    except ShapelyError:
         abort(400, description="Station lon-lat coordinates are not valid WKT syntax")
         return
     except GeospatialTypeError as e:
@@ -106,7 +106,9 @@ def get_time_invariant_variable_dataset(sesh, ensemble_name, variable):
     """
     query = (
         sesh.query(distinct(DataFile.filename).label("filename"))
-        .join(DataFileVariableGridded, EnsembleDataFileVariables, Ensemble,)
+        .join(DataFileVariableGridded)
+        .join(EnsembleDataFileVariables)
+        .join(Ensemble)
         .filter(Ensemble.name == ensemble_name)
         .filter(DataFileVariableGridded.netcdf_variable_name == variable)
         .filter(DataFile.time_set_id.is_(None))

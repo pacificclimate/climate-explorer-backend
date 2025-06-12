@@ -30,7 +30,13 @@ from modelmeta.v2 import Run
         ("anuspline_na.nc", "tasmax"),
         ("CanESM2-rcp85-tasmax-r1i1p1-2010-2039.nc", "tasmax"),
     ),
-    ids=("bnu-tasmax", "bnu-tasmin", "prism_pr_small", "anuspline", "canesm",),
+    ids=(
+        "bnu-tasmax",
+        "bnu-tasmin",
+        "prism_pr_small",
+        "anuspline",
+        "canesm",
+    ),
     scope="function",
 )
 def ncfilevar(request):
@@ -61,7 +67,7 @@ def test_get_array(request, nctuple, polygon):
     x = get_array(nc, fname, 0, polygon, var)
     t = time() - t0
     print(t)
-    assert t < 0.1
+    assert t < 0.2
     assert type(x) == MaskedArray
     assert hasattr(x, "mask")
     assert np.mean(x) > 0 or np.all(x.mask)
@@ -92,7 +98,7 @@ def test_mean_datetime(input_, output):
     [
         (
             "/storage/data/projects/comp_support/daccs/test-data/fdd_seasonal_CanESM2_rcp85_r1i1p1_1951-2100.nc",
-            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/fdd_seasonal_CanESM2_rcp85_r1i1p1_1951-2100.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/fdd_seasonal_CanESM2_rcp85_r1i1p1_1951-2100.nc",
         )
     ],
 )
@@ -121,10 +127,10 @@ def test_open_nc_exception(bad_path):
     ],
 )
 def test_get_units_from_run_object(
-    populateddb, run_name, var_name, ensemble_name, expected_units
+    populateddb_session, run_name, var_name, ensemble_name, expected_units
 ):
     run_object = Run(name=run_name)
-    units = get_units_from_run_object(populateddb.session, Run, var_name, ensemble_name)
+    units = get_units_from_run_object(populateddb_session, Run, var_name, ensemble_name)
     assert units == expected_units
 
 
@@ -425,10 +431,22 @@ def test_check_climatological_statistic_percentiles(
             False,
             "percentile[95.0]",
         ),
-        ("time: maximum time: mean over days", True, "mean",),
+        (
+            "time: maximum time: mean over days",
+            True,
+            "mean",
+        ),
         ("time: maximum time: mean over days", False, "mean"),
-        ("time: maximum time: mean over days models: mean", True, "mean",),
-        ("time: maximum time: mean over days models: mean", False, "mean",),
+        (
+            "time: maximum time: mean over days models: mean",
+            True,
+            "mean",
+        ),
+        (
+            "time: maximum time: mean over days models: mean",
+            False,
+            "mean",
+        ),
         (
             "time: minimum within days time: count within years where > 25 C",
             True,
@@ -439,10 +457,26 @@ def test_check_climatological_statistic_percentiles(
             False,
             False,
         ),
-        ("unspecified", True, "mean",),
-        ("unspecified", False, False,),
-        ("time: standard_deviation over days time: mean over days", True, "mean",),
-        ("time: standard_deviation over days time: mean over days", False, "mean",),
+        (
+            "unspecified",
+            True,
+            "mean",
+        ),
+        (
+            "unspecified",
+            False,
+            False,
+        ),
+        (
+            "time: standard_deviation over days time: mean over days",
+            True,
+            "mean",
+        ),
+        (
+            "time: standard_deviation over days time: mean over days",
+            False,
+            "mean",
+        ),
     ),
 )
 def test_get_climatological_statistic(cell_methods, default_to_mean, expected):

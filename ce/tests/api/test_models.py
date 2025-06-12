@@ -1,7 +1,6 @@
 from ce.api import models
 
 
-def test_models(populateddb):
-    sesh = populateddb.session
-    rv = models(sesh, "ce")
+def test_models(populateddb_session):
+    rv = models(populateddb_session, "ce")
     assert rv

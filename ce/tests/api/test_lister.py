@@ -19,7 +19,6 @@ from ce.api import lister
         ),
     ],
 )
-def test_lister(populateddb, args, expected):
-    sesh = populateddb.session
-    rv = lister(sesh, **args)
+def test_lister(populateddb_session, args, expected):
+    rv = lister(populateddb_session, **args)
     assert set(rv) == expected

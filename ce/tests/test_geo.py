@@ -10,7 +10,7 @@ from ce.api.geo import (
     rasterio_thredds_helper,
 )
 from shapely.wkt import loads
-from shapely.errors import ReadingError
+from shapely.errors import ShapelyError
 from collections import OrderedDict
 import rasterio
 
@@ -96,18 +96,18 @@ def test_cache_delete():
         cached_fibonacci(n)
         assert (f.get_size() / mb_conversion) <= cache_size_mb
         if previous_cache >= f.get_size():
-            return True
+            return None
         previous_cache = f.get_size()
 
     # make sure cache has stayed the same size or shrunk at least once.
-    assert 0
+    assert 0, "Items were supposed to have been deleted from the cache, but none were"
 
 
 def test_clip_speed(ncobject, polygon):
     ncobject, fname = ncobject
     try:
         poly = loads(polygon)
-    except ReadingError:
+    except ShapelyError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
     t0 = time.time()
     polygon_to_masked_array(ncobject, fname, poly, "tasmax")
@@ -120,7 +120,7 @@ def test_make_mask_grid_key(ncobject, polygon):
     ncobject, fname = ncobject
     try:
         poly = loads(polygon)
-    except ReadingError:
+    except ShapelyError:
         pytest.skip("Invalid polygon, so speed test is irrellevant")
 
     result = make_mask_grid_key(ncobject, fname, poly, None)
@@ -132,19 +132,21 @@ def test_make_mask_grid_key(ncobject, polygon):
 
 @pytest.mark.online
 @pytest.mark.parametrize(
-    "local, online",
+    "local, online, variable",
     [
         (
             "ce/tests/data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "tasmin",
         ),
         (
             "ce/tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://docker-dev03.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "tasmax",
         ),
     ],
 )
-def test_rasterio_thredds_helper(local, online):
-    with rasterio_thredds_helper(online) as temp_name:
-        with rasterio.open(temp_name) as result, rasterio.open(local) as expected:
+def test_rasterio_thredds_helper(local, online, variable):
+    with rasterio_thredds_helper(online, variable) as result:
+        with rasterio.open(f'NETCDF:"{local}":{variable}') as expected:
             assert result.profile == expected.profile

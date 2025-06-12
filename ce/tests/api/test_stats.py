@@ -28,9 +28,9 @@ from ce.api import stats
     ],
 )
 def test_stats(
-    populateddb, polygon, mock_thredds_url_root, unique_id, var_name, is_thredds
+    populateddb_session, polygon, mock_thredds_url_root, unique_id, var_name, is_thredds
 ):
-    sesh = populateddb.session
+    sesh = populateddb_session
     rv = stats(sesh, unique_id, None, polygon, var_name, is_thredds)
     statistics = rv[unique_id]
     for attr in ("min", "max", "mean", "median", "stdev"):
@@ -56,8 +56,8 @@ def test_stats(
         ("file1", "tasmax"),
     ),
 )
-def test_stats_bad_params(populateddb, unique_id, var):
-    sesh = populateddb.session
+def test_stats_bad_params(populateddb_session, unique_id, var):
+    sesh = populateddb_session
 
     rv = stats(sesh, unique_id, None, None, var)
     assert math.isnan(rv[unique_id]["max"])
@@ -66,6 +66,6 @@ def test_stats_bad_params(populateddb, unique_id, var):
     assert "modtime" not in rv[unique_id]
 
 
-def test_stats_bad_id(populateddb):
-    rv = stats(populateddb.session, "id-does-not-exist", None, None, None)
+def test_stats_bad_id(populateddb_session):
+    rv = stats(populateddb_session, "id-does-not-exist", None, None, None)
     assert rv == {}

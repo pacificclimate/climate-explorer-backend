@@ -7,9 +7,10 @@ import flask
 
 import pytest
 
-def test_stored_data(populateddb):
+
+def test_stored_data(populateddb_session):
     app = flask.Flask(__name__)
-    sesh = populateddb.session
+    sesh = populateddb_session
     mm = multimeta(sesh, "p2a_classic")
     # checking whether a file has been updated in the database is a little complicated,
     # because the database is rebuilt each time pytest is run. So we need to build the
@@ -35,7 +36,6 @@ def test_stored_data(populateddb):
 
     # fake up the request url for RESTy URL munging
     with app.test_request_context("http://example.com/api/health/regions"):
-
         # test regions endpoint for status summary
         r = list(filter(lambda x: x["region"] == "test_region", regions(sesh)))
 

@@ -8,14 +8,14 @@ from ce.api import data
 @pytest.mark.parametrize(
     ("model", "scenario"), (("", ""), (None, None), ("cgcm19", "rcp45"))
 )
-def test_data_bad_model_scenario(populateddb, model, scenario):
-    rv = data(populateddb.session, model, scenario, 1, None, "tasmax")
+def test_data_bad_model_scenario(populateddb_session, model, scenario):
+    rv = data(populateddb_session, model, scenario, 1, None, "tasmax")
     assert rv == {}
 
 
-def test_data_bad_time(populateddb):
+def test_data_bad_time(populateddb_session):
     with pytest.raises(Exception) as exc:
-        data(populateddb.session, "", "", "time-not-an-int", "", "")
+        data(populateddb_session, "", "", "time-not-an-int", "", "")
     assert 'time parameter "time-not-an-int" not convertable to an integer.' == str(
         exc.value
     )
@@ -24,7 +24,10 @@ def test_data_bad_time(populateddb):
 @pytest.mark.online
 @pytest.mark.parametrize(
     "variable,climatological_statistic",
-    (("tasmax", "standard_deviation"), ("tasmin", "mean"),),
+    (
+        ("tasmax", "standard_deviation"),
+        ("tasmin", "mean"),
+    ),
 )
 @pytest.mark.parametrize(
     "timescale, time_idx, expected_ymd",
@@ -35,7 +38,7 @@ def test_data_bad_time(populateddb):
     ),
 )
 def test_data_single_file(
-    populateddb,
+    populateddb_session,
     mock_thredds_url_root,
     variable,
     climatological_statistic,
@@ -44,7 +47,7 @@ def test_data_single_file(
     expected_ymd,
 ):
     rv = data(
-        populateddb.session,
+        populateddb_session,
         model="BNU-ESM",
         emission="historical",
         area=None,
@@ -71,9 +74,9 @@ def test_data_single_file(
         assert isinstance(run_value["modtime"], datetime)
 
 
-def test_data_multiple_times(multitime_db):
+def test_data_multiple_times(multitimedb_session):
     rv = data(
-        multitime_db.session,
+        multitimedb_session,
         model="BNU-ESM",
         emission="rcp45",
         time=0,

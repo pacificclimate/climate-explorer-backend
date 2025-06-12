@@ -1,6 +1,6 @@
 import shapely.wkt
 from shapely.geometry import Point, mapping, LineString
-from shapely.ops import cascaded_union
+from shapely.ops import unary_union
 
 
 class GeospatialError(Exception):
@@ -40,7 +40,7 @@ def outline_cell_rect(centres, height, width):
     also turns out to yield the simplest outline and do the least work."""
     dy = height / 2
     dx = width / 2
-    return cascaded_union(
+    return unary_union(
         [shapely.geometry.box(x - dx, y - dy, x + dx, y + dy) for x, y in centres]
     )
 

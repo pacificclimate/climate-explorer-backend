@@ -19,7 +19,6 @@ from contexttimer import Timer
 
 from flask import abort
 from shapely.geometry import Point
-from shapely.errors import WKTReadingError
 from pint import UnitRegistry
 
 from ce.api.geospatial import geojson_feature, outline_cell_rect
@@ -44,6 +43,7 @@ def watershed(sesh, station, ensemble_name):
         providing data for this request.
     :return: dict representation for JSON response object with the following
         attributes:
+
             area: Area of the watershed
 
             elevation: Minimum and maximum elevations

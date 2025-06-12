@@ -1,4 +1,4 @@
-FROM pcic/geospatial-python:3.4.0
+FROM pcic/geospatial-python:3.8.4
 
 RUN mkdir /app
 ADD poetry.lock /app

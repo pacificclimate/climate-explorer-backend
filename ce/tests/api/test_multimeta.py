@@ -4,7 +4,13 @@ import pytest
 from ce.api import multimeta
 
 
-@pytest.mark.parametrize("model", ("BNU-ESM", "",))
+@pytest.mark.parametrize(
+    "model",
+    (
+        "BNU-ESM",
+        "",
+    ),
+)
 @pytest.mark.parametrize(
     "climatological_statistic,unique_id",
     [
@@ -16,8 +22,10 @@ from ce.api import multimeta
     ],
 )
 @pytest.mark.parametrize("extras", (None, "", "filepath", "filepath,obviouslywrong"))
-def test_multimeta(populateddb, model, climatological_statistic, unique_id, extras):
-    sesh = populateddb.session
+def test_multimeta(
+    populateddb_session, model, climatological_statistic, unique_id, extras
+):
+    sesh = populateddb_session
     # Multimeta is wrapped for caching. Call the wrapped function
     rv = multimeta(
         sesh,
