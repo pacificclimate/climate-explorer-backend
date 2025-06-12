@@ -43,7 +43,7 @@ dependencies = [
     "Pint<1",
     "gunicorn==23.0.0",
     "nchelpers @ git+https://github.com/pacificclimate/nchelpers.git@py-sprint-25q1",
-    "modelmeta @ git+https://github.com/pacificclimate/modelmeta.git@py-sprint-25q1",
+    "modelmeta (==2.0.1)",
     "cf-cell-methods==0.1.0",
     "requests>=2.32,<3",
 ]
