@@ -1,5 +1,11 @@
 # News / Release Notes
 
+## 3.6.6
+**2025-Jun-12**
+
+- Maintenance updates to sphinx, poetry and python versions. [#249](https://github.com/pacificclimate/climate-explorer-backend/pull/249)
+
+
 ## 3.6.4
 **2024-Sep-24**
 
