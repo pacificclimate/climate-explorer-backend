@@ -1,0 +1,14 @@
+name: Black
+
+on: push
+
+jobs:
+  black:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - uses: psf/black@stable
+        with:
+          options: "--check"
