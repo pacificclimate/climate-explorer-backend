@@ -1,11 +1,9 @@
-"""module for requesting unique_ids from ensemble or model short name
-"""
+"""module for requesting unique_ids from ensemble or model short name"""
 
 from modelmeta import Ensemble
 
 
 def lister(sesh, ensemble_name="ce_files", model=None):
-
     """
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object

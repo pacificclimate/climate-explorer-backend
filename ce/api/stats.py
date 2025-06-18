@@ -1,5 +1,4 @@
-"""module for requsting summary statistics, averaged across a region
-"""
+"""module for requsting summary statistics, averaged across a region"""
 
 import numpy as np
 import numpy.ma as ma
@@ -26,7 +25,12 @@ na_array_stats = {
 
 
 def stats(
-    sesh, id_, time, area, variable, is_thredds=False,
+    sesh,
+    id_,
+    time,
+    area,
+    variable,
+    is_thredds=False,
 ):
     """Request and calculate summary statistics averaged across a region
 
@@ -133,7 +137,7 @@ def stats(
 
 def array_stats(array):
     """Return the min, max, mean, median, standard deviation and number
-       of cells of a 3d data grid (numpy.ma.MaskedArray)
+    of cells of a 3d data grid (numpy.ma.MaskedArray)
     """
     return {
         "min": np.min(array).item(),

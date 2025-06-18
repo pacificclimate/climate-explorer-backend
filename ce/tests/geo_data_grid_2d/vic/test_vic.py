@@ -7,7 +7,10 @@ from ce.geo_data_grid_2d.vic import VicDataGrid, VicDataGridNonuniformCoordinate
     "args, expected",
     [
         # Uniform coordinate steps
-        (dict(longitudes=(0, 1, 2), latitudes=(0, 2, 4)), (1, 2),),
+        (
+            dict(longitudes=(0, 1, 2), latitudes=(0, 2, 4)),
+            (1, 2),
+        ),
         # Nonuniform longitude steps
         (
             dict(longitudes=(0, 1, 3), latitudes=(0, 2, 4)),
@@ -97,17 +100,47 @@ def test_is_compatible(grid_1_args, grid_2_args, expected):
 
 
 @pytest.mark.parametrize(
-    "lon, y", ((0.051, 0), (0.1, 0), (0.149, 0), (0.151, 1), (0.2, 1), (0.249, 1),)
+    "lon, y",
+    (
+        (0.051, 0),
+        (0.1, 0),
+        (0.149, 0),
+        (0.151, 1),
+        (0.2, 1),
+        (0.249, 1),
+    ),
 )
 @pytest.mark.parametrize(
-    "lat, x", ((50.11, 0), (50.2, 0), (50.29, 0), (50.31, 1), (50.4, 1), (50.49, 1),)
+    "lat, x",
+    (
+        (50.11, 0),
+        (50.2, 0),
+        (50.29, 0),
+        (50.31, 1),
+        (50.4, 1),
+        (50.49, 1),
+    ),
 )
 def test_lonlat_to_xy(lon, lat, x, y, vic_data_grid_1):
     assert vic_data_grid_1.lonlat_to_xy((lon, lat)) == (x, y)
 
 
-@pytest.mark.parametrize("y, lon", ((0, 0.1), (1, 0.2), (2, 0.3),))
-@pytest.mark.parametrize("x, lat", ((0, 50.2), (1, 50.4), (3, 50.8),))
+@pytest.mark.parametrize(
+    "y, lon",
+    (
+        (0, 0.1),
+        (1, 0.2),
+        (2, 0.3),
+    ),
+)
+@pytest.mark.parametrize(
+    "x, lat",
+    (
+        (0, 50.2),
+        (1, 50.4),
+        (3, 50.8),
+    ),
+)
 def test_xy_to_lonlat(x, y, lon, lat, vic_data_grid_1):
     assert vic_data_grid_1.xy_to_lonlat((x, y)) == (lon, lat)
 

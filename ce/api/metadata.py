@@ -1,5 +1,5 @@
-"""module for requesting metadata for one single file through the API
-"""
+"""module for requesting metadata for one single file through the API"""
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from modelmeta import DataFile
@@ -131,4 +131,10 @@ def metadata(sesh, model_id, extras=""):
         }
     )
 
-    return {model_id: {**base_values, **requested_extra_values, **time_values,}}
+    return {
+        model_id: {
+            **base_values,
+            **requested_extra_values,
+            **time_values,
+        }
+    }

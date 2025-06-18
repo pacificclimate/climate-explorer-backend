@@ -14,6 +14,7 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
+
 from contexttimer import Timer
 
 from flask import abort
@@ -69,8 +70,8 @@ def watershed_streams(sesh, station, ensemble_name):
 
 
 def worker(station_lonlat, flow_direction):
-    """Returns the same as watershed_streams, this function exists to make 
-    these computations more easily testable. (Specifically, data *files* are not 
+    """Returns the same as watershed_streams, this function exists to make
+    these computations more easily testable. (Specifically, data *files* are not
     required, only the relevant contents of those files passed as `VicDataGrid` objects.
     `VicDataGrid`s are much easier to construct for tests.)
 
@@ -96,15 +97,20 @@ def worker(station_lonlat, flow_direction):
     # `watershed_lonlats` must be an ordered collection (not sets) because
     # a multi line string is an array (python list) of linestrings
     watershed_lonlats = [
-        [flow_direction.xy_to_lonlat(xy) for xy in stream]
-        for stream in watershed_xys
+        [flow_direction.xy_to_lonlat(xy) for xy in stream] for stream in watershed_xys
     ]
 
     lines = MultiLineString(watershed_lonlats)
 
     return {
-        "streams": geojson_feature(lines,),
-        "debug/test": {"watershed_streams": {"time": watershed_time.elapsed,}},
+        "streams": geojson_feature(
+            lines,
+        ),
+        "debug/test": {
+            "watershed_streams": {
+                "time": watershed_time.elapsed,
+            }
+        },
     }
 
 

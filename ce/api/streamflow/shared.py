@@ -55,7 +55,7 @@ def is_downstream(neighbour, cell, routing, direction_map):
 
 
 def VIC_direction_matrix(lat_step, lon_step):
-    """ Return a VIC direction matrix, which is a matrix indexed by the VIC
+    """Return a VIC direction matrix, which is a matrix indexed by the VIC
     streamflow direction codes 0...9, with the value at index `i` indicating
     the offsets from the data index in a streamflow file required to
     step in that streamflow direction.

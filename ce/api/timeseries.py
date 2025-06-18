@@ -1,5 +1,4 @@
-"""module for requesting sinlge-file data through the API
-"""
+"""module for requesting sinlge-file data through the API"""
 
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound

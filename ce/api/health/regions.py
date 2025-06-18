@@ -1,4 +1,5 @@
 """module for requesting a summary of stored region data status."""
+
 import os
 from csv import DictReader
 from ce.api.multimeta import multimeta
@@ -8,9 +9,9 @@ from flask import abort, request
 
 def region_status(region, metadata):
     """Opens a stored data file for a region, checks the modtime of the
-      stored data against the current versions of each file (as listed
-      in the metadata) and returns a list of the each file from which
-      stored data was calculated and its status."""
+    stored data against the current versions of each file (as listed
+    in the metadata) and returns a list of the each file from which
+    stored data was calculated and its status."""
 
     date_format = "%Y-%m-%dT%H:%M:%SZ"
 

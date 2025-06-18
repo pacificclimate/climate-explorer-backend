@@ -1,9 +1,8 @@
-""" PCIC Climate Explorer backend API module
+"""PCIC Climate Explorer backend API module
 
 .. moduleauthor:: James Hiebert <hiebert@uvic.ca>
 
 """
-
 
 import inspect
 from datetime import datetime
@@ -169,8 +168,10 @@ def format_dates(obj):
     if not isinstance(obj, dict):
         return obj
     return {
-        key: val.strftime(time_format)
-        if isinstance(val, datetime)
-        else format_dates(val)
+        key: (
+            val.strftime(time_format)
+            if isinstance(val, datetime)
+            else format_dates(val)
+        )
         for key, val in obj.items()
     }

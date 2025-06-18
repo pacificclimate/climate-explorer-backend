@@ -65,7 +65,7 @@ def is_dict_subset(dict1, dict2):
     "Subset" here means that every key in dict1 is in dict2, recursively
      for values that are themselves dicts. For values that are not dicts,
      then the values must be equal.
-     """
+    """
 
     def compare(value1, value2):
         if type(value1) == dict:

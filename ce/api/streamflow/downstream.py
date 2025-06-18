@@ -14,6 +14,7 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
+
 from gettext import dpgettext
 from this import d
 from contexttimer import Timer
@@ -53,7 +54,7 @@ def downstream(sesh, station, ensemble_name):
     and converting their contents to `VicDataGrid` objects for consumption by
     `downstream_worker`, which as its name suggests, does most of the work.
     """
-    
+
     station_lonlat = setup(station)
 
     with get_time_invariant_variable_dataset(
@@ -75,7 +76,8 @@ def downstream(sesh, station, ensemble_name):
 
 
 def downstream_worker(
-    station_lonlat, flow_direction,
+    station_lonlat,
+    flow_direction,
 ):
     """Compute the watershed.
 
@@ -136,16 +138,16 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
         represented by an offset of +1 or -1, respectively.
     :param debug: Boolean indicating whether this function should compute
         and return debug information.
-    :return: Tuple of cells (cell indices as tuples) that drain from `target` in 
+    :return: Tuple of cells (cell indices as tuples) that drain from `target` in
         a downstream flow order.
 
     Notes:
 
     - In this function, a cell is represented by an (x, y) index pair.
 
-    - Routing graphs can and in practice do contain cycles. Variable 
-    `stream` is used to check whether a cell has already been 
-    visited during the traversal of the routing graph, i.e., whether we 
+    - Routing graphs can and in practice do contain cycles. Variable
+    `stream` is used to check whether a cell has already been
+    visited during the traversal of the routing graph, i.e., whether we
     are cycling, and if so not to repeat that subgraph.
     """
 
@@ -156,10 +158,12 @@ def build_downstream_watershed(target, routing, direction_map, debug=False):
         cell_routing = routing[stream[-1]]
         downstream_neighbour = vec_add(stream[-1], direction_map[int(cell_routing)])
 
-        if downstream_neighbour in stream or not is_valid_index(downstream_neighbour, routing.shape):
+        if downstream_neighbour in stream or not is_valid_index(
+            downstream_neighbour, routing.shape
+        ):
             return stream
 
         stream += (downstream_neighbour,)
         return downstream(stream)
-        
+
     return downstream((target,))
