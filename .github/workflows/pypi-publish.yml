@@ -29,6 +29,6 @@ jobs:
         poetry config repositories.pcic https://pypi.pacificclimate.org/
         poetry config http-basic.pcic $PCIC_PYPI_USERNAME $PCIC_PYPI_PASSWORD
         # Install, build and publish
-        poetry install
+        # poetry install
         poetry build
         poetry publish -r pcic
