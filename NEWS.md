@@ -1,5 +1,10 @@
 # News / Release Notes
 
+## 3.6.7
+**2025-Jun-19**
+
+- Update workflows for black code styling check and pypi publication. [#252](https://github.com/pacificclimate/climate-explorer-backend/pull/252)
+
 ## 3.6.6
 **2025-Jun-12**
 
