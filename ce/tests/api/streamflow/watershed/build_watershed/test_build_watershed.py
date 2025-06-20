@@ -11,17 +11,34 @@ routing_1x1 = np_array(((N,),))
 
 # Fully connected routing arrays: All cells connect to the mouth
 
-routing_fc_3x3 = np_array(((S, S, SW), (S, SW, W), (OUTLET, W, W),))
+routing_fc_3x3 = np_array(
+    (
+        (S, S, SW),
+        (S, SW, W),
+        (OUTLET, W, W),
+    )
+)
 
 # Linear ccw spiral; distal point at (1,2)
 routing_fc_4x4 = np_array(
-    ((S, W, W, W), (S, S, W, N), (S, S, N, N), (OUTLET, E, E, N),)
+    (
+        (S, W, W, W),
+        (S, S, W, N),
+        (S, S, N, N),
+        (OUTLET, E, E, N),
+    )
 )
 
 # Partially connected routing arrays: Not all cells connect to the mouth
 
 # Norteasternmost cell does not connect to mouth
-routing_pc_3x3 = np_array(((S, S, N), (S, SW, W), (OUTLET, W, W),))
+routing_pc_3x3 = np_array(
+    (
+        (S, S, N),
+        (S, SW, W),
+        (OUTLET, W, W),
+    )
+)
 
 
 # Routing arrays with loops
@@ -30,10 +47,20 @@ routing_pc_3x3 = np_array(((S, S, N), (S, SW, W), (OUTLET, W, W),))
 routing_loop_1x2 = np_array(((E, W),))
 
 # Loop covering all cells in 2x2
-routing_loop_2x2_quad = np_array(((E, S), (N, W),))
+routing_loop_2x2_quad = np_array(
+    (
+        (E, S),
+        (N, W),
+    )
+)
 
 # Loop covering only 3 cells in 2x2
-routing_loop_2x2_tri = np_array(((E, S), (S, NW),))
+routing_loop_2x2_tri = np_array(
+    (
+        (E, S),
+        (S, NW),
+    )
+)
 
 
 @pytest.mark.parametrize(

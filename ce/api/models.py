@@ -1,11 +1,9 @@
-"""module for requesting list of available models
-"""
+"""module for requesting list of available models"""
 
 from modelmeta import Ensemble
 
 
 def models(sesh, ensemble_name="ce_files"):
-
     """
     Args
         sesh (sqlalchemy.orm.session.Session): A database Session object

@@ -1,5 +1,4 @@
-"""module for requesting the lat/lon grid for a given model run file
-"""
+"""module for requesting the lat/lon grid for a given model run file"""
 
 from sqlalchemy.orm.exc import NoResultFound
 

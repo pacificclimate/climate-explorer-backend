@@ -1,5 +1,4 @@
-"""module for requesting metadata from multiple files based on model or ensemble
-"""
+"""module for requesting metadata from multiple files based on model or ensemble"""
 
 from modelmeta import DataFile, Model, Emission, Run
 from modelmeta import DataFileVariableGridded, VariableAlias, TimeSet
@@ -47,7 +46,7 @@ def multimeta(
         climatological_statistic(str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile"). Defaulted to "mean".
-        
+
         percentile(float): optionally, specify a a single percentile values to filter on.
 
     Returns:

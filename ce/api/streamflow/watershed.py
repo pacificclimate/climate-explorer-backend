@@ -14,6 +14,7 @@ Functions `lonlat_to_xy()` and `xy_to_lonlat()`, which translate from a
 spatial tuple to a data index tuple and vice versa, also switch the
 dimension order accordingly.
 """
+
 import math
 from contexttimer import Timer
 
@@ -59,17 +60,21 @@ def watershed(sesh, station, ensemble_name):
     """
     station_lonlat = setup(station)
 
-    with get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "flow_direction"
-    ) as flow_direction_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elev"
-    ) as elevation_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elevmin"
-    ) as elevation_min_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "elevmax"
-    ) as elevation_max_ds, get_time_invariant_variable_dataset(
-        sesh, ensemble_name, "area"
-    ) as area_ds:
+    with (
+        get_time_invariant_variable_dataset(
+            sesh, ensemble_name, "flow_direction"
+        ) as flow_direction_ds,
+        get_time_invariant_variable_dataset(
+            sesh, ensemble_name, "elev"
+        ) as elevation_ds,
+        get_time_invariant_variable_dataset(
+            sesh, ensemble_name, "elevmin"
+        ) as elevation_min_ds,
+        get_time_invariant_variable_dataset(
+            sesh, ensemble_name, "elevmax"
+        ) as elevation_max_ds,
+        get_time_invariant_variable_dataset(sesh, ensemble_name, "area") as area_ds,
+    ):
         try:
             return worker(
                 station_lonlat,
@@ -218,7 +223,10 @@ def worker(
             "elevation_units": elevation_mean.units,
             "area_units": area.units,
         },
-        "melton_ratio": {"units": "km/km", "value": m_ratio,},
+        "melton_ratio": {
+            "units": "km/km",
+            "value": m_ratio,
+        },
         "boundary": geojson_feature(
             outline,
             properties={

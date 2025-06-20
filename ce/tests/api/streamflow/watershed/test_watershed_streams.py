@@ -25,7 +25,10 @@ from test_utils import check_dict_subset
             {
                 "streams": {
                     "type": "Feature",
-                    "geometry": {"coordinates": (), "type": "MultiLineString",},
+                    "geometry": {
+                        "coordinates": (),
+                        "type": "MultiLineString",
+                    },
                 },
             },
         ),
@@ -84,7 +87,13 @@ from test_utils import check_dict_subset
     ),
 )
 def test_worker(
-    lon, lat, expected, flow_direction_1,
+    lon,
+    lat,
+    expected,
+    flow_direction_1,
 ):
-    result = worker((lon, lat), flow_direction_1,)
+    result = worker(
+        (lon, lat),
+        flow_direction_1,
+    )
     check_dict_subset(expected, result)

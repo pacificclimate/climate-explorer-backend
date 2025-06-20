@@ -1,5 +1,4 @@
-"""module for requesting data across multiple files through the API
-"""
+"""module for requesting data across multiple files through the API"""
 
 import numpy as np
 import os
@@ -61,9 +60,9 @@ def data(
         climatological_statistic (str): Statistical operation applied to variable in a
             climatological dataset (e.g "mean", "standard_deviation",
             "percentile). Defaulted to "mean".
-        
+
         percentile (float): if climatological_statistic is "percentile", specifies what
-            percentile value to use. A percentile value must be provided if the 
+            percentile value to use. A percentile value must be provided if the
             climatological_statistic is "percentile".
 
         is_thredds (bool): If set to `True` the filepath will be searched for

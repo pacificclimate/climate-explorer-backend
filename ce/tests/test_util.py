@@ -110,7 +110,7 @@ def test_open_nc(local, online):
 
 
 @pytest.mark.online
-@pytest.mark.parametrize(("bad_path"), [("/bad/path/to/file.nc")])
+@pytest.mark.parametrize(("bad_path"), ["/bad/path/to/file.nc"])
 def test_open_nc_exception(bad_path):
     with pytest.raises(Exception):
         with open_nc(bad_path) as nc:

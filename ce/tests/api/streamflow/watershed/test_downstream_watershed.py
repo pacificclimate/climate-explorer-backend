@@ -54,7 +54,13 @@ from test_utils import check_dict_subset
     ),
 )
 def test_downstream_worker(
-    lon, lat, expected, flow_direction_1,
+    lon,
+    lat,
+    expected,
+    flow_direction_1,
 ):
-    result = downstream_worker((lon, lat), flow_direction_1,)
+    result = downstream_worker(
+        (lon, lat),
+        flow_direction_1,
+    )
     check_dict_subset(expected, result)

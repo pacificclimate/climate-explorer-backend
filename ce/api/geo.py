@@ -219,7 +219,7 @@ def polygon_to_mask(nc, resource, poly, variable):
 
 def make_masked_file_key(nc, resource, wkt, varname):
     """generates a key suitable for characterizing a masked netCDF file:
-       filename and polygon"""
+    filename and polygon"""
     return (resource, wkt)
 
 

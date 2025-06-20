@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+\.dev[0-9]+'
 
 jobs:
   publish:
@@ -16,14 +17,18 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.12'
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine sphinx
-    - name: Build and publish
+        curl -sSL https://install.python-poetry.org | python3 -
+    - name: Install and publish project
       env:
-        TWINE_USERNAME: ${{ secrets.pcic_at_pypi_username }}
-        TWINE_PASSWORD: ${{ secrets.pcic_at_pypi_password }}
+        PCIC_PYPI_USERNAME: ${{ secrets.pcic_at_pypi_username }}
+        PCIC_PYPI_PASSWORD: ${{ secrets.pcic_at_pypi_password }}
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload --repository-url https://pypi.pacificclimate.org/ --skip-existing -u $TWINE_USERNAME -p $TWINE_PASSWORD dist/*
+        # Configure Poetry to publish to PCIC private package repository
+        poetry config repositories.pcic https://pypi.pacificclimate.org/
+        poetry config http-basic.pcic $PCIC_PYPI_USERNAME $PCIC_PYPI_PASSWORD
+        # Install, build and publish
+        # poetry install
+        poetry build
+        poetry publish -r pcic

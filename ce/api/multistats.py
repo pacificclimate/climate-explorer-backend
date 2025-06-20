@@ -1,5 +1,4 @@
-"""module for requesting stats from multiple files based on model or ensemble
-"""
+"""module for requesting stats from multiple files based on model or ensemble"""
 
 from ce.api.stats import stats
 from ce.api.util import search_for_unique_ids
