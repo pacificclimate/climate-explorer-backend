@@ -3,15 +3,14 @@ name: Docker Publishing
 on:
   push:
     branches:
-      - '*'
+      - "*"
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: read
 jobs:
   publish:
-
     runs-on: ubuntu-24.04
 
     steps:
@@ -30,4 +29,4 @@ jobs:
           push: true
           tags: |
             pcic/climate-explorer-backend:${{ github.ref_name }}
-            ${{ github.ref_name == 'main' && 'pcic/climate-explorer-backend:latest' || '' }}
+            ${{ github.ref_name == 'master' && 'pcic/climate-explorer-backend:latest' || '' }}
