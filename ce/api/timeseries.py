@@ -65,7 +65,6 @@ def timeseries(sesh, id_, area, variable):
     ti.sort(key=lambda x: x[1])
 
     with open_nc(file_.filename) as nc:
-
         data = OrderedDict(
             [
                 (

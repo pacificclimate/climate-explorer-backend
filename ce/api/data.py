@@ -212,7 +212,6 @@ def data(
 
     result = {}
     for data_file_variable in data_file_variables:
-
         try:
             run_result = result[data_file_variable.file.run.name]
         except KeyError:

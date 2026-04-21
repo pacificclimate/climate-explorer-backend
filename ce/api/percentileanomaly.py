@@ -339,7 +339,6 @@ def percentileanomaly(
                             )
 
                     if row["climatology"] == climatology:
-
                         projected_data, models = add_to_nested_li(
                             projected_data, row, ctimestamp, models
                         )
@@ -349,7 +348,6 @@ def percentileanomaly(
                         and row["model"] == baseline_model
                         and row["climatology"] == baseline_climatology
                     ):
-
                         baseline_data, _ = add_to_nested_li(
                             baseline_data, row, ctimestamp
                         )
