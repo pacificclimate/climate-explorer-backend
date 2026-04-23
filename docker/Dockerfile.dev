@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get install libffi-dev
 RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH=/root/.local/bin:$PATH
-RUN poetry install --with=dev
+RUN poetry install --extras dev
 
 ADD . /app/
 

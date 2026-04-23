@@ -17,4 +17,5 @@ jobs:
           python-version: "3.12" # Python ≥3.11 required for use_pyproject
       - uses: psf/black@35ea67920b7f6ac8e09be1c47278752b1e827f76 # stable
         with:
-          options: "--check --target-version py312"
+          use_pyproject: true
+          options: "--check"

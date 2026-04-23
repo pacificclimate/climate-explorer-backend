@@ -5,18 +5,18 @@ requires-python = ">=3.11,<4"
 description = "PCIC's Climate Explorer (CE)"
 authors = [
     {name = "Pacific Climate Impacts Consortium"},
-    {name = "Rod Glover", email = "<rglover@uvic.ca>"},
-    {name = "James Hiebert", email = "<hiebert@uvic.ca>"},
+    {name = "Rod Glover", email = "rglover@uvic.ca"},
+    {name = "James Hiebert", email = "hiebert@uvic.ca"},
     {name = "Nik Rados"},
-    {name = "Lee Zeman", email = "<lzeman@uvic.ca>"},
+    {name = "Lee Zeman", email = "lzeman@uvic.ca"},
     {name = "Jonathan Helfrich"},
     {name = "Ada Sungar"},
     {name = "Cairo Sanders"},
-    {name = "Quintin Sparks", email = "<quintins@uvic.ca>"},
+    {name = "Quintin Sparks", email = "quintins@uvic.ca"},
     {name = "Basil Veerman"},
     {name = "Eric Yvorchuk"},
 ]
-license = "GPL3"
+license = "GPL-3.0-only"
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -48,18 +48,19 @@ dependencies = [
     "requests>=2.32,<3",
 ]
 
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=3.0.0"
-python-dateutil = "^2.8.2"
-black = "^23.11.0"
-pre-commit = "^3.5.0"
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^8.2.3"
-sphinx-pyproject = "^0.3.0"
-m2r2 = "^0.3.4"
-poethepoet = "^0.34.0"
+[project.optional-dependencies]
+dev = [
+    "pytest>=3.0.0",
+    "python-dateutil>=2.8.2,<3.0.0",
+    "black>=23.11.0,<24.0.0",
+    "pre-commit>=3.5.0,<4.0.0",
+]
+docs = [
+    "sphinx>=8.2.3,<9.0.0",
+    "sphinx-pyproject>=0.3.0,<0.4.0",
+    "m2r2>=0.3.4,<0.4.0",
+    "poethepoet>=0.34.0,<0.35.0",
+]
 
 [[tool.poetry.source]]
 name = "pcic"
@@ -76,6 +77,9 @@ markers = [
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 norecursedirs = ".git site-packages _build *.egg ce/tests/helpers"
+
+[tool.black]
+target-version = ["py311", "py312"]
 
 [tool.poe.tasks]
 document = "sphinx-build doc/source doc/build/html"
