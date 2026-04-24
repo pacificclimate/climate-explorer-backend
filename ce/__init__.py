@@ -3,6 +3,10 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
+from ce.api.multimeta_cache import (
+    DEFAULT_PRELOAD_MULTIMETA_PARAMS,
+    preload_multimeta_cache,
+)
 
 from ce.views import add_routes
 
@@ -17,6 +21,10 @@ def get_app(config=None):
         ),
         "SQLALCHEMY_ENGINE_OPTIONS": {"pool_pre_ping": True},
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+        "MULTIMETA_CACHE_DIR": os.getenv("MULTIMETA_CACHE_DIR", "/tmp/multimeta-cache"),
+        "MULTIMETA_CACHE_ENABLED": True,
+        "MULTIMETA_PRELOAD_PARAMS": DEFAULT_PRELOAD_MULTIMETA_PARAMS,
+        "PRELOAD_MULTIMETA_CACHE": True,
     }
     app.config.update(default_config)
 
@@ -24,4 +32,5 @@ def get_app(config=None):
         app.config.update(config)
 
     add_routes(app)
+    preload_multimeta_cache(app)
     return app
