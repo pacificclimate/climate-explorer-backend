@@ -100,7 +100,6 @@ class memoize(object):
         self.maxsize = maxsize
 
     def __call__(self, func):
-
         # Under normal circumstances, the callable object returned by this function (and
         # therefore the decorator as a whole) should be called as if it were a decorated
         # function.

@@ -21,6 +21,10 @@ from ce.api.multimeta import multimeta
 from ce.api.lister import lister
 from ce.api.grid import grid
 from ce.api.percentileanomaly import percentileanomaly
+from ce.api.multimeta_cache import (
+    cache_multimeta_response,
+    get_cached_multimeta_response,
+)
 from ce.api.streamflow.watershed import watershed
 from ce.api.streamflow.watershed_streams import watershed_streams
 from ce.api.streamflow.downstream import downstream
@@ -107,6 +111,12 @@ def call(session, request_type, item=None):
     }
 
     args.update(kwargs)
+
+    if request_type == "multimeta" and not item and request.method == "GET":
+        cached_response = get_cached_multimeta_response(args)
+        if cached_response is not None:
+            return cached_response
+
     # Note: all arguments to the delegate functions are necessarily strings
     # at this point, since they're all coming through the URL query
     # parameters
@@ -114,6 +124,16 @@ def call(session, request_type, item=None):
         rv = func(session, item, **args)
     else:
         rv = func(session, **args)
+
+    resp = make_json_response(rv)
+
+    if request_type == "multimeta" and not item and request.method == "GET":
+        cache_multimeta_response(args, resp)
+
+    return resp
+
+
+def make_json_response(rv):
     modtime = find_modtime(rv)
     resp = Response(dumps(format_dates(rv)), content_type="application/json")
     resp.last_modified = modtime

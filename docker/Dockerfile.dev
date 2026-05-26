@@ -1,20 +1,22 @@
 FROM pcic/geospatial-python:3.8.4
 
 RUN mkdir /app
-ADD poetry.lock /app
-ADD pyproject.toml /app
 WORKDIR /app
 
-RUN apt-get install libffi-dev
-RUN wget -O - https://install.python-poetry.org | python3 -
-ENV PATH=/root/.local/bin:$PATH
-RUN poetry install --with=dev
+RUN apt-get update && apt-get install -yq libffi-dev pipx
+
+COPY poetry.lock pyproject.toml /app/
+
+ENV PATH="/root/.local/bin:${PATH}"
+RUN pipx install "poetry==2.4.0"
 
 ADD . /app/
+RUN poetry install --extras dev
+
 
 EXPOSE 8000
-ENV FLASK_APP ce.wsgi:app
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV FLASK_APP=ce.wsgi:app
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
-CMD poetry run flask run -p 8000 -h 0.0.0.0 --no-reload
+CMD ["poetry", "run", "flask", "run", "-p", "8000", "-h", "0.0.0.0", "--no-reload"]

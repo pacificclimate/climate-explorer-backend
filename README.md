@@ -69,17 +69,17 @@ export THREDDS_URL_ROOT=https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thr
 Setup using `poetry` which sets up the virtual environment automatically.
 
 ```bash
-$ poetry install # --with=dev to include development packages
+$ poetry install # use --extras dev to include development packages
 $ poetry shell
 ```
 
 Development packages are listed under
-`[tool.poetry.group.dev.dependencies]` in the `pyproject.toml` file.
+`[project.optional-dependencies].dev` in the `pyproject.toml` file.
 
 #### Pre-commit hook
 The `pre-commit hook` will run checks against your code whenever you make a commit. This prevents styling from breaking the CI/CD actions pipeline. This will be automatically installed by the command above, but to do so manually run the following:
 ```bash
-$ poetry add --group=dev pre-commit
+$ poetry install --extras dev
 ```
 
 ### Building the Documentation
@@ -87,7 +87,7 @@ $ poetry add --group=dev pre-commit
 You can install documentation requirements, including [poethepoet](https://poethepoet.natn.io/) to automaticaly run documentaion scripts, with
 
 ```bash
-poetry install --with docs
+poetry install --extras docs
 ```
 
 And then use poe to build the HTML documentation in the `doc/build/html` directory:

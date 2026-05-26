@@ -2,34 +2,39 @@ name: Python CI
 
 on: push
 
+permissions:
+  contents: read
 jobs:
   test:
-
     runs-on: ubuntu-24.04
     container: pcic/geospatial-python:3.8.4
+    env:
+      HOME: /root
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install system dependencies
-      run: |
-        apt-get update 
-        apt-get install -yq libxml2-dev libxslt-dev libffi-dev wget
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install system dependencies
+        run: |
+          apt-get update 
+          apt-get install -yq libxml2-dev libxslt-dev libffi-dev wget pipx
 
-    - name: Install poetry
-      run: |
-        wget -O - https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        
-    - name: Install python dependencies
-      run: |
-        poetry install --with=dev
+      - name: Install poetry
+        run: |
+          pipx install "poetry==2.4.0"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Test with pytest (full)
-      if: github.ref == 'refs/heads/master'
-      run: |
-        poetry run py.test -m "not online" -v
-    
-    - name: Test with pytest (fast)
-      if: github.ref != 'refs/heads/master'
-      run: |
-        poetry run py.test -m "not online and not slow" -v
+      - name: Install python dependencies
+        run: |
+          poetry install --extras dev
+
+      - name: Test with pytest (full)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          poetry run py.test -m "not online" -v
+
+      - name: Test with pytest (fast)
+        if: github.ref != 'refs/heads/master'
+        run: |
+          poetry run py.test -m "not online and not slow" -v

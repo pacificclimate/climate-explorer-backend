@@ -4,7 +4,6 @@ import ce.api
 
 
 def add_routes(app):
-
     db = SQLAlchemy(app)
 
     @app.route("/api/<request_type>", methods=["GET", "POST"])
