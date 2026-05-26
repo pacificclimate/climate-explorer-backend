@@ -1,5 +1,12 @@
 # News / Release Notes
 
+## 3.7.0
+**2026-May-26**
+- Maintenance updates [#254](https://github.com/pacificclimate/climate-explorer-backend/pull/254)
+
+- Add multimeta cache
+
+
 ## 3.6.7
 **2025-Jun-19**
 
