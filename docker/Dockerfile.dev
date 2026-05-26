@@ -1,18 +1,14 @@
 FROM pcic/geospatial-python:3.8.4
 
 RUN mkdir /app
-ADD poetry.lock /app
-ADD pyproject.toml /app
 WORKDIR /app
 
-RUN apt-get update && apt-get install -yq libffi-dev curl
+RUN apt-get update && apt-get install -yq libffi-dev pipx
 
 COPY poetry.lock pyproject.toml /app/
 
-ENV POETRY_HOME="/opt/poetry"
-ENV PATH="${POETRY_HOME}/bin:${PATH}"
-
-RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:${PATH}"
+RUN pipx install "poetry==2.4.0"
 
 ADD . /app/
 RUN poetry install --extras dev

@@ -6,14 +6,15 @@ RUN apt-get update && \
     libxml2-dev \
     libgeos-dev \
     libffi-dev \
-    wget
+    pipx \
+    && rm -rf /var/lib/apt/lists/*
 
 ADD . /app
 WORKDIR /app
 
-RUN wget -O - https://install.python-poetry.org | python3 -
 ENV PATH="/root/.local/bin:${PATH}"
-RUN /root/.local/bin/poetry install
+RUN pipx install "poetry==2.4.0"
+RUN poetry install
 
 EXPOSE 8000
 
@@ -24,4 +25,4 @@ EXPOSE 8000
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
 
-ENTRYPOINT ["/root/.local/bin/poetry", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
+ENTRYPOINT ["poetry", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
