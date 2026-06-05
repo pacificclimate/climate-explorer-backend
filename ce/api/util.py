@@ -68,12 +68,9 @@ def open_nc(resource):
             f"The metadata database is out of sync with the filesystem. I was told to open file with name {resource}, but it does not exist."
         )
 
-    try:
-        nc = Dataset(resource, "r")
+    with Dataset(resource, "r") as nc:
         nc.set_always_mask(False)
         yield nc
-    finally:
-        nc.close()
 
 
 def get_array(nc, resource, time, area, variable):

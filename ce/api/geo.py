@@ -263,10 +263,11 @@ def polygon_to_masked_array(nc, resource, poly, variable):
 @contextmanager
 def rasterio_thredds_helper(resource, variable):
     """
-    Opens a remote NetCDF resource for Rasterio, handling OpenDAP (dodsC) or fileServer as needed.
-    Assumes Rasterio has GDAL with OpenDAP support.
+    Opens a remote NetCDF resource for Rasterio via GDAL's vsicurl.
+    THREDDS dodsC (OPeNDAP) URLs are converted to fileServer URLs since
+    GDAL's NetCDF driver requires direct HTTP file access, not OPeNDAP.
     """
-    # Construct proper NetCDF subdataset path
-    dataset_url = f'NETCDF:"{resource}":{variable}'
+    http_resource = resource.replace("/dodsC/", "/fileServer/", 1)
+    dataset_url = f'NETCDF:"/vsicurl/{http_resource}":{variable}'
     with rasterio.open(dataset_url, mode="r", driver="NetCDF") as raster:
         yield raster
