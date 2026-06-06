@@ -7,6 +7,7 @@ RUN apt-get update && \
     libgeos-dev \
     libffi-dev \
     pipx \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 ADD . /app
@@ -17,6 +18,9 @@ RUN pipx install "poetry==2.4.0"
 RUN poetry install
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/readyz || exit 1
 
 # gunicorn.conf is set up so that one can tune gunicorn settings when
 # running the container by setting environment an variable
