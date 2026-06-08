@@ -120,6 +120,7 @@ def test_geojson_feature(thing, kwargs, expected):
 )
 def test_outline(centres, height, width, expected):
     ol = outline_cell_rect(centres, height, width)
+    assert isinstance(ol, (Polygon, MultiPolygon))
     assert ol.equals(expected)
 
 
@@ -136,7 +137,7 @@ def test_outline(centres, height, width, expected):
     ),
 )
 def test_WKT_point_to_lonlat(text, result):
-    if type(result) == tuple:
+    if isinstance(result, tuple):
         assert WKT_point_to_lonlat(text) == result
     else:
         with pytest.raises(result):

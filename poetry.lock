@@ -2008,4 +2008,4 @@ docs = ["m2r2", "poethepoet", "sphinx", "sphinx-pyproject"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4"
-content-hash = "b990150c67b24a517b871efe4ba68c3b1786c2aa1c28397a0032ba06f051f0d9"
+content-hash = "e2202a240c953b266e753db4a5ae2d833b0e15cd35d2effe46e90d8b68bae988"

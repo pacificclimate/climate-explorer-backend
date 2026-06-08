@@ -32,9 +32,10 @@ from ce import get_app
 
 # Filesystem root where /testdata/ database paths are stored locally.
 # Override with TESTDATA_PATH env var if files live elsewhere.
-_TESTDATA_LOCAL = os.getenv(
-    "TESTDATA_PATH", "/storage/data/projects/comp_support/daccs/test-data"
-)
+_default_testdata = "/storage/data/projects/comp_support/daccs/test-data"
+if not os.path.exists(_default_testdata):
+    _default_testdata = os.path.join(os.path.dirname(__file__), "data")
+_TESTDATA_LOCAL = os.getenv("TESTDATA_PATH", _default_testdata)
 
 
 def resource_filename(package, path):
