@@ -1,5 +1,13 @@
 # News / Release Notes
 
+## 3.8.0
+**2026-Jun-10**
+
+- [#256](https://github.com/pacificclimate/climate-explorer-backend/pull/256) Allow customisation of SqlAlchemy pool for pgbouncer
+- [#256](https://github.com/pacificclimate/climate-explorer-backend/pull/256) Add readyz healthceck route
+- [#255](https://github.com/pacificclimate/climate-explorer-backend/pull/255) Bumps to package versions and upgrade to pythong 3.14 compatability
+- [#255](https://github.com/pacificclimate/climate-explorer-backend/pull/255) Add devcontainer setup files for local development convenience
+
 ## 3.7.0
 **2026-May-26**
 - Maintenance updates [#254](https://github.com/pacificclimate/climate-explorer-backend/pull/254)

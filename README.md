@@ -175,7 +175,7 @@ If using the test data is sufficient, use `-e "MDDB_DSN=sqlite:////app/ce/tests/
 
 Creating a versioned release involves:
 
-1. Incrementing `__version__` in `setup.py`
+1. Incrementing `__version__` in `pyproject.toml`
 2. Summarize the changes from the last release in `NEWS.md`
 3. Commit these changes, then tag the release:
 
