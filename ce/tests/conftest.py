@@ -30,6 +30,13 @@ from netCDF4 import Dataset
 
 from ce import get_app
 
+# Filesystem root where /testdata/ database paths are stored locally.
+# Override with TESTDATA_PATH env var if files live elsewhere.
+_default_testdata = "/storage/data/projects/comp_support/daccs/test-data"
+if not os.path.exists(_default_testdata):
+    _default_testdata = os.path.join(os.path.dirname(__file__), "data")
+_TESTDATA_LOCAL = os.getenv("TESTDATA_PATH", _default_testdata)
+
 
 def resource_filename(package, path):
     return str(files(import_module(package)) / path)
@@ -239,6 +246,8 @@ def populateddb_session(
                 "ce",
                 "tests/data/{}".format(filename),
             )
+        elif filename.startswith("/testdata/"):
+            filename = os.path.join(_TESTDATA_LOCAL, filename[len("/testdata/") :])
         return DataFile(
             filename=filename,
             unique_id=unique_id,
@@ -277,7 +286,7 @@ def populateddb_session(
     )
     df_5_monthly_online = make_data_file(
         unique_id="tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
-        filename="/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+        filename="/testdata/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
         run=run3,
     )
     df_5_seasonal = make_data_file(
@@ -294,7 +303,7 @@ def populateddb_session(
     )
     df_6_monthly_online = make_data_file(
         unique_id="tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test",
-        filename="/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+        filename="/testdata/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
         run=run3,
     )
     df_6_seasonal = make_data_file(
@@ -1193,7 +1202,18 @@ def polygon(
 
 @pytest.fixture
 def mock_thredds_url_root(monkeypatch):
-    monkeypatch.setenv(
-        "THREDDS_URL_ROOT",
-        "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/",
-    )
+    _thredds_base = "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/testdata"
+
+    def _apply_thredds_root(filename):
+        rel = (
+            filename[len(_TESTDATA_LOCAL) :].lstrip("/")
+            if filename.startswith(_TESTDATA_LOCAL)
+            else filename.lstrip("/")
+        )
+        return f"{_thredds_base}/{rel}"
+
+    import importlib
+
+    stats_module = importlib.import_module("ce.api.stats")
+    monkeypatch.setenv("THREDDS_URL_ROOT", f"{_thredds_base}/")
+    monkeypatch.setattr(stats_module, "apply_thredds_root", _apply_thredds_root)

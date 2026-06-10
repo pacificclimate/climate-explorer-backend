@@ -249,8 +249,9 @@ def polygon_to_masked_array(nc, resource, poly, variable):
 
         return array * scale_factor + add_offset
 
-    if "dodsC" in resource:
-        with rasterio_thredds_helper(resource, variable) as raster:
+    if "http" in resource:
+        fs_resource = resource.replace("/dodsC/", "/fileServer/", 1)
+        with rasterio_thredds_helper(fs_resource, variable) as raster:
             return polygon_to_masked_array_helper(raster)
 
     # Local file path case
@@ -263,10 +264,10 @@ def polygon_to_masked_array(nc, resource, poly, variable):
 @contextmanager
 def rasterio_thredds_helper(resource, variable):
     """
-    Opens a remote NetCDF resource for Rasterio, handling OpenDAP (dodsC) or fileServer as needed.
-    Assumes Rasterio has GDAL with OpenDAP support.
+    Opens a remote NetCDF resource for Rasterio via GDAL's vsicurl.
+    Expects a fileServer URL; GDAL's NetCDF driver requires direct HTTP
+    file access and cannot use OPeNDAP.
     """
-    # Construct proper NetCDF subdataset path
-    dataset_url = f'NETCDF:"{resource}":{variable}'
+    dataset_url = f'NETCDF:"/vsicurl/{resource}":{variable}'
     with rasterio.open(dataset_url, mode="r", driver="NetCDF") as raster:
         yield raster

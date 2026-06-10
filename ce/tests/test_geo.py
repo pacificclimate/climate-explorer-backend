@@ -136,12 +136,12 @@ def test_make_mask_grid_key(ncobject, polygon):
     [
         (
             "ce/tests/data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/fileServer/datasets/testdata/tasmin_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
             "tasmin",
         ),
         (
             "ce/tests/data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230.nc",
-            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/dodsC/datasets/storage/data/projects/comp_support/daccs/test-data/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
+            "https://marble-dev01.pcic.uvic.ca/twitcher/ows/proxy/thredds/fileServer/datasets/testdata/tasmax_mClim_BNU-ESM_historical_r1i1p1_19650101-19701230_test.nc",
             "tasmax",
         ),
     ],
