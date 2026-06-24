@@ -1,22 +1,45 @@
-FROM pcic/geospatial-python:3.8.4
+# syntax=docker/dockerfile:1
 
-RUN mkdir /app
+# Development image: single stage, runs the Flask dev server.
+# Built on the same geospatial-python base as production (Ubuntu 26.04,
+# Python 3.14, GDAL 3.12.2) so dev matches prod. The base ships a prebuilt
+# virtualenv at /opt/venv with the geospatial stack; we install the project
+# (with its dev extras) on top of it.
+ARG GEOSPATIAL_PYTHON_TAG=3.12.2
+FROM pcic/geospatial-python:${GEOSPATIAL_PYTHON_TAG}
+
+ENV PIP_NO_CACHE_DIR=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_HOME=/opt/poetry \
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    FLASK_APP=ce.wsgi:app \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
+
+# Build tooling + dev headers for dependencies that compile from source.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        python3-dev \
+        python3-venv \
+        git \
+        libpq-dev \
+        libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Poetry in its own isolated virtualenv so it never pollutes /opt/venv.
+RUN python3 -m venv "$POETRY_HOME" \
+    && "$POETRY_HOME/bin/pip" install --no-cache-dir "poetry==2.4.0"
+
 WORKDIR /app
 
-RUN apt-get update && apt-get install -yq libffi-dev pipx
-
-COPY poetry.lock pyproject.toml /app/
-
-ENV PATH="/root/.local/bin:${PATH}"
-RUN pipx install "poetry==2.4.0"
-
-ADD . /app/
-RUN poetry install --extras dev
-
+# Dependencies first (better layer caching), then the project itself.
+COPY pyproject.toml poetry.lock ./
+RUN "$POETRY_HOME/bin/poetry" install --extras dev --no-root
+COPY . .
+RUN "$POETRY_HOME/bin/poetry" install --extras dev
 
 EXPOSE 8000
-ENV FLASK_APP=ce.wsgi:app
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
 
-CMD ["poetry", "run", "flask", "run", "-p", "8000", "-h", "0.0.0.0", "--no-reload"]
+CMD ["flask", "run", "-p", "8000", "-h", "0.0.0.0", "--no-reload"]

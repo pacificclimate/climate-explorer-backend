@@ -21,7 +21,9 @@ readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12"
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
 ]
 keywords = [
     "sql",
@@ -34,8 +36,11 @@ dependencies = [
     "Flask-SQLAlchemy>=3.0.5,<4",
     "Flask-Cors>=4.0.0,<5",
     "shapely>2.0,<3",
-    "numpy<2",
-    "GDAL>=3.3.0,<3.4",
+    "numpy>=2,<3",
+    # GDAL is provided by the pcic/geospatial-python base image; the Python
+    # bindings must match the system libgdal exactly. Keep this pin in sync
+    # with the geospatial-python image tag used in the Dockerfiles.
+    "GDAL==3.12.2",
     "rasterio>=1.4,<2",
     "SQLAlchemy>=2.0.40,<3.0.0",
     "contexttimer==0.3.3",
@@ -75,10 +80,10 @@ markers = [
     "online: marks tests that use an online resource (deselect with '-m \"not online\"')",
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
-norecursedirs = ".git site-packages _build *.egg ce/tests/helpers"
+norecursedirs = ".git .venv .cache site-packages _build *.egg ce/tests/helpers"
 
 [tool.black]
-target-version = ["py311", "py312"]
+target-version = ["py311", "py312", "py313", "py314"]
 
 [tool.poe.tasks]
 document = "sphinx-build doc/source doc/build/html"

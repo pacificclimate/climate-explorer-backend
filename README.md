@@ -38,11 +38,12 @@ developing on a system where the most recent GDAL system libraries are
 not available (e.g. Ubuntu bionic), feel free to install a lesser
 version of GDAL for development purposes. You may be able to install a
 different version and resolve the dependencies by executing something
-like `poetry add GDAL==3.3`, but your mileage may vary.
+like `poetry add GDAL==3.12.2` to match your system libraries, but your
+mileage may vary.
 
-If you prefer to build GDAL from source (not recommended), there is a
-`build_gdal.sh` script in the repo that does reasonably well. The
-specifics in the script may need a bit of tweaking.
+The official Docker images and the devcontainer avoid this complication
+by building on the `pcic/geospatial-python` base image, which ships the
+system GDAL libraries and matching Python bindings already installed.
 
 
 #### Troubleshooting
