@@ -30,7 +30,6 @@ from ce.api.streamflow.watershed_streams import watershed_streams
 from ce.api.streamflow.downstream import downstream
 from ce.api.health.regions import regions
 
-
 methods = {
     "stats": stats,
     "multistats": multistats,

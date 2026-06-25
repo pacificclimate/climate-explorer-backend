@@ -1,7 +1,6 @@
 import re
 import numpy
 
-
 direction_map = (
     (0, 0),  # filler - 0 is not used in the encoding
     (1, 0),  # 1 = north

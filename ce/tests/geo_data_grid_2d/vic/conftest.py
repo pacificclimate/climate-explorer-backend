@@ -2,7 +2,6 @@ import pytest
 import numpy
 from ce.geo_data_grid_2d.vic import VicDataGrid
 
-
 # Longitudes
 
 

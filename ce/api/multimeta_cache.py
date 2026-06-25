@@ -8,7 +8,6 @@ from urllib.parse import urlencode
 from flask import current_app
 from werkzeug.wrappers import Response
 
-
 DEFAULT_MULTIMETA_PARAMS = {
     "ensemble_name": "ce_files",
     "model": "",

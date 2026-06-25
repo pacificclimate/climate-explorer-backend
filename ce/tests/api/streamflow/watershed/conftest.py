@@ -3,7 +3,6 @@ import numpy
 from ce.geo_data_grid_2d.vic import VicDataGrid
 from test_utils import np_array, N, E, SE, S, SW, W, OUTLET
 
-
 # Longitudes
 
 
