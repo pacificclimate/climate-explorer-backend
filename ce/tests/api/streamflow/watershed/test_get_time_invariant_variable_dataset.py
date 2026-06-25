@@ -2,7 +2,6 @@ import pytest
 from sqlalchemy.orm.exc import NoResultFound
 from ce.api.streamflow.watershed import get_time_invariant_variable_dataset
 
-
 # TODO: Add more tests
 
 

@@ -20,7 +20,6 @@ from collections.abc import Set, Mapping
 
 from tempfile import NamedTemporaryFile
 
-
 try:  # Python 2
     zero_depth_bases = (basestring, Number, xrange, bytearray)
     iteritems = "iteritems"

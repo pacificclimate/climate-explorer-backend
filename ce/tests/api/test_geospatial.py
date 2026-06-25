@@ -8,7 +8,6 @@ from ce.api.geospatial import (
     GeospatialTypeError,
 )
 
-
 coordinates = ((0, 0), (0, 1), (1, 1), (0, 0))
 
 

@@ -1,0 +1,32 @@
+# Keep the build context small and avoid leaking local state into the image.
+.git
+.github
+.gitignore
+.dockerignore
+
+# Local virtualenvs / caches
+.venv
+venv/
+.cache
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Editor / tooling
+.devcontainer
+.vscode
+.idea
+.pre-commit-config.yaml
+
+# Docs and build artifacts
+doc/build/
+build/
+dist/
+*.egg-info/
+
+# OS cruft
+.DS_Store
+*~

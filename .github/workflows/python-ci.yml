@@ -7,34 +7,40 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    container: pcic/geospatial-python:3.8.4
+    # The base image determines the Python (3.14) and geospatial stack
+    # (GDAL 3.12.2, numpy 2.x) we test against. It ships a prebuilt virtualenv
+    # at /opt/venv; we install our dependencies on top of it.
+    container: pcic/geospatial-python:3.12.2
     timeout-minutes: 15
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.python-version }}
+      group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
-    strategy:
-      matrix:
-        python-version:
-          - "3.11"
-          - "3.12"
-          - "3.13"
-          - "3.14"
     env:
       HOME: /root
+      POETRY_HOME: /opt/poetry
+      POETRY_VIRTUALENVS_CREATE: "false"
+      VIRTUAL_ENV: /opt/venv
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
       - name: Install system dependencies
         run: |
-          apt-get update 
-          apt-get install -yq libxml2-dev libxslt-dev libffi-dev wget pipx
+          apt-get update
+          apt-get install -yq --no-install-recommends \
+            build-essential python3-dev python3-venv git \
+            libpq-dev libxml2-dev libxslt1-dev libffi-dev
 
       - name: Install poetry
         run: |
-          pipx install "poetry==2.4.0"
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          python3 -m venv "$POETRY_HOME"
+          "$POETRY_HOME/bin/pip" install --no-cache-dir "poetry==2.4.0"
+          # Entries added to GITHUB_PATH are prepended, so the last write wins:
+          # keep /opt/venv/bin ahead of poetry's venv on PATH.
+          echo "$POETRY_HOME/bin" >> $GITHUB_PATH
+          echo "/opt/venv/bin" >> $GITHUB_PATH
 
       - name: Install python dependencies
         run: |
@@ -43,9 +49,9 @@ jobs:
       - name: Test with pytest (full)
         if: github.ref == 'refs/heads/master'
         run: |
-          poetry run py.test -m "not online" -v
+          py.test -m "not online" -v
 
       - name: Test with pytest (fast)
         if: github.ref != 'refs/heads/master'
         run: |
-          poetry run py.test -m "not online and not slow" -v
+          py.test -m "not online and not slow" -v

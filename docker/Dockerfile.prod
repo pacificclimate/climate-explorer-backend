@@ -1,21 +1,74 @@
-# Image with ubuntu 24.04, python 3.12, gdal 3.8.4
-FROM pcic/geospatial-python:3.8.4
+# syntax=docker/dockerfile:1
 
-RUN apt-get update && \
-    apt-get install -yq libpq-dev \
-    libxml2-dev \
-    libgeos-dev \
-    libffi-dev \
-    pipx \
-    curl \
+# Base image: Ubuntu 26.04, Python 3.14, GDAL 3.12.2, numpy 2.x.
+# It ships a ready-to-use virtualenv at /opt/venv with the geospatial stack
+# (GDAL, numpy, netCDF4, h5py, ...) prebuilt and version-matched to the system
+# libraries. We install our remaining dependencies on top of that venv in a
+# builder stage, then copy the venv into a slim runtime stage.
+ARG GEOSPATIAL_PYTHON_TAG=3.12.2
+
+############################
+# Builder stage
+############################
+FROM pcic/geospatial-python:${GEOSPATIAL_PYTHON_TAG} AS builder
+
+ENV PIP_NO_CACHE_DIR=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_HOME=/opt/poetry \
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH
+
+# Build tooling and dev headers for the few dependencies that compile from
+# source (e.g. psycopg2). The geospatial stack itself is already built in the
+# base image and is reused as-is.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        python3-dev \
+        python3-venv \
+        git \
+        libpq-dev \
+        libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ADD . /app
+# Install Poetry in its own isolated virtualenv so it never pollutes /opt/venv.
+RUN python3 -m venv "$POETRY_HOME" \
+    && "$POETRY_HOME/bin/pip" install --no-cache-dir "poetry==2.4.0"
+
 WORKDIR /app
 
-ENV PATH="/root/.local/bin:${PATH}"
-RUN pipx install "poetry==2.4.0"
-RUN poetry install
+# Install dependencies first (without the project) for better layer caching:
+# this layer is only rebuilt when pyproject.toml / poetry.lock change.
+COPY pyproject.toml poetry.lock ./
+RUN "$POETRY_HOME/bin/poetry" install --only main --no-root
+
+# Install the application itself.
+COPY . .
+RUN "$POETRY_HOME/bin/poetry" install --only main
+
+############################
+# Runtime stage
+############################
+FROM pcic/geospatial-python:${GEOSPATIAL_PYTHON_TAG} AS runtime
+
+# curl is needed for the container HEALTHCHECK.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Copy the populated virtualenv and the application source from the builder.
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app /app
+WORKDIR /app
+
+# Run as an unprivileged user.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8000
 
@@ -23,10 +76,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/api/readyz || exit 1
 
 # gunicorn.conf is set up so that one can tune gunicorn settings when
-# running the container by setting environment an variable
+# running the container by setting an environment variable
 # GUNICORN_[setting], where setting is any of the parameters in this
 # list: http://docs.gunicorn.org/en/latest/settings.html
 #
 # E.g. docker run -e GUNICORN_WORKERS=10 -e GUNICORN_PORT=8000 -e GUNICORN_BIND=0.0.0.0:8000 ...
-
-ENTRYPOINT ["poetry", "run", "gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
+ENTRYPOINT ["gunicorn", "--config", "docker/gunicorn.conf", "--log-config", "docker/logging.conf", "-b", ":8000", "ce.wsgi:app"]
